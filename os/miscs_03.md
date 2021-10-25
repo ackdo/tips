@@ -27,7 +27,7 @@ curl -i \
       }
     }
   }
-}' \
+}" \
 http://${publicapi}:5000/v3/auth/tokens 2>&1 | tee /tmp/tempfile
 
 token=$(cat /tmp/tempfile | awk '/X-Subject-Token: /{print $NF}' | tr -d '\r' )
