@@ -68,3 +68,24 @@ curl -g -i -X DELETE http://${publicapi}:8774/v2.1/servers/$instanceid \
 -H "Content-Type: application/json" \
 -H "X-Auth-Token: $mytoken" 
 ```
+
+### Grafana Dashboard 相关的信息
+https://www.jianshu.com/p/7e7e0d06709b
+```
+  "targets": [
+    {
+      "exemplar": true,
+      "expr": "sum by (resource, plugin_instance) (label_replace(collectd_virt_memory{service=~\".+-$clouds-.+\"}, \"resource\", \"$1\", \"host\", \".+:(.+):.+\")) + on(resource) group_right(plugin_instance) ceilometer_cpu{project=\"$projects\", service=~\".+-$clouds-.+\"}",
+      "instant": true,
+      "interval": "",
+      "legendFormat": "{{plugin_instance}}",
+      "refId": "A"
+    }
+  ],
+
+sum by (resource, plugin_instance) (label_replace(collectd_virt_memory{service=~\".+-$clouds-.+\"}, \"resource\", \"$1\", \"host\", \".+:(.+):.+\")) + on(resource) group_right(plugin_instance) ceilometer_cpu{project=\"573de9f1520b4e08852cb5e17e734ede\", service=~\".+-cloud1-.+\"}
+
+
+sum by (resource, plugin_instance) (label_replace(collectd_virt_memory{service=~".+-cloud1-.+"}, "resource", "e7570f38-f78e-4a6e-9ca6-1e5f8e8a1295", "host", ".+:(.+):.+")) + on(resource) group_right(plugin_instance) ceilometer_cpu{project="573de9f1520b4e08852cb5e17e73e",service=~".+-cloud1-.+"}
+```
+
