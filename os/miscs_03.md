@@ -100,16 +100,19 @@ sum by (resource, plugin_instance) (label_replace(collectd_virt_memory{service=~
 ### 使用 Elasticsearch Operator 快速部署 Elasticsearch 集群
 https://www.qikqiak.com/post/elastic-cloud-on-k8s/
 ```
-apiVersion: kibana.k8s.elastic.co/v1alpha1
+# 在 STF 1.3 下创建 kibana 资源
+apiVersion: kibana.k8s.elastic.co/v1
 kind: Kibana
 metadata:
   name: kibana
-  namespace: elastic-system
+  namespace: service-telemetry
 spec:
-  version: 7.2.0
+  version: 7.10.2
   nodeCount: 1
   elasticsearchRef:
-    name: elastic
+    name: elasticsearch
+
+# 注意 version: 7.10.2 与 elasticsearch 的版本一致
 ```
 
 ### 当 chrome 打开页面显示报错信息 '该网站发回了异常的错误凭据' 的处理方法
