@@ -97,3 +97,17 @@ sum by (resource, plugin_instance) (label_replace(collectd_virt_memory{service=~
 sum by (resource, plugin_instance) (label_replace(collectd_virt_memory{service=~".+-cloud1-.+"}, "resource", "$1", "host", ".+-.+")) + on(resource) group_right(plugin_instance) ceilometer_cpu{project="573de9f1520b4e08852cb5e17e73e"}
 ```
 
+### 使用 Elasticsearch Operator 快速部署 Elasticsearch 集群
+https://www.qikqiak.com/post/elastic-cloud-on-k8s/
+```
+apiVersion: kibana.k8s.elastic.co/v1alpha1
+kind: Kibana
+metadata:
+  name: kibana
+  namespace: elastic-system
+spec:
+  version: 7.2.0
+  nodeCount: 1
+  elasticsearchRef:
+    name: elastic
+```
