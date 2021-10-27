@@ -111,3 +111,6 @@ spec:
   elasticsearchRef:
     name: elastic
 ```
+
+### 当 chrome 打开页面显示报错信息 '该网站发回了异常的错误凭据' 的处理方法
+如果确认网址是正确的，可以在页面输入 'thisisunsafe'
