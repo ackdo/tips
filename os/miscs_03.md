@@ -113,6 +113,37 @@ spec:
     name: elasticsearch
 
 # 注意 version: 7.10.2 与 elasticsearch 的版本一致
+
+oc get secret
+...
+kibana-kb-config                                Opaque                                2      17h
+kibana-kb-es-ca                                 Opaque                                2      17h
+kibana-kb-http-ca-internal                      Opaque                                2      17h
+kibana-kb-http-certs-internal                   Opaque                                3      17h
+kibana-kb-http-certs-public                     Opaque                                2      17h
+kibana-kibana-user                              Opaque                                1      17h
+
+# TLS certification
+https://www.elastic.co/guide/en/cloud-on-k8s/master/k8s-tls-certificates.html
+
+oc run curl --image=radial/busyboxplus:curl -i --tty
+curl -v -k https://kibana-kb-http:5601
+
+oc get secret kibana-kb-http-certs-public -o go-template='{{index .data "tls.crt" | base64 --decode }}'
+
+oc get secret kibana-kb-http-certs-public -o template='{{index .data "ca.crt"}}' | base64 --decode | tee ~/tmp/ca.crt 
+
+oc get secret kibana-kb-http-certs-public -o template='{{index .data "tls.crt"}}' | base64 --decode | tee ~/tmp/tls.crt 
+
+oc get secret kibana-kb-http-certs-internal -o template='{{index .data "tls.key"}}' | base64 --decode | tee ~/tmp/tls.key
+
+cd ~/tmp
+oc create route edge kibana-kb-edge --service=kibana-kb-http --port=5601 --ca-cert ca.crt --cert tls.crt --key tls.key
+
+https://stackoverflow.com/questions/59167199/openshift-edge-tls-termination-route-does-not-work-cwwko0801e-unable-to-initia
+...
+
+
 ```
 
 ### 当 chrome 打开页面显示报错信息 '该网站发回了异常的错误凭据' 的处理方法
@@ -126,3 +157,10 @@ https://bugzilla.redhat.com/show_bug.cgi?id=1668858
 
 ### Encryption at Rest - Red Hat Ceph Storage 5
 https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html/data_security_and_hardening_guide/assembly-encryption-and-key-management
+
+### OpenStack VaultLocker
+https://github.com/openstack-charmers/vaultlocker<br>
+关于在 Hashicorp Vault 中存储 LUKS dm-crypt 加密 keys
+
+Linux Unified Key Setup
+https://en.wikipedia.org/wiki/Linux_Unified_Key_Setup<br>
