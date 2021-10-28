@@ -123,3 +123,6 @@ https://github.com/infrawatch/service-telemetry-operator/pull/277
 
 ### OSP: Failure prepping block device., Code: 500 when deploying whole disk secure image
 https://bugzilla.redhat.com/show_bug.cgi?id=1668858
+
+### Encryption at Rest - Red Hat Ceph Storage 5
+https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html/data_security_and_hardening_guide/assembly-encryption-and-key-management
