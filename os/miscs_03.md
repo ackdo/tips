@@ -117,3 +117,6 @@ spec:
 
 ### 当 chrome 打开页面显示报错信息 '该网站发回了异常的错误凭据' 的处理方法
 如果确认网址是正确的，可以在页面输入 'thisisunsafe'
+
+### 计划让 STF 1.3 支持 OCP 4.8
+https://github.com/infrawatch/service-telemetry-operator/pull/277
