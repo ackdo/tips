@@ -129,20 +129,8 @@ https://www.elastic.co/guide/en/cloud-on-k8s/master/k8s-tls-certificates.html
 oc run curl --image=radial/busyboxplus:curl -i --tty
 curl -v -k https://kibana-kb-http:5601
 
-oc get secret kibana-kb-http-certs-public -o go-template='{{index .data "tls.crt" | base64 --decode }}'
-
-oc get secret kibana-kb-http-certs-public -o template='{{index .data "ca.crt"}}' | base64 --decode | tee ~/tmp/ca.crt 
-
-oc get secret kibana-kb-http-certs-public -o template='{{index .data "tls.crt"}}' | base64 --decode | tee ~/tmp/tls.crt 
-
-oc get secret kibana-kb-http-certs-internal -o template='{{index .data "tls.key"}}' | base64 --decode | tee ~/tmp/tls.key
-
 cd ~/tmp
-oc create route edge kibana-kb-edge --service=kibana-kb-http --port=5601 --ca-cert ca.crt --cert tls.crt --key tls.key
-
-https://stackoverflow.com/questions/59167199/openshift-edge-tls-termination-route-does-not-work-cwwko0801e-unable-to-initia
-...
-
+oc create route passthrough kibana-kb-route --service=kibana-kb-http --port=5601 
 
 ```
 
