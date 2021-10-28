@@ -120,3 +120,6 @@ spec:
 
 ### 计划让 STF 1.3 支持 OCP 4.8
 https://github.com/infrawatch/service-telemetry-operator/pull/277
+
+### OSP: Failure prepping block device., Code: 500 when deploying whole disk secure image
+https://bugzilla.redhat.com/show_bug.cgi?id=1668858
