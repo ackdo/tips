@@ -162,4 +162,9 @@ https://medium.com/@avmor/how-to-configure-rgw-multisite-in-ceph-65e89a075c1f
 https://access.redhat.com/solutions/3363761
 
 ### Ceph 参考架构 Cisco UCS and red hat ceph storage 4
-https://www.cisco.com/c/en/us/td/docs/unified_computing/ucs/UCS_CVDs/ucs_c240m5_redhatceph4.html?dtid=osscdc000283
+https://www.cisco.com/c/en/us/td/docs/unified_computing/ucs/UCS_CVDs/ucs_c240m5_redhatceph4.html?dtid=osscdc000283<br>
+https://blog.csdn.net/swingwang/article/details/60781084<br>
+https://dnsflagday.net/2020/<br>
+
+### osp 16.1 pre-provisioned templatess
+https://gitlab.cee.redhat.com/sputhenp/lab/-/tree/master/templates/osp-16-1/pre-provisioned
