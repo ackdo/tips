@@ -132,6 +132,8 @@ curl -v -k https://kibana-kb-http:5601
 cd ~/tmp
 oc create route passthrough kibana-kb-route --service=kibana-kb-http --port=5601 
 
+oc get secret elasticsearch-es-elastic-user -o jsonpath='{.data.elastic}' | base64 --decode
+a16O5gq448IhL91G1GvbbQ2D
 ```
 
 ### 当 chrome 打开页面显示报错信息 '该网站发回了异常的错误凭据' 的处理方法
@@ -152,3 +154,12 @@ https://github.com/openstack-charmers/vaultlocker<br>
 
 Linux Unified Key Setup
 https://en.wikipedia.org/wiki/Linux_Unified_Key_Setup<br>
+
+### 如何配置 ceph rgw multisite
+https://medium.com/@avmor/how-to-configure-rgw-multisite-in-ceph-65e89a075c1f
+
+### Pulling a docker image hosted by Satellite throws 403 error or digest verification failed error
+https://access.redhat.com/solutions/3363761
+
+### Ceph 参考架构 Cisco UCS and red hat ceph storage 4
+https://www.cisco.com/c/en/us/td/docs/unified_computing/ucs/UCS_CVDs/ucs_c240m5_redhatceph4.html?dtid=osscdc000283
