@@ -166,5 +166,5 @@ https://www.cisco.com/c/en/us/td/docs/unified_computing/ucs/UCS_CVDs/ucs_c240m5_
 https://blog.csdn.net/swingwang/article/details/60781084<br>
 https://dnsflagday.net/2020/<br>
 
-### osp 16.1 pre-provisioned templatess
+### osp 16.1 pre-provisioned nodes templatess
 https://gitlab.cee.redhat.com/sputhenp/lab/-/tree/master/templates/osp-16-1/pre-provisioned
