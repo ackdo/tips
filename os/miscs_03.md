@@ -172,3 +172,6 @@ https://gitlab.cee.redhat.com/sputhenp/lab/-/tree/master/templates/osp-16-1/pre-
 ### Enrich your Ceph Object Storage Data Lake by leveraging Kafka as the Data Source
 用 Kafka 作为胶水将数据源和 Data Lake 以及数据分析解决方案粘在一起<br>
 https://itnext.io/enrich-your-ceph-object-storage-data-lake-by-leveraging-kafka-as-the-data-source-e9a4d305abcf
+
+### RBD snapshot 是否支持 crash consistency 文档
+https://github.com/ceph/ceph/pull/43764
