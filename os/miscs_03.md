@@ -175,3 +175,6 @@ https://itnext.io/enrich-your-ceph-object-storage-data-lake-by-leveraging-kafka-
 
 ### RBD snapshot 是否支持 crash consistency 文档
 https://github.com/ceph/ceph/pull/43764
+
+### STF 集成
+https://bugzilla.redhat.com/show_bug.cgi?id=1845943
