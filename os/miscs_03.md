@@ -178,3 +178,14 @@ https://github.com/ceph/ceph/pull/43764
 
 ### STF 集成
 https://bugzilla.redhat.com/show_bug.cgi?id=1845943
+
+### The future of data engineer
+https://aws.amazon.com/big-data/datalakes-and-analytics/data-lake-house/
+
+https://netflixtechblog.com/optimizing-data-warehouse-storage-7b94a48fdcbe
+
+https://github.com/sripathikrishnan/jinjasql
+
+https://preset.io/blog/the-future-of-the-data-engineer/
+
+https://www.montecarlodata.com/the-future-of-the-data-engineer/
