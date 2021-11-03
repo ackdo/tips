@@ -189,3 +189,8 @@ https://github.com/sripathikrishnan/jinjasql
 https://preset.io/blog/the-future-of-the-data-engineer/
 
 https://www.montecarlodata.com/the-future-of-the-data-engineer/
+
+### 
+```
+        "<13>Nov  2 10:30:35 puppet-user: Error: /Stage[main]/Tripleo::Certmonger::Neutron/Certmonger_certificate[neutron]: Could not evaluate: Could not get certificate: Server at https://helper.example.com/ipa/xml denied our request, giving up: 2100 (RPC failed at server.  Insufficient access: Insufficient 'add' privilege to add the entry 'krbprincipalname=neutron/overcloud-controller-0.internalapi.example.com@EXAMPLE.COM,cn=services,cn=accounts,dc=example,dc=com'.).",
+```
