@@ -285,7 +285,26 @@ gpgcheck=0
 
 EOF
 done
+
+
+cat > ~/templates/node-info.yaml << 'EOF'
+parameter_defaults:
+  ControllerCount: 3
+  ComputeCount: 0
+  ComputeHCICount: 3
+
+  # SchedulerHints
+  ControllerSchedulerHints:
+    'capabilities:node': 'controller-%index%'
+  ComputeSchedulerHints:
+    'capabilities:node': 'compute-%index%'
+  ComputeHCISchedulerHints:
+    'capabilities:node': 'computehci-%index%'
+EOF
 ```
 
-### 
-https://access.redhat.com/labs/ocssi/
+### openshift container storage labs
+https://access.redhat.com/labs/ocssi/<br>
+
+### OpenShift 与 Global Load Balancer
+https://cloud.redhat.com/blog/global-load-balancer-for-openshift-clusters-an-operator-based-approach<br>
