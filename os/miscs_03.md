@@ -343,3 +343,10 @@ https://access.redhat.com/labs/ocssi/<br>
 
 ### OpenShift 与 Global Load Balancer
 https://cloud.redhat.com/blog/global-load-balancer-for-openshift-clusters-an-operator-based-approach<br>
+
+### 有状态应用与双数据中心的难题
+https://cloud.redhat.com/blog/stateful-workloads-and-the-two-data-center-conundrum
+
+### Disaster Recovery Strategies for Applications Running on OpenShift
+https://cloud.redhat.com/blog/disaster-recovery-strategies-for-applications-running-on-openshift
+
