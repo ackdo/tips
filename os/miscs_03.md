@@ -395,3 +395,15 @@ https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/4/html-single
 https://access.redhat.com/articles/1548993<br>
 https://bugzilla.redhat.com/show_bug.cgi?id=1831995<br>
 https://bugzilla.redhat.com/show_bug.cgi?id=1831995#c38<br>
+https://fossies.org/linux/collectd/src/collectd.conf.in<br>
+
+### 软件定义存储
+```
+需求：
+1. ceph 如何用
+2. ceph 跟 openstack 
+3. 对接 openstack
+
+
+
+```
