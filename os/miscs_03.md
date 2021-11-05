@@ -363,3 +363,35 @@ EOF
 (undercloud) [stack@undercloud ~]$ ansible -i /tmp/inventory all -m copy -a 'src=/tmp/10-cephdest=/etc/pki/ca-trust/source/anchors'
 
 ```
+
+### ODH OCP 4.9
+```
+报错信息
+csv created in namespace with multiple operatorgroups, can't pick one automatically
+
+解决方法：创建 opendatahub namespace，在 opendatahub namespace 下创建 opendatahub 资源
+
+报错信息
+constraints not satisfiable: subscription seldon-operator-certified exists, no operators found in package seldon-operator-certified in the catalog referenced by subscription seldon-operator-certified
+
+podman cp 的例子
+https://github.com/containers/podman/blob/main/docs/source/markdown/podman-cp.1.md
+```
+
+### Ceph 与中心 prometheus 的集成
+https://bugzilla.redhat.com/show_bug.cgi?id=1897250<br>
+https://github.com/ceph/ceph/blob/master/src/mgr/DaemonHealthMetricCollector.cc#L33-L56<br>
+https://bugzilla.redhat.com/show_bug.cgi?id=1259160<br>
+https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html-single/dashboard_guide/index#network-port-requirements-for-ceph-dashboard_dash<br>
+https://gitlab.consulting.redhat.com/iberia-consulting/inditex/ceph/cer-rhcs4-archive-zone<br>
+https://github.com/prometheus/snmp_exporter<br>
+https://gitlab.consulting.redhat.com/iberia-consulting/inditex/ceph/upgrade-rhcs4<br>
+https://bugzilla.redhat.com/show_bug.cgi?id=1902212<br>
+https://documentation.suse.com/ses/7/html/ses-all/monitoring-alerting.html#prometheus-webhook-snmp<br>
+https://github.com/SUSE/prometheus-webhook-snmp<br>
+https://prometheus.io/docs/alerting/latest/alertmanager/#high-availability<br>
+https://grafana.com/docs/grafana/latest/administration/set-up-for-high-availability<br>
+https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/4/html-single/installation_guide/index#colocation-of-containerized-ceph-daemons<br>
+https://access.redhat.com/articles/1548993<br>
+https://bugzilla.redhat.com/show_bug.cgi?id=1831995<br>
+https://bugzilla.redhat.com/show_bug.cgi?id=1831995#c38<br>
