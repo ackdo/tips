@@ -350,3 +350,16 @@ https://cloud.redhat.com/blog/stateful-workloads-and-the-two-data-center-conundr
 ### Disaster Recovery Strategies for Applications Running on OpenShift
 https://cloud.redhat.com/blog/disaster-recovery-strategies-for-applications-running-on-openshift
 
+```
+cat > /tmp/inventory <<EOF
+[controller]
+192.0.2.5[1:3] ansible_user=heat-admin ansible_become=yes ansible_become_method=sudo
+
+[computehci]
+192.0.2.7[1:3] ansible_user=heat-admin ansible_become=yes ansible_become_method=sudo
+
+EOF
+
+(undercloud) [stack@undercloud ~]$ ansible -i /tmp/inventory all -m copy -a 'src=/tmp/10-cephdest=/etc/pki/ca-trust/source/anchors'
+
+```
