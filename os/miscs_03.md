@@ -403,3 +403,155 @@ https://fossies.org/linux/collectd/src/collectd.conf.in<br>
 ### OSP 16.2 备份与恢复
 https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.2/html-single/backing_up_and_restoring_the_undercloud_and_control_plane_nodes/index<br>
 https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.2/html-single/back_up_and_restore_the_director_undercloud/index<br>
+
+https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.1/html-single/operational_measurements/index<br>
+
+
+```
+# https://bugzilla.redhat.com/show_bug.cgi?id=1594967
+2021-11-08 03:12:57.558 77 WARNING neutron.pecan_wsgi.controllers.root [req-7e952a16-ad2c-47d5-8b12-c8b7f5720d3d 4b7041bb93c0438e921c8d6e1516a2d9 5a7854f1b7ea41169141436b1c5bf02c - default default] No controller found for: fw - returning response code 404: pecan.routing.PecanNotFound
+2021-11-08 03:13:01.439 76 WARNING neutron.pecan_wsgi.controllers.root [req-52b36b8d-c615-43ca-ada4-51841a77c3c7 4b7041bb93c0438e921c8d6e1516a2d9 5a7854f1b7ea41169141436b1c5bf02c - default default] No controller found for: fw - returning response code 404: pecan.routing.PecanNotFound
+2021-11-08 03:13:15.700 76 WARNING neutron.pecan_wsgi.controllers.root [req-d9f5ad06-fd2d-4536-986d-65cd6869fca4 4b7041bb93c0438e921c8d6e1516a2d9 5a7854f1b7ea41169141436b1c5bf02c - default default] No controller found for: vpn - returning response code 404: pecan.routing.PecanNotFound
+2021-11-08 03:13:21.063 76 WARNING neutron.pecan_wsgi.controllers.root [req-2b5aa5c6-3b73-498a-aee6-baad8ed7d3e0 4b7041bb93c0438e921c8d6e1516a2d9 5a7854f1b7ea41169141436b1c5bf02c - default default] No controller found for: vpn - returning response code 404: pecan.routing.PecanNotFound
+2021-11-08 03:13:24.775 77 WARNING neutron.pecan_wsgi.controllers.root [req-5697a4a7-194f-4e09-85be-cc146ef503ff 4b7041bb93c0438e921c8d6e1516a2d9 5a7854f1b7ea41169141436b1c5bf02c - default default] No controller found for: lbaas - returning response code 404: pecan.routing.PecanNotFound
+2021-11-08 03:13:25.227 76 WARNING neutron.pecan_wsgi.controllers.root [req-12929c75-2462-436b-9e89-f497c3fb03ad 4b7041bb93c0438e921c8d6e1516a2d9 5a7854f1b7ea41169141436b1c5bf02c - default default] No controller found for: lbaas - returning response code 404: pecan.routing.PecanNotFound
+2021-11-08 03:13:25.627 77 WARNING neutron.pecan_wsgi.controllers.root [req-acd8ac0e-fd6b-4457-ad78-0ba02737dde0 4b7041bb93c0438e921c8d6e1516a2d9 5a7854f1b7ea41169141436b1c5bf02c - default default] No controller found for: fw - returning response code 404: pecan.routing.PecanNotFound
+2021-11-08 03:13:26.202 77 WARNING neutron.pecan_wsgi.controllers.root [req-34e17998-17c2-4756-adba-b154bdb49341 4b7041bb93c0438e921c8d6e1516a2d9 5a7854f1b7ea41169141436b1c5bf02c - default default] No controller found for: vpn - returning response code 404: pecan.routing.PecanNotFound
+2021-11-08 03:13:26.534 76 WARNING neutron.pecan_wsgi.controllers.root [req-b9223895-0183-4651-b344-130b107b782d 4b7041bb93c0438e921c8d6e1516a2d9 5a7854f1b7ea41169141436b1c5bf02c - default default] No controller found for: lbaas - returning response code 404: pecan.routing.PecanNotFound
+2021-11-08 03:13:27.794 76 WARNING neutron.pecan_wsgi.controllers.root [req-c2714d95-1582-4ae5-8c91-6284521055bc 4b7041bb93c0438e921c8d6e1516a2d9 5a7854f1b7ea41169141436b1c5bf02c - default default] No controller found for: lbaas - returning response code 404: pecan.routing.PecanNotFound
+
+openstack.exceptions.HttpException: HttpException: 502: Server Error for url: https://overcloud.example.com:13696/v2.0/agents, Reason: Error reading from remote server: response from an upstream server.: The proxy server received an invalid: 502 Proxy Error: The proxy server could not handle the request GET&nbsp;/v2.0/agents.: Proxy Error
+
+
+WARNING ceilometer.neutron_client [-] The resource could not be found.:neutronclient.common.exceptions.NotFound: The resource could not be found.
+```
+
+### CentOS Stream 的 EPEL 是 EPEL Next
+https://fedoraproject.org/wiki/EPEL_Next
+
+### OSP 16.1 与 collectd 
+```
+osp 16.1 安装的 collectd 版本
+
+collectd-5.11.0-5.el8ost.x86_64
+```
+
+### 下载软件包及依赖
+https://ostechnix.com/download-rpm-package-dependencies-centos/<br>
+https://access.redhat.com/solutions/10154<br>
+```
+yum install --downloadonly --downloaddir=<downloaddir> <package>
+```
+
+### 为 osp collectd 容器添加 rrd plugins
+```
+> /tmp/osp.repo
+
+for i in rhel-8-for-x86_64-baseos-eus-rpms rhel-8-for-x86_64-appstream-eus-rpms rhel-8-for-x86_64-highavailability-eus-rpms ansible-2.9-for-rhel-8-x86_64-rpms openstack-16.1-for-rhel-8-x86_64-rpms fast-datapath-for-rhel-8-x86_64-rpms rhceph-4-tools-for-rhel-8-x86_64-rpms advanced-virt-for-rhel-8-x86_64-rpms
+do 
+cat >> /tmp/osp.repo <<EOF
+[$i]
+name=$i
+baseurl=http://192.0.2.1:8088/repos/osp16.1/$i/
+enabled=1
+gpgcheck=0
+
+EOF
+done
+
+# 拷贝 osp.repo
+cat > /tmp/inventory <<EOF
+[controller]
+192.0.2.5[1:3] ansible_user=heat-admin ansible_become=yes ansible_become_method=sudo
+
+[computehci]
+192.0.2.7[1:3] ansible_user=heat-admin ansible_become=yes ansible_become_method=sudo
+
+EOF
+
+(undercloud) [stack@undercloud ~]$ ansible -i /tmp/inventory all -m copy -a 'src=/tmp/osp.repo dest=/etc/yum.repos.d'
+
+# 在 overcloud 节点上，挂在 collectd pod 到 host
+[heat-admin@overcloud-controller-0 ~]$
+sudo -i 
+podman ps | grep collectd 
+mnt=$(podman mount $(podman ps | grep collectd | awk '{print $1}') )
+
+# 拷贝 /etc/yum.repos.d/osp.repo 到容器内
+cp /etc/yum.repos.d/osp.repo $mnt/etc/yum.repos.d
+
+# 为容器内安装 rrdtool
+yum install --installroot=$mnt rrdtool
+
+# 拷贝 collectd-rrdtool 软件包到容器内
+cp /tmp/collectd-rrdtool-5.11.0-9.el8ost.x86_64.rpm $mnt/tmp
+
+# 切换到容器内，安装 collectd rrdtool 插件
+podman exec -it collectd sh
+()[root@overcloud-controller-0 /]$ rpm -ivh /tmp/ollectd-rrdtool-5.11.0-9.el8ost.x86_64.rpm --force
+()[root@overcloud-controller-0 /]$ exit
+
+# 生成 collectd rrdtool 插件配置文件
+[heat-admin@overcloud-controller-0 ~]$
+sudo -i
+cd /var/lib/config-data/puppet-generated/collectd/etc/collectd.d
+# https://frontier.town/2017/10/collectd-and-rrdtool/
+cat > 10-rrdtool.conf <<EOF
+LoadPlugin rrdtool
+<Plugin rrdtool>
+	DataDir "/var/lib/collectd/rrd"
+	CreateFilesAsync false
+	CacheTimeout 120
+	CacheFlush   900
+	WritesPerSecond 50
+
+	# The default settings are optimised for plotting time-series graphs over pre-fixed
+  # time period, but are not very helpful for simply asking "what is my average memory
+  # usage for the last hour?", so we define some new ones.
+
+	# The first one is an anomaly, as it seems that the rrd plugin enforces some
+	# minimums. The result is a time-series 200 hours long with a granularity of 10s.
+	RRATimeSpan 3600
+	# This defines a time-series 20 hours long with a granularity of 1 minute.
+	RRATimeSpan 72000
+	# This defines a time-series 50 days long with a granularity of 1 hour.
+	RRATimeSpan 4320000
+</Plugin>
+EOF
+
+# 重启 collectd 容器
+podman restart collectd
+
+# 检查 collectd 内 rrd 目录下的内容
+podman exec -it collectd sh
+()[root@overcloud-controller-0 /]$ ls /var/lib/collectd/rrd/overcloud-controller-0.example.com/
+ceph-ceph-mon.overcloud-controller-0       libpodstats-ceph-mgr-overcloud-controller-0       libpodstats-nova_scheduler
+cpu-0                                      libpodstats-ceph-mon-overcloud-controller-0       libpodstats-nova_vnc_proxy
+cpu-1                                      libpodstats-ceph-rgw-overcloud-controller-0-rgw0  libpodstats-octavia_api
+cpu-2                                      libpodstats-cinder_api                            libpodstats-octavia_driver_agent
+cpu-3                                      libpodstats-cinder_api_cron                       libpodstats-octavia_health_manager
+df-overlay                                 libpodstats-cinder_scheduler                      libpodstats-octavia_housekeeping
+df-shm                                     libpodstats-clustercheck                          libpodstats-octavia_worker
+df-tmpfs                                   libpodstats-collectd                              libpodstats-ovn_controller
+disk-vda                                   libpodstats-galera-bundle-podman-0                libpodstats-ovn-dbs-bundle-podman-0
+disk-vda1                                  libpodstats-glance_api                            libpodstats-placement_api
+disk-vda2                                  libpodstats-glance_api_tls_proxy                  libpodstats-rabbitmq-bundle-podman-0
+hugepages-mm-2048Kb                        libpodstats-haproxy-bundle-podman-0               libpodstats-redis-bundle-podman-0
+hugepages-node0-2048Kb                     libpodstats-heat_api                              libpodstats-redis_tls_proxy
+interface-br-ex                            libpodstats-heat_api_cfn                          load
+interface-br-int                           libpodstats-heat_api_cron                         memcached-local
+interface-ens3                             libpodstats-heat_engine                           memory
+interface-ens4                             libpodstats-horizon                               processes
+interface-ens5                             libpodstats-iscsid                                uptime
+interface-genev_sys_6081                   libpodstats-keystone                              vmem
+interface-lo                               libpodstats-logrotate_crond                       vmem-direct
+interface-o-hm0                            libpodstats-memcached                             vmem-dma
+interface-ovs-system                       libpodstats-metrics_qdr                           vmem-dma32
+interface-vlan20                           libpodstats-neutron_api                           vmem-kswapd
+interface-vlan30                           libpodstats-neutron_server_tls_proxy              vmem-movable
+interface-vlan40                           libpodstats-nova_api                              vmem-normal
+interface-vlan50                           libpodstats-nova_api_cron                         vmem-throttle
+libpodstats-ceilometer_agent_central       libpodstats-nova_conductor
+libpodstats-ceilometer_agent_notification  libpodstats-nova_metadata
+
+```
