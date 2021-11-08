@@ -566,3 +566,8 @@ ceph_bytes-Mempool.pgmapBytes.rrd
 ceph_bytes-Mempool.pgmapItems.rrd
 
 ```
+
+
+### Ceph Dashboard 监控
+https://www.cnblogs.com/William-Guozi/p/grafana-monitor.html<br>
+https://grafana.com/grafana/dashboards/2842<br>
