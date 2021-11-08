@@ -488,7 +488,7 @@ cp /tmp/collectd-rrdtool-5.11.0-9.el8ost.x86_64.rpm $mnt/tmp
 
 # 切换到容器内，安装 collectd rrdtool 插件
 podman exec -it collectd sh
-()[root@overcloud-controller-0 /]$ rpm -ivh /tmp/ollectd-rrdtool-5.11.0-9.el8ost.x86_64.rpm --force
+()[root@overcloud-controller-0 /]$ rpm -ivh /tmp/collectd-rrdtool-5.11.0-9.el8ost.x86_64.rpm --force
 ()[root@overcloud-controller-0 /]$ exit
 
 # 生成 collectd rrdtool 插件配置文件
@@ -553,5 +553,16 @@ interface-vlan40                           libpodstats-nova_api                 
 interface-vlan50                           libpodstats-nova_api_cron                         vmem-throttle
 libpodstats-ceilometer_agent_central       libpodstats-nova_conductor
 libpodstats-ceilometer_agent_notification  libpodstats-nova_metadata
+
+# 检查 collectd 内 rrd 目录下的 ceph 指标
+()[root@overcloud-controller-0 /]$ ls /var/lib/collectd/rrd/overcloud-controller-0.example.com/ceph-ceph-mon.overcloud-controller-0 -1F | grep -Ei pg
+ceph_bytes-Cluster.numPgActiveClean.rrd
+ceph_bytes-Cluster.numPgActive.rrd
+ceph_bytes-Cluster.numPgPeering.rrd
+ceph_bytes-Cluster.numPg.rrd
+ceph_bytes-Mempool.osdPglogBytes.rrd
+ceph_bytes-Mempool.osdPglogItems.rrd
+ceph_bytes-Mempool.pgmapBytes.rrd
+ceph_bytes-Mempool.pgmapItems.rrd
 
 ```
