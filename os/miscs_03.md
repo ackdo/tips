@@ -397,13 +397,5 @@ https://bugzilla.redhat.com/show_bug.cgi?id=1831995<br>
 https://bugzilla.redhat.com/show_bug.cgi?id=1831995#c38<br>
 https://fossies.org/linux/collectd/src/collectd.conf.in<br>
 
-### 软件定义存储
-```
-需求：
-1. ceph 如何用
-2. ceph 跟 openstack 
-3. 对接 openstack
-
-
-
-```
+### 如何调试 ROOK
+设置 ROOK_LOG_LEVEL=DEBUG 
