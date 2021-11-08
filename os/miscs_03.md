@@ -568,6 +568,12 @@ ceph_bytes-Mempool.pgmapItems.rrd
 ```
 
 
-### Ceph Dashboard 监控
+### Ceph 监控
+collectd + Graphite + Grafana
 https://www.cnblogs.com/William-Guozi/p/grafana-monitor.html<br>
+
+Grafana Ceph Cluster Dashboard，数据源来自 Prometheus
 https://grafana.com/grafana/dashboards/2842<br>
+
+Ceph Mgr Prometheus 模块
+https://docs.ceph.com/en/latest/mgr/prometheus/<br>
