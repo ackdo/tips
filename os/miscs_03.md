@@ -399,3 +399,7 @@ https://fossies.org/linux/collectd/src/collectd.conf.in<br>
 
 ### 如何调试 ROOK
 设置 ROOK_LOG_LEVEL=DEBUG 
+
+### OSP 16.2 备份与恢复
+https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.2/html-single/backing_up_and_restoring_the_undercloud_and_control_plane_nodes/index<br>
+https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.2/html-single/back_up_and_restore_the_director_undercloud/index<br>
