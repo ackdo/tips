@@ -424,6 +424,9 @@ openstack.exceptions.HttpException: HttpException: 502: Server Error for url: ht
 
 
 WARNING ceilometer.neutron_client [-] The resource could not be found.:neutronclient.common.exceptions.NotFound: The resource could not be found.
+
+Nov 09 13:55:53 base-pvg.redhat.ren libvirtd[21062]: 2021-11-09 05:55:53.711+0000: 21062: error : virNetSocketReadWire:1806 : 读Hint: Some lines were ellipsized, use -l to show in full.
+
 ```
 
 ### CentOS Stream 的 EPEL 是 EPEL Next
@@ -585,6 +588,23 @@ https://01.org/blogs/tingjie/2020/research-performance-tuning-hdd-based-ceph-clu
 https://www.redhat.com/en/blog/devops-culture-and-practice-openshift-experience-driven-real-world-guide-building-empowered-teams<br>
 https://www.redhat.com/en/engage/devops-culture-practice-openshift-ebooks<br>
 https://www.whsmith.co.uk/products/adaptive-systems-with-domaindriven-design-wardley-maps-and-team-topologies-designing-architecture-fo/susanne-kaiser/paperback/9780137393039.html<br>
+https://www.ready-to-innovate.com/<br>
+https://github.com/boogiespook/rti/issues<br>
+https://www.redhat.com/rhdc/managed-files/rh-slowing-down-digital-transformation-questions-ebook-f29635-202109-en_0.pdf<br>
+https://voltagecontrol.com/blog/episode-60-a-future-forward-in-devops/<br>
+https://www.linkedin.com/posts/andreasspanner_transformation-agile-changemanagement-activity-6836651389054263296-vtvs<br>
+https://www.redhat.com/en/events/webinar/transformation-takes-practice-users-guide-open-practice-library<br>
 
 ### OSP 16.1 为 overcloud 添加 Red Hat Ceph Storage Dashboard
 https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.1/html-single/deploying_an_overcloud_with_containerized_red_hat_ceph/index#adding-ceph-dashboard<br>
+
+```
+I wrote up a summary of this year's State of DevOps report on my blog over here: https://www.tomgeraghty.co.uk/index.php/the-state-of-devops-report-2021-a-summary/
+
+https://access.redhat.com/solutions/5464941
+Stderr: 'iscsiadm: Cannot perform discovery. Invalid Initiatorname.\niscsiadm: Could not perform SendTargets discovery: invalid parameter\n'
+https://bugzilla.redhat.com/show_bug.cgi?id=1764187
+
+sudo iptables -I INPUT 8 -p tcp -m multiport --dports 3260 -m state --state NEW -m comment --comment "100 iscsid ipv4" -j ACCEPT
+
+```
