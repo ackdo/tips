@@ -584,6 +584,7 @@ https://01.org/blogs/tingjie/2020/research-performance-tuning-hdd-based-ceph-clu
 ### DevOps 文化与实践
 https://www.redhat.com/en/blog/devops-culture-and-practice-openshift-experience-driven-real-world-guide-building-empowered-teams<br>
 https://www.redhat.com/en/engage/devops-culture-practice-openshift-ebooks<br>
+https://www.whsmith.co.uk/products/adaptive-systems-with-domaindriven-design-wardley-maps-and-team-topologies-designing-architecture-fo/susanne-kaiser/paperback/9780137393039.html<br>
 
 ### OSP 16.1 为 overcloud 添加 Red Hat Ceph Storage Dashboard
 https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.1/html-single/deploying_an_overcloud_with_containerized_red_hat_ceph/index#adding-ceph-dashboard<br>
