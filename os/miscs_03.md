@@ -577,3 +577,6 @@ https://grafana.com/grafana/dashboards/2842<br>
 
 Ceph Mgr Prometheus 模块
 https://docs.ceph.com/en/latest/mgr/prometheus/<br>
+
+### Ceph and OpenCAS
+https://01.org/blogs/tingjie/2020/research-performance-tuning-hdd-based-ceph-cluster-using-open-cas
