@@ -607,4 +607,6 @@ https://bugzilla.redhat.com/show_bug.cgi?id=1764187
 
 sudo iptables -I INPUT 8 -p tcp -m multiport --dports 3260 -m state --state NEW -m comment --comment "100 iscsid ipv4" -j ACCEPT
 
+# 检查最新文件的最后 10 行
+ls -ltr | tail -1 | awk '{print $9}' | xargs cat | tail -10
 ```
