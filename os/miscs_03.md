@@ -610,4 +610,23 @@ sudo iptables -I INPUT 8 -p tcp -m multiport --dports 3260 -m state --state NEW 
 # 检查最新文件的最后 10 行
 ls -ltr | tail -1 | awk '{print $9}' | xargs cat | tail -10
 watch -n5 "ls -ltr | tail -1 | awk '{print \$9}' | xargs cat | tail -10"
+
+# 部署失败，报错信息是
+rhosp-rhel8/openstack-collectd:16.1'] run failed after + mkdir -p /etc/puppet
+
+"<13>Nov  9 09:39:29 puppet-user: Error: Evaluation Error: Error while evaluating a Resource Statement, Evaluation Error: Error while evaluating a Resource Statement, Duplicate declaration: Tripleo::Profile::Base::Metrics::Collectd::Collectd_plugin[ceph] is already declared at (file: /etc/puppet/modules/tripleo/manifests/profile/base/metrics/collectd/collectd_service.pp, line: 8); cannot redeclare (file: /etc/puppet/modules/tripleo/manifests/profile/base/metrics/collectd/collectd_service.pp, line: 8) (file: /etc/puppet/modules/tripleo/manifests/profile/base/metrics/collectd/collectd_service.pp, line: 8, column: 5) (file: /etc/puppet/modules/tripleo/manifests/profile/base/metrics/collectd.pp, line: 301) on node overcloud-computehci-0.example.com",
+
+Tripleo::Profile::Base::Metrics::Collectd::Collectd_plugin[ceph]
+/etc/puppet/modules/tripleo/manifests/profile/base/metrics/collectd/collectd_service.pp
+/etc/puppet/modules/tripleo/manifests/profile/base/metrics/collectd/collectd_service.pp
+/etc/puppet/modules/tripleo/manifests/profile/base/metrics/collectd/collectd_service.pp
+/etc/puppet/modules/tripleo/manifests/profile/base/metrics/collectd.pp
+
+# 在所有 computehci 节点执行
+sudo sed -i 's|^|#|g' /etc/puppet/modules/tripleo/manifests/profile/base/metrics/collectd/collectd_service.pp
+
+Nov 10 03:44:30 overcloud-computehci-0.example.com puppet-user[19587]: Error: Evaluation Error: Error while evaluating a Resource Statement, Evaluation Error: Error while evaluating a Resource Statement, Duplicate declaration: Tripleo::Profile::Base::Metrics::Collectd::Collectd_plugin[ceph] is already declared at (file: /etc/puppet/modules/tripleo/manifests/profile/base/metrics/collectd/collectd_service.pp, line: 8); cannot redeclare (file: /etc/puppet/modules/tripleo/manifests/profile/base/metrics/collectd/collectd_service.pp, line: 8) (file: /etc/puppet/modules/tripleo/manifests/profile/base/metrics/collectd/collectd_service.pp, line: 8, column: 5) (file: /etc/puppet/modules/tripleo/manifests/profile/base/metrics/collectd.pp, line: 301) on node overcloud-computehci-0.example.com
+
+https://bugzilla.redhat.com/show_bug.cgi?id=1845943
+
 ```
