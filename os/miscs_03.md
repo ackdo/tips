@@ -630,3 +630,6 @@ Nov 10 03:44:30 overcloud-computehci-0.example.com puppet-user[19587]: Error: Ev
 https://bugzilla.redhat.com/show_bug.cgi?id=1845943
 
 ```
+
+### ODH 1.1.0 kfdef
+https://github.com/opendatahub-io/odh-manifests/tree/v1.1.0/kfdef
