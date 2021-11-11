@@ -641,4 +641,7 @@ sudo iptables -I INPUT 8 -p tcp -m multiport --dports 5900:5999 -m state --state
 ### ODH 1.1.0 kfdef
 https://github.com/opendatahub-io/odh-manifests/tree/v1.1.0/kfdef
 
+### OpenShift Cluster 安装 CephFS csi
+https://www.jianshu.com/p/5cbe9f58dda7
+
 
