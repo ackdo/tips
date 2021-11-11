@@ -629,7 +629,11 @@ Nov 10 03:44:30 overcloud-computehci-0.example.com puppet-user[19587]: Error: Ev
 
 https://bugzilla.redhat.com/show_bug.cgi?id=1845943
 
+
+sudo iptables -I INPUT 8 -p tcp -m multiport --dports 5900:5999 -m state --state NEW -m comment --comment "100 vnc ipv4" -j ACCEPT
 ```
 
 ### ODH 1.1.0 kfdef
 https://github.com/opendatahub-io/odh-manifests/tree/v1.1.0/kfdef
+
+
