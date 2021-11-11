@@ -644,4 +644,7 @@ https://github.com/opendatahub-io/odh-manifests/tree/v1.1.0/kfdef
 ### OpenShift Cluster 安装 CephFS csi
 https://www.jianshu.com/p/5cbe9f58dda7
 
+### 如何改变 Grafana password in director
+[rhos-tech] [ceph-dashboard] How to change the Grafana password in director deployed ceph
+
 
