@@ -647,4 +647,23 @@ https://www.jianshu.com/p/5cbe9f58dda7
 ### 如何改变 Grafana password in director
 [rhos-tech] [ceph-dashboard] How to change the Grafana password in director deployed ceph
 
+### temp cmd 
+```
+cat > /tmp/inventory <<EOF
+[controller]
+192.0.2.51 ansible_user=root
 
+[compute]
+192.0.2.52 ansible_user=root
+
+EOF
+
+cat > /tmp/inventory <<EOF
+[controller]
+192.0.2.51 ansible_user=stack ansible_become=yes ansible_become_method=sudo
+
+[compute]
+192.0.2.52 ansible_user=stack ansible_become=yes ansible_become_method=sudo
+
+EOF
+```
