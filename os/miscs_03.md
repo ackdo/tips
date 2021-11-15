@@ -666,8 +666,19 @@ cat > /tmp/inventory <<EOF
 192.0.2.52 ansible_user=stack ansible_become=yes ansible_become_method=sudo
 
 EOF
+
+报错
+[ERROR] WSREP: wsrep::connect(gcomm://overcloud-controller-0.internalapi.localdomain,overcloud-controller-1.internalapi.localdomain,overcloud-controller-2.internalapi.localdomain) failed: 7
+
+https://access.redhat.com/solutions/2085773
+
+https://docs.openstack.org/project-deploy-guide/tripleo-docs/latest/features/deployed_server.html#deployed-server-with-config-download
+
 ```
 
 ### Satellite and OpenShift 4 KBase
 https://access.redhat.com/solutions/5003361<br>
 https://bugzilla.redhat.com/show_bug.cgi?id=1798485<br>
+
+### Kubernetes 1.22 对应的 csi 版本是 1.5.0 
+https://github.com/kubernetes/kubernetes/blob/v1.22.0/go.mod#L28
