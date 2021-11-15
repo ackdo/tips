@@ -683,3 +683,6 @@ https://bugzilla.redhat.com/show_bug.cgi?id=1798485<br>
 ### Kubernetes 1.22 对应的 csi 版本是 1.5.0 
 https://github.com/kubernetes/kubernetes/blob/v1.22.0/go.mod#L28<br>
 https://bugzilla.redhat.com/show_bug.cgi?id=2023197
+
+### OSP Baremetal FIP security group
+https://bugzilla.redhat.com/show_bug.cgi?id=2021261
