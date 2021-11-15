@@ -667,3 +667,6 @@ cat > /tmp/inventory <<EOF
 
 EOF
 ```
+
+### Satellite and OpenShift 4 KBase
+https://access.redhat.com/solutions/5003361
