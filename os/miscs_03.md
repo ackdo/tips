@@ -686,3 +686,6 @@ https://bugzilla.redhat.com/show_bug.cgi?id=2023197
 
 ### OSP Baremetal FIP security group
 https://bugzilla.redhat.com/show_bug.cgi?id=2021261
+
+### 使用 go modules 管理 kubernetes 依赖
+https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/vendor.md
