@@ -669,4 +669,5 @@ EOF
 ```
 
 ### Satellite and OpenShift 4 KBase
-https://access.redhat.com/solutions/5003361
+https://access.redhat.com/solutions/5003361<br>
+https://bugzilla.redhat.com/show_bug.cgi?id=1798485<br>
