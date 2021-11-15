@@ -610,6 +610,9 @@ sudo iptables -I INPUT 8 -p tcp -m multiport --dports 3260 -m state --state NEW 
 # 检查最新文件的最后 10 行
 ls -ltr | tail -1 | awk '{print $9}' | xargs cat | tail -10
 watch -n5 "ls -ltr | tail -1 | awk '{print \$9}' | xargs cat | tail -10"
+watch -n5 "sudo cd /var/log/containers/mistral && sudo ls -ltr | tail -1 | awk '{print \$9}' | sudo xargs cat | tail -10"
+watch -n5 "sudo cd /var/log/containers/heat && sudo ls -ltr | tail -1 | awk '{print \$9}' | sudo xargs cat | tail -10"
+
 
 # 部署失败，报错信息是
 rhosp-rhel8/openstack-collectd:16.1'] run failed after + mkdir -p /etc/puppet
