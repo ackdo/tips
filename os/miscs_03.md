@@ -712,6 +712,7 @@ Unable to retrieve metadata from metadata service.
 FATAL: No metadata available or could not read the hostname from the metadata
 + exit 1
 
+"<13>Nov 16 02:40:38 puppet-user: Error: /Stage[main]/Tripleo::Profile::Base::Certmonger_user/Tripleo::Certmonger::Libvirt_vnc[libvirt-vnc-server-cert]/Certmonger_certificate[libvirt-vnc-server-cert]: Could not evaluate: The certificate 'libvirt-vnc-server-cert' wasn't found in the list.",
 ```
 
 ### Mac terminal 报错 operation not permitted 的处理
@@ -719,3 +720,6 @@ https://osxdaily.com/2018/10/09/fix-operation-not-permitted-terminal-error-macos
 
 ### Mac Big Sur 设置 remote viewer
 https://rizvir.com/articles/ovirt-mac-console/
+
+### Red Hat Satellite 6 创建 internal registry 
+https://access.redhat.com/solutions/3233491
