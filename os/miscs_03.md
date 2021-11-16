@@ -692,3 +692,27 @@ https://bugzilla.redhat.com/show_bug.cgi?id=2021261
 
 ### 使用 go modules 管理 kubernetes 依赖
 https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/vendor.md
+
+### 报错
+```
+[stack@overcloud-controller-0 ~]$ sudo cat /var/log/setup-ipa-client-ansible.log 
++ get_metadata_config_drive
++ '[' -f /run/cloud-init/status.json ']'
++ echo 'Unable to retrieve metadata from config drive.'
+Unable to retrieve metadata from config drive.
++ return 1
++ get_metadata_network
+++ timeout 300 /bin/bash -c 'data=""; while [ -z "$data" ]; do sleep $[ ( $RANDOM % 10 )  + 1 ]s; data=`curl -s http://169.254.169.254/openstack/2016-10-06/vendor_data2.json 2>/dev/null`; done; echo $data'
++ data=
++ [[ 124 != 0 ]]
++ echo 'Unable to retrieve metadata from metadata service.'
+Unable to retrieve metadata from metadata service.
++ return 1
++ echo 'FATAL: No metadata available or could not read the hostname from the metadata'
+FATAL: No metadata available or could not read the hostname from the metadata
++ exit 1
+
+```
+
+### Mac terminal 报错 operation not permitted 的处理
+https://osxdaily.com/2018/10/09/fix-operation-not-permitted-terminal-error-macos/
