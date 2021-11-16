@@ -738,6 +738,42 @@ ipa dnsrecord-del example.com overcloud-controller-2.storagemgmt --del-all
 https://access.redhat.com/solutions/642993
 ipa-getkeytab -s helper.example.com -k /etc/krb5.keytab -p host/overcloud-controller-0.example.com
 
+报错: TASK [ipaclient : Install - IPA client test] *********************************************************************************************************
+fatal: [undercloud.example.com]: FAILED! => {"changed": false, "msg": "Failed to verify that helper.example.com is an IPA Server."}
+
+https://github.com/freeipa/ansible-freeipa/issues/337
+
+ansible-playbook -vvv \
+--ssh-extra-args "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+/usr/share/ansible/tripleo-playbooks/undercloud-ipa-install.yaml
+
+TASK [tripleo_ipa_setup : add Nova Host Manager role] ************************************************************************************************
+fatal: [localhost]: FAILED! => {"changed": false, "msg": "login: Request failed: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:897)>"}
+
+TASK [tripleo_ipa_setup : add nova service] **********************************************************************************************************
+task path: /usr/share/ansible/roles/tripleo_ipa_setup/tasks/add_ipa_user.yml:26
+
+fatal: [localhost]: FAILED! => {
+    "changed": false,
+    "invocation": {
+        "module_args": {
+            "force": true,
+            "hosts": null,
+            "ipa_host": "helper.example.com",
+            "ipa_pass": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
+            "ipa_port": 443,
+            "ipa_prot": "https",
+            "ipa_timeout": 10,
+            "ipa_user": "admin",
+            "krbcanonicalname": "nova/undercloud.example.com",
+            "name": "nova/undercloud.example.com",
+            "state": "present",
+            "validate_certs": true
+        }
+    },
+
+    "msg": "response service_add: The host 'undercloud.example.com' does not exist to add a service to."
+
 ```
 
 ### Mac terminal 报错 operation not permitted 的处理
