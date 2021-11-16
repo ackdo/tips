@@ -713,6 +713,31 @@ FATAL: No metadata available or could not read the hostname from the metadata
 + exit 1
 
 "<13>Nov 16 02:40:38 puppet-user: Error: /Stage[main]/Tripleo::Profile::Base::Certmonger_user/Tripleo::Certmonger::Libvirt_vnc[libvirt-vnc-server-cert]/Certmonger_certificate[libvirt-vnc-server-cert]: Could not evaluate: The certificate 'libvirt-vnc-server-cert' wasn't found in the list.",
+
+"<13>Nov 16 03:42:56 puppet-user: Error: /Stage[main]/Tripleo::Certmonger::Ovn_controller/Certmonger_certificate[ovn_controller]: Could not evaluate: Could not get certificate: Error setting up ccache for \"host\" service on client using default keytab: Preauthentication failed.",
+https://lists.fedoraproject.org/archives/list/freeipa-users@lists.fedorahosted.org/thread/ZUW57MXKU75IEKTQSHDYFSXEHI3QQCVA/?sort=date
+
+https://lists.fedorahosted.org/archives/list/freeipa-users@lists.fedorahosted.org/thread/WDJZI4VIC6NP5LX6E3TMQCKMSG7IB4RU/
+
+https://lists.fedorahosted.org/archives/list/freeipa-users@lists.fedorahosted.org/thread/XT5GZFGHVEQH2LH56UYC56EIXX2N6PTH/
+
+klist -ekt /etc/krb5.keytab
+
+[root@overcloud-controller-0 ~]# klist -k /etc/krb5.keytab 
+Keytab name: FILE:/etc/krb5.keytab
+KVNO Principal
+---- --------------------------------------------------------------------------
+   1 host/overcloud-controller-0.example.com@EXAMPLE.COM
+   1 host/overcloud-controller-0.example.com@EXAMPLE.COM
+
+http://sammoffatt.com.au/jauthtools/Kerberos/Troubleshooting
+
+ipa host-del example.com overcloud-controller-2.storagemgmt
+ipa dnsrecord-del example.com overcloud-controller-2.storagemgmt --del-all
+
+https://access.redhat.com/solutions/642993
+ipa-getkeytab -s helper.example.com -k /etc/krb5.keytab -p host/overcloud-controller-0.example.com
+
 ```
 
 ### Mac terminal 报错 operation not permitted 的处理
