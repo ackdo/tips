@@ -716,3 +716,6 @@ FATAL: No metadata available or could not read the hostname from the metadata
 
 ### Mac terminal 报错 operation not permitted 的处理
 https://osxdaily.com/2018/10/09/fix-operation-not-permitted-terminal-error-macos/
+
+### Mac Big Sur 设置 remote viewer
+https://rizvir.com/articles/ovirt-mac-console/
