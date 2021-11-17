@@ -774,6 +774,34 @@ fatal: [localhost]: FAILED! => {
 
     "msg": "response service_add: The host 'undercloud.example.com' does not exist to add a service to."
 
+2021-11-17 10:50:31,304 p=1526 u=mistral n=ansible | fatal: [undercloud]: FAILED! => {
+    "changed": false,
+    "invocation": {
+        "module_args": {
+            "description": null,
+            "force": true,
+            "fqdn": "overcloud-computehci-0.example.com",
+            "ip_address": null,
+            "ipa_host": "helper.example.com",
+            "ipa_pass": null,
+            "ipa_port": 443,
+            "ipa_prot": "https",
+            "ipa_timeout": 10,
+            "ipa_user": "nova/undercloud.example.com",
+            "mac_address": null,
+            "ns_hardware_platform": null,
+            "ns_host_location": null,
+            "ns_os_version": null,
+            "random_password": true,
+            "state": "present",
+            "update_dns": null,
+            "user_certificate": null,
+            "validate_certs": true
+        }
+    },
+    "msg": "host_find: HTTP Error 401: Unauthorized"
+}
+
 ```
 
 ### Mac terminal 报错 operation not permitted 的处理
@@ -784,3 +812,14 @@ https://rizvir.com/articles/ovirt-mac-console/
 
 ### Red Hat Satellite 6 创建 internal registry 
 https://access.redhat.com/solutions/3233491
+
+### Nutanix Labs
+```
+ncli datastore help 
+ncli storagepool help
+ncli container help
+
+ncli user help
+ncli user list
+
+```
