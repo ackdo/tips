@@ -814,6 +814,7 @@ https://rizvir.com/articles/ovirt-mac-console/
 https://access.redhat.com/solutions/3233491
 
 ### Nutanix Labs
+
 ```
 ncli datastore help 
 ncli storagepool help
@@ -822,4 +823,13 @@ ncli container help
 ncli user help
 ncli user list
 
+ncli container create help
+ncli container create name=cli-container-jun sp-name=SP01
+
+allssh manage_ovs show_interfaces
+allssh manage_ovs show_bridges
+allssh manage_ovs show_uplinks
+
+# 支持的 Guest OS
+https://portal.nutanix.com/page/documents/compatibility-matrix/guestos
 ```
