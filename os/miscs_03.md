@@ -820,9 +820,9 @@ ipa-getkeytab -s helper.example.com -p nova/undercloud.example.com -k /etc/novaj
 klist
 kdestroy
 klist
-kinit -kt /etc/novajoin/krb5.keytab
+kinit -kt /etc/novajoin/krb5.keytab nova/undercloud.example.com
 klist
-
+chmod a+r /etc/novajoin/krb5.keytab
 ```
 
 ### Mac terminal 报错 operation not permitted 的处理
