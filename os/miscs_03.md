@@ -823,6 +823,11 @@ klist
 kinit -kt /etc/novajoin/krb5.keytab nova/undercloud.example.com
 klist
 chmod a+r /etc/novajoin/krb5.keytab
+
+报错　
+[jwang@undercloud ~]$ curl https://overcloud.ctlplane.example.com:8444 
+curl: (51) SSL: no alternative certificate subject name matches target host name 'overcloud.ctlplane.example.com'
+
 ```
 
 ### Mac terminal 报错 operation not permitted 的处理
