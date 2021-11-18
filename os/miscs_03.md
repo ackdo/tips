@@ -802,6 +802,7 @@ fatal: [localhost]: FAILED! => {
     "msg": "host_find: HTTP Error 401: Unauthorized"
 }
 
+https://bugzilla.redhat.com/show_bug.cgi?id=1921855
 ```
 
 ### Mac terminal 报错 operation not permitted 的处理
