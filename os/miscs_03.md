@@ -817,6 +817,11 @@ kinit: Preauthentication failed while getting initial credentials
 https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/linux_domain_identity_authentication_and_policy_guide/retrieve-existing-keytabs
 echo redhat123 | kinit admin
 ipa-getkeytab -s helper.example.com -p nova/undercloud.example.com -k /etc/novajoin/krb5.keytab
+klist
+kdestroy
+klist
+kinit -kt /etc/novajoin/krb5.keytab
+klist
 
 ```
 
