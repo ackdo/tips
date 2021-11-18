@@ -803,6 +803,21 @@ fatal: [localhost]: FAILED! => {
 }
 
 https://bugzilla.redhat.com/show_bug.cgi?id=1921855
+
+(undercloud) [stack@undercloud ~]$ sudo kinit -kt /etc/novajoin/krb5.keytab nova/undercloud.example.com
+kinit: Preauthentication failed while getting initial credentials
+
+ipa privilege-find | grep -E "Privilege name:" 
+
+https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/15/html/integrate_with_identity_service/idm-novajoin
+
+(undercloud) [stack@undercloud ~]$ sudo kinit -kt /etc/novajoin/krb5.keytab nova/undercloud.example.com@EXAMPLE.COM 
+kinit: Preauthentication failed while getting initial credentials
+
+https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/linux_domain_identity_authentication_and_policy_guide/retrieve-existing-keytabs
+echo redhat123 | kinit admin
+ipa-getkeytab -s helper.example.com -p nova/undercloud.example.com -k /etc/novajoin/krb5.keytab
+
 ```
 
 ### Mac terminal 报错 operation not permitted 的处理
