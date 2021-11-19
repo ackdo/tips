@@ -859,3 +859,6 @@ allssh manage_ovs show_uplinks
 # 支持的 Guest OS
 https://portal.nutanix.com/page/documents/compatibility-matrix/guestos
 ```
+
+### data path operation
+https://www.ovirt.org/develop/release-management/features/storage/data-path-operations.html
