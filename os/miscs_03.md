@@ -861,4 +861,6 @@ https://portal.nutanix.com/page/documents/compatibility-matrix/guestos
 ```
 
 ### data path operation
-https://www.ovirt.org/develop/release-management/features/storage/data-path-operations.html
+https://www.ovirt.org/develop/release-management/features/storage/data-path-operations.html<bf>
+https://access.redhat.com/documentation/zh-cn/red_hat_virtualization/4.0/html/administration_guide/the_storage_pool_managerspm<br>
+https://www.ovirt.org/develop/developer-guide/vdsm/sanlock.html<br>
