@@ -824,12 +824,42 @@ kinit -kt /etc/novajoin/krb5.keytab nova/undercloud.example.com
 klist
 chmod a+r /etc/novajoin/krb5.keytab
 
+echo redhat123 | sudo kinit admin
+sudo klist
+sudo ipa-join
+sudo rm -f /etc/krb5.keytab
+sudo ipa-getkeytab -s helper.example.com -p host/overcloud-controller-1.example.com -k /etc/krb5.keytab
+sudo ls -l /etc/krb5.keytab
+sudo chmod a+r /etc/krb5.keytab
+klist
+kdestroy -A
+klist
+kinit -kt /etc/krb5.keytab host/overcloud-controller-1.example.com
+klist
+
+ansible -i /tmp/inventory all -f 6 -m shell -a 'echo redhat123 | sudo kinit admin' 
+ansible -i /tmp/inventory all -f 6 -m shell -a 'sudo ipa-join'
+ansible -i /tmp/inventory all -f 6 -m shell -a 'sudo rm -f /etc/krb5.keytab'
+ansible -i /tmp/inventory all -f 6 -m setup
+# ssh overcloud node
+sudo ipa-getkeytab -s helper.example.com -p host/$(hostname) -k /etc/krb5.keytab
+# done
+
+ansible -i /tmp/inventory all -f 6 -m shell -a "sudo chmod a+r /etc/krb5.keytab"
+# ansible -i /tmp/inventory all -f 6 -m shell -a "kdestroy -A"
+# ansible -i /tmp/inventory all -f 6 -m shell -a "kinit -kt /etc/krb5.keytab host/$hostname"
+# ssh overcloud node
+kdestroy -A; kinit -kt /etc/krb5.keytab host/$(hostname); klist
+sudo kdestroy -A; sudo kinit -kt /etc/krb5.keytab host/$(hostname); sudo klist
+# done
+
 报错　
 [jwang@undercloud ~]$ curl https://overcloud.ctlplane.example.com:8444 
 curl: (51) SSL: no alternative certificate subject name matches target host name 'overcloud.ctlplane.example.com'
 
 kinit: Keytab contains no suitable keys for host/undercloud.example.com@EXAMPLE.COM while getting initial credentials
 
+ipa: ERROR: You must enroll a host in order to create a host service
 ```
 
 ### Mac terminal 报错 operation not permitted 的处理
@@ -883,3 +913,6 @@ https://object-storage-ca-ymq-1.vexxhost.net/swift/v1/6e4619c416ff4bd19e1c087f27
 https://etherpad.opendev.org/p/neutron-xena-ptg<br>
 https://etherpad.opendev.org/p/tripleo-frr-integration<br>
 https://www.youtube.com/watch?v=9DL8M1d4xLY<br>
+
+### OCP 4.9 use aws object storage as registry storage
+https://docs.openshift.com/container-platform/4.9/registry/configuring_registry_storage/configuring-registry-storage-aws-user-infrastructure.html
