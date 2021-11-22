@@ -872,4 +872,14 @@ https://access.redhat.com/solutions/6527961<br>
 https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux<br>
 
 ### TripleO Routed Networks Deployment (Spine-and-Leaf Clos)
-https://specs.openstack.org/openstack/tripleo-specs/specs/queens/tripleo-routed-networks-deployment.html
+https://specs.openstack.org/openstack/tripleo-specs/specs/queens/tripleo-routed-networks-deployment.html<br>
+[RFE][Tracker] Enable BGP Routing For Spine-Leaf Deployments<br>
+https://bugzilla.redhat.com/show_bug.cgi?id=1896551<br>
+https://bugzilla.redhat.com/show_bug.cgi?id=1791821<br>
+https://specs.openstack.org/openstack/neutron-specs/specs/liberty/ipv6-prefix-delegation.html<br>
+https://specs.openstack.org/openstack/neutron-specs/specs/ussuri/ml2ovs-ovn-convergence.html#feature-gap-analysis<br>
+https://github.com/alauda/kube-ovn/blob/f2dc37ceca28ed984511b351ce22a040bf749975/docs/bgp.md<br>
+https://object-storage-ca-ymq-1.vexxhost.net/swift/v1/6e4619c416ff4bd19e1c087f27a43eea/www-assets-prod/presentation-media/20170508-IPv6-Lessons.pdf<br>
+https://etherpad.opendev.org/p/neutron-xena-ptg<br>
+https://etherpad.opendev.org/p/tripleo-frr-integration<br>
+https://www.youtube.com/watch?v=9DL8M1d4xLY<br>
