@@ -870,3 +870,6 @@ https://www.ovirt.org/develop/developer-guide/vdsm/sanlock.html<br>
 ### Default repositories are missing in the RHEL 9 beta UBI
 https://access.redhat.com/solutions/6527961<br>
 https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux<br>
+
+### TripleO Routed Networks Deployment (Spine-and-Leaf Clos)
+https://specs.openstack.org/openstack/tripleo-specs/specs/queens/tripleo-routed-networks-deployment.html
