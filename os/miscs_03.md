@@ -925,3 +925,6 @@ https://www.youtube.com/watch?v=9DL8M1d4xLY<br>
 
 ### OCP 4.9 use aws object storage as registry storage
 https://docs.openshift.com/container-platform/4.9/registry/configuring_registry_storage/configuring-registry-storage-aws-user-infrastructure.html
+
+### 王征的 OCP 仓库
+https://github.com/wangzheng422/docker_env
