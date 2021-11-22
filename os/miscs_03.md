@@ -828,6 +828,8 @@ chmod a+r /etc/novajoin/krb5.keytab
 [jwang@undercloud ~]$ curl https://overcloud.ctlplane.example.com:8444 
 curl: (51) SSL: no alternative certificate subject name matches target host name 'overcloud.ctlplane.example.com'
 
+kinit: Keytab contains no suitable keys for host/undercloud.example.com@EXAMPLE.COM while getting initial credentials
+
 ```
 
 ### Mac terminal 报错 operation not permitted 的处理
@@ -864,3 +866,7 @@ https://portal.nutanix.com/page/documents/compatibility-matrix/guestos
 https://www.ovirt.org/develop/release-management/features/storage/data-path-operations.html<bf>
 https://access.redhat.com/documentation/zh-cn/red_hat_virtualization/4.0/html/administration_guide/the_storage_pool_managerspm<br>
 https://www.ovirt.org/develop/developer-guide/vdsm/sanlock.html<br>
+
+### Default repositories are missing in the RHEL 9 beta UBI
+https://access.redhat.com/solutions/6527961<br>
+https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux<br>
