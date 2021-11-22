@@ -841,9 +841,18 @@ ansible -i /tmp/inventory all -f 6 -m shell -a 'echo redhat123 | sudo kinit admi
 ansible -i /tmp/inventory all -f 6 -m shell -a 'sudo ipa-join'
 ansible -i /tmp/inventory all -f 6 -m shell -a 'sudo rm -f /etc/krb5.keytab'
 ansible -i /tmp/inventory all -f 6 -m setup
+# ansible 
+ansible -vvv -i /tmp/inventory all -f 6 -m shell -a 'sudo echo $(hostname)'
+ssh stack@192.0.2.51 "bash -c 'echo \$HOSTNAME'"
+ssh stack@192.0.2.51 "bash -c 'echo \$(hostname)'"
+
 # ssh overcloud node
 sudo ipa-getkeytab -s helper.example.com -p host/$(hostname) -k /etc/krb5.keytab
 # done
+
+# ansible version
+ansible -vvv -i /tmp/inventory all -f 6 -m shell -a 'sudo ipa-getkeytab -s helper.example.com -p host/$(hostname) -k /etc/krb5.keytab'
+
 
 ansible -i /tmp/inventory all -f 6 -m shell -a "sudo chmod a+r /etc/krb5.keytab"
 # ansible -i /tmp/inventory all -f 6 -m shell -a "kdestroy -A"
