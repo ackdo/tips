@@ -1005,3 +1005,8 @@ https://access.redhat.com/solutions/5269201
 /var/lib/mistral/config-download-latest/Controller/config_settings.yaml:- port_security
 /var/lib/mistral/config-download-latest/group_vars/Controller:  - port_security
 ```
+
+### Role Specific Parameters
+https://docs.openstack.org/project-deploy-guide/tripleo-docs/latest/features/role_specific_parameters.html
+
+NeutronPluginExtensions 不是一个 Role Specific Parameter
