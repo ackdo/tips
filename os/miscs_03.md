@@ -984,3 +984,24 @@ https://developers.redhat.com/articles/2021/11/19/improve-multicore-scaling-open
 
 ### Red Hat Virtualization no longer supports software FCoE starting with version 4.4
 https://access.redhat.com/solutions/5269201
+
+### 检查控制节点的 neutron plugin ml2 extension_dirvers
+```
+[stack@overcloud-controller-2 ~]$ sudo grep -A10 neutron::plugins::ml2::extension_drivers  /etc/puppet/hieradata/service_configs.json
+    "neutron::plugins::ml2::extension_drivers": [
+        "qos",
+        "port_security",
+        "dns"
+    ],
+    "neutron::plugins::ml2::firewall_driver": "iptables_hybrid",
+    "neutron::plugins::ml2::flat_networks": [
+        "datacentre"
+    ],
+...
+```
+### 检查最新的 config-download 是否包含某个配置
+```
+(overcloud) [stack@undercloud ~]$ sudo grep -r port_security /var/lib/mistral/config-download-latest/ | grep -Ev ansible.log
+/var/lib/mistral/config-download-latest/Controller/config_settings.yaml:- port_security
+/var/lib/mistral/config-download-latest/group_vars/Controller:  - port_security
+```
