@@ -978,3 +978,6 @@ https://docs.openshift.com/container-platform/4.9/registry/configuring_registry_
 
 ### 王征的 OCP 仓库
 https://github.com/wangzheng422/docker_env
+
+### OVS-DPDK - The group RxQ-to-PMD assignment type
+https://developers.redhat.com/articles/2021/11/19/improve-multicore-scaling-open-vswitch-dpdk#other_rxq_considerations
