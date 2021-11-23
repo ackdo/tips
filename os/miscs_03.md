@@ -981,3 +981,6 @@ https://github.com/wangzheng422/docker_env
 
 ### OVS-DPDK - The group RxQ-to-PMD assignment type
 https://developers.redhat.com/articles/2021/11/19/improve-multicore-scaling-open-vswitch-dpdk#other_rxq_considerations
+
+### Red Hat Virtualization no longer supports software FCoE starting with version 4.4
+https://access.redhat.com/solutions/5269201
