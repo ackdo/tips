@@ -1027,3 +1027,49 @@ http://dani.foroselectronica.es/implementing-security-groups-in-openstack-using-
 
 ### Deploying Overcloud with L3 routed networking
 https://docs.openstack.org/project-deploy-guide/tripleo-docs/latest/features/routed_spine_leaf_network.html
+
+### 深入理解 TripleO
+https://www.bookstack.cn/read/deep-understanding-of-tripleo/%E5%B0%81%E9%9D%A2.md
+
+### undercloud.conf 的内容
+```
+# 普通部署
+# 部署时定义了 subnets 和 local_subnet 
+# subnets 只定义了 1 个 subnet ctlplane-subnet
+# local_subnet 是 ctlplane-subnet
+# ctlplane-subnet 的定义包括
+# cidr 网段
+# dhcp_start 和 dhcp_stop
+# inspection_iprange 定义了 inttrospection 时使用的 ip 范围
+# gateway
+# masquerade
+cat > undercloud.conf <<EOF
+[DEFAULT]
+undercloud_hostname = undercloud.example.com
+container_images_file = containers-prepare-parameter.yaml
+local_ip = 192.0.2.1/24
+undercloud_public_host = 192.0.2.2
+undercloud_admin_host = 192.0.2.3
+subnets = ctlplane-subnet
+local_subnet = ctlplane-subnet
+local_interface = ens10
+inspection_extras = true
+undercloud_debug = false
+enable_tempest = false
+enable_ui = false
+clean_nodes = true
+overcloud_domain_name = example.com
+undercloud_nameservers = 192.168.122.3
+
+[auth]
+undercloud_admin_password = redhat
+
+[ctlplane-subnet]
+cidr = 192.0.2.0/24
+dhcp_start = 192.0.2.5
+dhcp_end = 192.0.2.24
+inspection_iprange = 192.0.2.100,192.0.2.120
+gateway = 192.0.2.1
+masquerade = true
+EOF
+```
