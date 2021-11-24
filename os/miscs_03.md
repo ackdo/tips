@@ -1037,6 +1037,37 @@ https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.0/ht
 # 根据以下解释，如果希望 ctlplane subnet 通过 masquerade 的方式通过 undercloud 访问外网，就把这个参数设置为 true 
 masquerade
 Defines whether to masquerade the network defined in the cidr for external access. This provides the Provisioning network with a degree of network address translation (NAT) so that the Provisioning network has external access through director.
+
+# 生成 rhel 8.2 的配置文件
+kernel parameters  
+ks=http://10.66.208.115/ks-undercloud.cfg ksdevice=ens3 ip=10.66.208.121 netmask=255.255.255.0 dns 10.64.63.6 gateway=10.66.208.254
+
+```
+
+### 重启运行self hosted engine的服务器
+参考： https://access.redhat.com/solutions/2486301
+```
+hosted-engine --vm-shutdown 
+hosted-engine --vm-status
+virsh -r list
+reboot
+
+# 重启后，执行
+systemctl stop ovirt-ha-agent
+systemctl stop ovirt-ha-broker
+systemctl restart nfs-server
+systemctl start ovirt-ha-broker
+systemctl start ovirt-ha-agent
+
+# 检查服务状态
+systemctl status ovirt-ha-broker
+systemctl status ovirt-ha-agent
+
+# 检查 hosted-engine 状态
+hosted-engine --vm-status
+hosted-engine --vm-start
+watch hosted-engine --vm-status
+hosted-engine --set-maintenance --mode=none
 ```
 
 ### undercloud.conf 的内容
@@ -1081,4 +1112,7 @@ inspection_iprange = 192.0.2.100,192.0.2.120
 gateway = 192.0.2.1
 masquerade = true
 EOF
+
+
 ```
+
