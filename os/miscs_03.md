@@ -1010,3 +1010,17 @@ https://access.redhat.com/solutions/5269201
 https://docs.openstack.org/project-deploy-guide/tripleo-docs/latest/features/role_specific_parameters.html
 
 NeutronPluginExtensions 不是一个 Role Specific Parameter
+
+### OCS/ODF crash 处理
+```
+ceph health detail
+ceph status
+ceph crash ls
+ceph crash archive-all
+
+# 不见得需要执行
+# ceph crash rm <id>
+```
+
+### Implementing Security Groups in OpenStack using OVN Port Groups
+http://dani.foroselectronica.es/implementing-security-groups-in-openstack-using-ovn-port-groups-478/
