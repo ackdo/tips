@@ -1024,3 +1024,6 @@ ceph crash archive-all
 
 ### Implementing Security Groups in OpenStack using OVN Port Groups
 http://dani.foroselectronica.es/implementing-security-groups-in-openstack-using-ovn-port-groups-478/
+
+### Deploying Overcloud with L3 routed networking
+https://docs.openstack.org/project-deploy-guide/tripleo-docs/latest/features/routed_spine_leaf_network.html
