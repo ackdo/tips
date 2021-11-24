@@ -1031,8 +1031,17 @@ https://docs.openstack.org/project-deploy-guide/tripleo-docs/latest/features/rou
 ### 深入理解 TripleO
 https://www.bookstack.cn/read/deep-understanding-of-tripleo/%E5%B0%81%E9%9D%A2.md
 
+# undercloud.conf 文件参数解释
+https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.0/html/director_installation_and_usage/installing-the-undercloud
+```
+# 根据以下解释，如果希望 ctlplane subnet 通过 masquerade 的方式通过 undercloud 访问外网，就把这个参数设置为 true 
+masquerade
+Defines whether to masquerade the network defined in the cidr for external access. This provides the Provisioning network with a degree of network address translation (NAT) so that the Provisioning network has external access through director.
+```
+
 ### undercloud.conf 的内容
 ```
+# cat /usr/share/python-tripleoclient/undercloud.conf.sample
 # 普通部署
 # 部署时定义了 subnets 和 local_subnet 
 # subnets 只定义了 1 个 subnet ctlplane-subnet
