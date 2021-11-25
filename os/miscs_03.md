@@ -1166,15 +1166,14 @@ EOF
 ### BaiduPCS-Go 下载
 https://github.com/qjfoidnh/BaiduPCS-Go/releases/tag/v3.8.4<br>
 https://github.com/GangZhuo/BaiduPCS.git<br>
+https://blog.csdn.net/ykiwmy/article/details/103730962<br>
+```
+# 登陆
+BaiduPCS-Go login -bduss=<BDUSS>
+# 上传文件
+BaiduPCS-Go upload osp16.1-yum-repos-2021-11-25.tar.gz /osp16.1/repos
+```
 
-```
-yum groupinstall -y "Development Tools"
-yum install -y openssl-devel libcurl-devel
-git clone https://github.com/GangZhuo/BaiduPCS.git
-make clean -f Makefile.old
-make -f Makefile.old
-make install -f Makefile.old
-```
 
 ### rhel8  
 ```
@@ -1188,3 +1187,6 @@ make install -f Makefile.old
 # 查看接口 TX RX 数据包信息
 ip -s link show dev ens3
 ```
+
+### Red Hat Solutions - Result: hostbyte=DID_ERROR driverbyte=DRIVER_OK
+https://access.redhat.com/solutions/438403
