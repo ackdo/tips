@@ -1054,7 +1054,7 @@ cdrom
 bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
 zerombr
 clearpart --all --initlabel
-autopart
+autopart --nohome
 network --device=ens3 --hostname=undercloud.example.com --bootproto=static --ip=10.66.208.121 --netmask=255.255.255.0 --gateway=10.66.208.254 --nameserver=10.64.63.6
 auth --passalgo=sha512 --useshadow
 selinux --enforcing
@@ -1086,6 +1086,9 @@ EOF
 done
 
 tar zcvf /tmp/osp16.1-yum-repos-$(date -I).tar.gz /var/www/html/repos/OSP16_1_repo_sync_up.sh /var/www/html/repos/osp16.1
+
+tar zcvf /home/osp16.1-poc-registry-$(date -I).tar.gz /opt/registry
+
 
 ```
 
