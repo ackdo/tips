@@ -1164,4 +1164,27 @@ EOF
 ### osp 的 rpm 版本信息可以参见 openstack-16.1-for-rhel-8-x86_64-rpms 仓库的 rhosp-release 软件包
 
 ### BaiduPCS-Go 下载
-https://github.com/qjfoidnh/BaiduPCS-Go/releases/tag/v3.8.4
+https://github.com/qjfoidnh/BaiduPCS-Go/releases/tag/v3.8.4<br>
+https://github.com/GangZhuo/BaiduPCS.git<br>
+
+```
+yum groupinstall -y "Development Tools"
+yum install -y openssl-devel libcurl-devel
+git clone https://github.com/GangZhuo/BaiduPCS.git
+make clean -f Makefile.old
+make -f Makefile.old
+make install -f Makefile.old
+```
+
+### rhel8  
+```
+# update dnf 相关软件
+# yum list all | grep dnf | grep -E "anaconda|AppStream"  | awk '{print $1}' | while read i ; do yum update -y $i ; done 
+
+# yum clean all
+# yum repolist 
+# yum install -y chrony
+
+# 查看接口 TX RX 数据包信息
+ip -s link show dev ens3
+```
