@@ -1193,3 +1193,12 @@ ip -s link show dev ens3
 
 ### Red Hat Solutions - Result: hostbyte=DID_ERROR driverbyte=DRIVER_OK
 https://access.redhat.com/solutions/438403
+
+### 命令历史控制
+```
+关闭命令历史 
+set +o history
+
+打开命令历史
+set -o history
+```
