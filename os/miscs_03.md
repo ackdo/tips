@@ -1071,6 +1071,22 @@ yum-utils
 wget
 %end
 EOF
+
+> /etc/yum.repos.d/osp.repo
+for i in rhel-8-for-x86_64-baseos-eus-rpms rhel-8-for-x86_64-appstream-eus-rpms rhel-8-for-x86_64-highavailability-eus-rpms ansible-2.9-for-rhel-8-x86_64-rpms openstack-16.1-for-rhel-8-x86_64-rpms fast-datapath-for-rhel-8-x86_64-rpms rhceph-4-tools-for-rhel-8-x86_64-rpms advanced-virt-for-rhel-8-x86_64-rpms
+do
+cat >> /etc/yum.repos.d/osp.repo << EOF
+[$i]
+name=$i
+baseurl=file:///var/www/html/repos/osp16.1/$i/
+enabled=1
+gpgcheck=0
+
+EOF
+done
+
+tar zcvf /tmp/osp16.1-yum-repos-$(date -I).tar.gz /var/www/html/repos/OSP16_1_repo_sync_up.sh /var/www/html/repos/osp16.1
+
 ```
 
 ### 重启运行self hosted engine的服务器
@@ -1145,3 +1161,4 @@ EOF
 
 ```
 
+### osp 的 rpm 版本信息可以参见 openstack-16.1-for-rhel-8-x86_64-rpms 仓库的 rhosp-release 软件包
