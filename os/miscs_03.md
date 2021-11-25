@@ -1162,3 +1162,6 @@ EOF
 ```
 
 ### osp 的 rpm 版本信息可以参见 openstack-16.1-for-rhel-8-x86_64-rpms 仓库的 rhosp-release 软件包
+
+### BaiduPCS-Go 下载
+https://github.com/qjfoidnh/BaiduPCS-Go/releases/tag/v3.8.4
