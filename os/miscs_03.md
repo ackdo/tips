@@ -1202,3 +1202,11 @@ set +o history
 打开命令历史
 set -o history
 ```
+ 
+### 记录
+```
+
+ACM
+添加 SNO ZTP
+Page 14: OpenShift Bare Metal 发布逻辑，可以替换成 Baremetal IPI，SNO ZTP 相关的 Slide 
+```
