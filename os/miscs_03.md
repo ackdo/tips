@@ -1206,7 +1206,74 @@ set -o history
 ### 记录
 ```
 
-ACM
-添加 SNO ZTP
-Page 14: OpenShift Bare Metal 发布逻辑，可以替换成 Baremetal IPI，SNO ZTP 相关的 Slide 
+
+DaemonSet 确保所有（或部分）节点运行一个 Pod 的副本。 如果 Node 与集群断开连接，那么 k8s API 中的 Daemonset Pod 将不会改变状态，并将继续保持上次报告的状态。
+
+在网络中断期间如果节点重新启动，将不重新启动工作负载
+
+当节点网络中断恢复节点重新加入集群时，工作负载重新启动
+
+如果工作负载在所有 Remote Worker Nodes 上运行时建议使用 DaemonSet 运行工作负载。 DaemonSet 还支持 Service Endpoint 和 Load Balancer。
+
+Static Pod 由特定节点上的 kubelet 守护进程管理。 与由 k8s 控制平面管理的 Pod 不同，节点的 kubelet 负责监视每个Static Pod。
+
+在 Pod-eviction-timeout 之后调度 Pod 的其他方法；
+
+减缓 pod evict...
+通常，对于无法访问的受污染节点，控制器以每 10 秒 1 个节点的速率执行 pod evict，使用区域控制器后以每 100 秒驱逐 1 个节点的速率执行 pod evict。
+少于 50 个节点的集群不会标记Tainted，并且您的集群必须具有 3 个以上的区域才能生效。
+
+https://docs.openstack.org/neutron/wallaby/admin/ovn/router_availability_zones.html
+
+ml2/ovn 的实现
+https://docs.openstack.org/neutron/wallaby/admin/ovn/router_availability_zones.html
+
+$ ovs-vsctl set Open_vSwitch . \
+external-ids:ovn-cms-options="enable-chassis-as-gw,availability-zones=az-0:az-1:az-2"
+上面的命令在 external-ids:ovn-cms-options 选项中添加了两个配置，enable-chassis-as-gw 选项告诉 OVN 驱动程序这是一个网关/网络节点，available-zones 选项指定三个可用区：az -0、az-1 和 az-2。
+
+
+在 Pod-eviction-timeout 之后重新安排 Pod 的其他方法；
+
+缺点
+在没有来自 API 服务器的任何触发的情况下，是否通过节点重新启动来重新启动工作负载
+
+
+减缓 pod 驱逐...
+通常，对于无法访问的受污染节点，控制器以每 10 秒 1 个节点的速率驱逐 pod，使用区域控制器以每 100 秒驱逐 1 个节点的速率驱逐。少于 50 个节点的集群不会被污染，并且您的集群必须有 3 个以上的区域才能生效。
+
+当连接恢复时，在 Pod-eviction-timeout 或 tolerationSeconds 到期之前，节点会在控制平面管理下返回
+如果容忍秒数 = 0，容忍可以无限期地减轻 pod 驱逐；
+或者使用给定污点的指定值延长 pod 驱逐超时；
+$ openstack network agent list
++--------------------------------------+------------------------------+----------------+-------------------+-------+-------+----------------+
+| ID                                   | Agent Type                   | Host           | Availability Zone | Alive | State | Binary         |
++--------------------------------------+------------------------------+----------------+-------------------+-------+-------+----------------+
+| 2d1924b2-99a4-4c6c-a4f2-0be64c0cec8c | OVN Controller Gateway agent | gateway-host-0 | az0, az1, az2     | :-)   | UP    | ovn-controller |
++--------------------------------------+------------------------------+----------------+-------------------+-------+-------+----------------+
+
+$ openstack router create --availability-zone-hint az-0 --availability-zone-hint az-1 router-0
++-------------------------+--------------------------------------+
+| Field                   | Value                                |
++-------------------------+--------------------------------------+
+| admin_state_up          | UP                                   |
+| availability_zone_hints | az-0, az-1                           |
+| availability_zones      |                                      |
+| created_at              | 2020-06-04T08:29:33Z                 |
+| description             |                                      |
+| external_gateway_info   | null                                 |
+| flavor_id               | None                                 |
+| id                      | 8fd6d01a-57ad-4e91-a788-ebe48742d000 |
+| name                    | router-0                             |
+| project_id              | 2a364ced6c084888be0919450629de1c     |
+| revision_number         | 1                                    |
+| routes                  |                                      |
+| status                  | ACTIVE                               |
+| tags                    |                                      |
+| updated_at              | 2020-06-04T08:29:33Z                 |
++-------------------------+--------------------------------------+
+
 ```
+
+### Infraed 相关资料
+https://github.com/sean-m-sullivan/infrared_custom_documentation
