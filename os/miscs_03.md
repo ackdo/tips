@@ -1289,6 +1289,10 @@ https://stackoverflow.com/questions/4974131/how-to-create-ssh-tunnel-using-putty
 # 选中：Auto
 # Add
 # L13808 192.168.122.40:13808
+# L80 192.168.122.40:80
+# L443 192.168.122.40:443
+# L8444 192.168.122.40:8444
+# L3100 192.168.122.40:3100
 # Open
 ```
 
