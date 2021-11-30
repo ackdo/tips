@@ -1287,3 +1287,7 @@ https://documentation.suse.com/zh-cn/ses/6/html/ses-all/cha-ses-cifs.html<br>
 S3 Client<br>
 https://rclone.org/<br>
 https://mountainduck.io/<br>
+
+rook ceph dashboard<br>
+https://github.com/rook/rook/blob/master/Documentation/ceph-dashboard.md<br>
+
