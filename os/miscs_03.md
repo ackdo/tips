@@ -1277,6 +1277,39 @@ Playbook - 用来创建 osp 16.2 dcn 的环境
 https://gitlab.cee.redhat.com/sputhenp/lab/-/blob/master/recreate-infra.yaml -e "osp_version=16" osp_sub_version=2 dcn=1"
 ```
 
+### windows add route 命令
+https://www.jianshu.com/p/c99c267f3f8d<br>
+https://stackoverflow.com/questions/4974131/how-to-create-ssh-tunnel-using-putty-in-windows<br>
+```
+# 希望达到的效果是，在 Windows Putty 这边访问 127.0.0.1:13808 通过 ssh 隧道转发到 192.168.122.40:13808 上
+# Connection -> SSH -> Tunnels
+# Source port: 13808
+# Destination: 192.168.122.40:13808
+# 选中：Local
+# 选中：Auto
+# Add
+# L13808 192.168.122.40:13808
+# Open
+```
+
+```
+# 在 window 这边添加主机路由
+route -p add 192.168.122.1 mask 255.255.255.255 10.66.208.240
+
+# 建立 putty ssh 隧道
+# https://tecadmin.net/putty-ssh-tunnel-and-port-forwarding/
+
+# 编辑 windows hosts 文件
+# c:\Windows\System32\Drivers\etc\hosts
+
+# Windows 10 添加证书
+# https://docs.fortinet.com/document/fortiauthenticator/5.5.0/cookbook/494798/manually-importing-the-client-certificate-windows-10
+
+# rclone 如何设置不检查证书？
+# https://github.com/rclone/rclone/issues/168
+# rclone.exe --no-check-certificate lsd s3:
+```
+
 ### Infraed 相关资料
 https://github.com/sean-m-sullivan/infrared_custom_documentation
 
@@ -1290,6 +1323,8 @@ https://mountainduck.io/<br>
 
 s3browse 用 s3 协议访问 ceph bucket<br>
 https://blog.csdn.net/wuguifa/article/details/109605973<br>
+Endpoint: overcloud.example.com:13808<br>
+Use secure transfer (SSL/TLS): true<br>
 
 rook ceph dashboard<br>
 https://github.com/rook/rook/blob/master/Documentation/ceph-dashboard.md<br>
