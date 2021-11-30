@@ -1288,6 +1288,9 @@ S3 Client<br>
 https://rclone.org/<br>
 https://mountainduck.io/<br>
 
+s3browse 用 s3 协议访问 ceph bucket<br>
+https://blog.csdn.net/wuguifa/article/details/109605973<br>
+
 rook ceph dashboard<br>
 https://github.com/rook/rook/blob/master/Documentation/ceph-dashboard.md<br>
 
