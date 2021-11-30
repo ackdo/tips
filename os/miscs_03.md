@@ -1308,6 +1308,7 @@ route -p add 192.168.122.1 mask 255.255.255.255 10.66.208.240
 # rclone 如何设置不检查证书？
 # https://github.com/rclone/rclone/issues/168
 # rclone.exe --no-check-certificate lsd s3:
+# 注意将本地时间与 s3 服务器时间配置成一致的时间
 ```
 
 ### Infraed 相关资料
