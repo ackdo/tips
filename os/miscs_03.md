@@ -1273,7 +1273,17 @@ $ openstack router create --availability-zone-hint az-0 --availability-zone-hint
 | updated_at              | 2020-06-04T08:29:33Z                 |
 +-------------------------+--------------------------------------+
 
+Playbook - 用来创建 osp 16.2 dcn 的环境
+https://gitlab.cee.redhat.com/sputhenp/lab/-/blob/master/recreate-infra.yaml -e "osp_version=16" osp_sub_version=2 dcn=1"
 ```
 
 ### Infraed 相关资料
 https://github.com/sean-m-sullivan/infrared_custom_documentation
+
+### CephFS 
+https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html-single/file_system_guide/index#exporting-ceph-file-system-namespaces-over-the-nfs-protocol_fs<br>
+https://documentation.suse.com/zh-cn/ses/6/html/ses-all/cha-ses-cifs.html<br>
+
+S3 Client<br>
+https://rclone.org/<br>
+https://mountainduck.io/<br>
