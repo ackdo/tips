@@ -1300,6 +1300,9 @@ https://kubernetes-csi.github.io/docs/drivers.html<br>
 ### ImageBuild Service
 https://console.redhat.com/beta/insights/image-builder<br>
 
+### migration from self host engine to another self host engine
+https://access.redhat.com/documentation/en-us/red_hat_virtualization/4.4/html/self-hosted_engine_guide/restoring_the_backup_on_a_new_self-hosted_engine_migrating_to_she<br>
+
 ### 获取 ceph rgw 的 haproxy 配置
 ```
 # 查看 rgw 的 haproxy 配置
