@@ -1362,5 +1362,154 @@ upload: ./overcloudrc to s3://mybucket/overcloudrc
 (overcloud) [stack@undercloud ~]$ aws s3 ls 
 2021-11-30 09:57:51 mybucket
 
+# 下载 rclone 
+# https://downloads.rclone.org/v1.57.0/rclone-v1.57.0-linux-amd64.zip
+(overcloud) [stack@undercloud ~]$ unzip /tmp/rclone-v1.57.0-linux-amd64.zip
+(overcloud) [stack@undercloud ~]$ sudo cp rclone-v1.57.0-linux-amd64/rclone /usr/local/bin/ 
+(overcloud) [stack@undercloud ~]$ rclone config
+2021/11/30 10:13:08 NOTICE: Config file "/home/stack/.config/rclone/rclone.conf" not found - using defaults
+No remotes found - make a new one
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q> n
+name> s3
+Option Storage.
+Type of storage to configure.
+Enter a string value. Press Enter for the default ("").
+Choose a number from below, or type in your own value.
+ 1 / 1Fichier
+   \ "fichier"
+ 2 / Alias for an existing remote
+   \ "alias"
+ 3 / Amazon Drive
+   \ "amazon cloud drive"
+ 4 / Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, SeaweedFS, and Tencent COS
+   \ "s3"
+...
+Storage> 4
+Option provider.
+Choose your S3 provider.
+Enter a string value. Press Enter for the default ("").
+Choose a number from below, or type in your own value.
+ 1 / Amazon Web Services (AWS) S3
+   \ "AWS"
+ 2 / Alibaba Cloud Object Storage System (OSS) formerly Aliyun
+   \ "Alibaba"
+ 3 / Ceph Object Storage
+   \ "Ceph"
+ 4 / Digital Ocean Spaces
+   \ "DigitalOcean"
+provider> 3
 
+Option env_auth.
+Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).
+Only applies if access_key_id and secret_access_key is blank.
+Enter a boolean value (true or false). Press Enter for the default ("false").
+Choose a number from below, or type in your own value.
+ 1 / Enter AWS credentials in the next step.
+   \ "false"
+ 2 / Get AWS credentials from the environment (env vars or IAM).
+   \ "true"
+env_auth> 1
+
+Option access_key_id.
+AWS Access Key ID.
+Leave blank for anonymous access or runtime credentials.
+Enter a string value. Press Enter for the default ("").
+access_key_id> admin
+
+Option secret_access_key.
+AWS Secret Access Key (password).
+Leave blank for anonymous access or runtime credentials.
+Enter a string value. Press Enter for the default ("").
+secret_access_key> admin123
+
+Option region.
+Region to connect to.
+Leave blank if you are using an S3 clone and you don't have a region.
+Enter a string value. Press Enter for the default ("").
+Choose a number from below, or type in your own value.
+   / Use this if unsure.
+ 1 | Will use v4 signatures and an empty region.
+   \ ""
+   / Use this only if v4 signatures don't work.
+ 2 | E.g. pre Jewel/v10 CEPH.
+   \ "other-v2-signature"
+region> 1
+
+Option endpoint.
+Endpoint for S3 API.
+Required when using an S3 clone.
+Enter a string value. Press Enter for the default ("").
+endpoint> https://overcloud.example.com:13808
+
+Option location_constraint.
+Location constraint - must be set to match the Region.
+Leave blank if not sure. Used when creating buckets only.
+Enter a string value. Press Enter for the default ("").
+location_constraint> 
+
+Option acl.
+Canned ACL used when creating buckets and storing or copying objects.
+This ACL is used for creating objects and if bucket_acl isn't set, for creating buckets too.
+For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+Note that this ACL is applied when server-side copying objects as S3
+doesn't copy the ACL from the source but rather writes a fresh one.
+Enter a string value. Press Enter for the default ("").
+acl> 
+
+Option server_side_encryption.
+The server-side encryption algorithm used when storing this object in S3.
+Enter a string value. Press Enter for the default ("").
+server_side_encryption>
+
+Option sse_kms_key_id.
+If using KMS ID you must provide the ARN of Key.
+Enter a string value. Press Enter for the default ("").
+sse_kms_key_id> 
+
+Edit advanced config?
+y) Yes
+n) No (default)
+y/n> 
+--------------------
+[s3]
+type = s3
+provider = Ceph
+access_key_id = admin
+secret_access_key = admin123
+endpoint = https://overcloud.example.com:13808
+--------------------
+y) Yes this is OK (default)
+e) Edit this remote
+d) Delete this remote
+y/e/d> 
+Current remotes:
+
+Name                 Type
+====                 ====
+s3                   s3
+
+e) Edit existing remote
+n) New remote
+d) Delete remote
+r) Rename remote
+c) Copy remote
+s) Set configuration password
+q) Quit config
+e/n/d/r/c/s/q> q
+
+# https://rclone.org/s3/
+
+# 查看 all buckets
+rclone lsd s3:
+
+# 使用 rclone 时需要 unset AWS_CA_BUNDLE
+# https://forum.rclone.org/t/mounting-an-amazon-s3-bucket/15106
+# 否则有报错
+# "Failed to create file system for mountname:bucketname: LoadCustomCABundleError: unable to load custom CA bundle, HTTPClient's transport unsupported type"
+(overcloud) [stack@undercloud ~]$ unset AWS_CA_BUNDLE 
+(overcloud) [stack@undercloud ~]$ rclone lsd s3:
+          -1 2021-11-30 09:57:51        -1 mybucket
 ```
