@@ -1296,3 +1296,71 @@ https://kubernetes-csi.github.io/docs/drivers.html<br>
 
 ### ImageBuild Service
 https://console.redhat.com/beta/insights/image-builder<br>
+
+### 获取 ceph rgw 的 haproxy 配置
+```
+# 查看 rgw 的 haproxy 配置
+# 192.168.122.40 对应 public/external endpoint
+[stack@overcloud-controller-0 ~]$ sudo -i cat /var/lib/config-data/puppet-generated/haproxy/etc/haproxy/haproxy.cfg | grep rgw -A12
+listen ceph_rgw
+  bind 172.16.1.240:8080 transparent ssl crt /etc/pki/tls/certs/haproxy/overcloud-haproxy-storage.pem
+  bind 192.168.122.40:13808 transparent ssl crt /etc/pki/tls/private/overcloud_endpoint.pem
+  mode http
+  http-request set-header X-Forwarded-Proto https if { ssl_fc }
+  http-request set-header X-Forwarded-Proto http if !{ ssl_fc }
+  http-request set-header X-Forwarded-Port %[dst_port]
+  option httpchk GET /swift/healthcheck
+  redirect scheme https code 301 if { hdr(host) -i 192.168.122.40 } !{ ssl_fc }
+  rsprep ^Location:\ http://(.*) Location:\ https://\1
+  server overcloud-controller-0.storage.example.com 172.16.1.51:8080 ca-file /etc/ipa/ca.crt check fall 5 inter 2000 rise 2 ssl verify required verifyhost overcloud-controller-0.storage.example.com
+  server overcloud-controller-1.storage.example.com 172.16.1.52:8080 ca-file /etc/ipa/ca.crt check fall 5 inter 2000 rise 2 ssl verify required verifyhost overcloud-controller-1.storage.example.com
+  server overcloud-controller-2.storage.example.com 172.16.1.53:8080 ca-file /etc/ipa/ca.crt check fall 5 inter 2000 rise 2 ssl verify required verifyhost overcloud-controller-2.storage.example.com
+
+# 从 undercloud 访问 192.168.122.40:13808 对应的 url (overcloud.example.dom)
+[stack@overcloud-controller-0 ~]$ curl https://overcloud.example.com:13808
+<?xml version="1.0" encoding="UTF-8"?><ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Owner><ID>anonymous</ID><DisplayName></DisplayName></Owner><Buckets></Buckets></ListAllMyBucketsResult>
+[stack@overcloud-controller-0 ~]$ 
+
+# 创建用户
+# uid: admin
+# display-name: admin
+# access-key: admin
+# secret-key: admin123
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-rgw-overcloud-controller-0-rgw0 radosgw-admin user create --uid='admin' --display-name='admin' --access-key='admin' --secret-key='admin123'
+
+# 安装 aws cli
+# https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+(overcloud) [stack@undercloud ~]$ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+(overcloud) [stack@undercloud ~]$ unzip awscliv2.zip
+(overcloud) [stack@undercloud ~]$ sudo ./aws/install
+
+# 配置一下 aws s3 client
+# 设置 access key
+# 设置 secret key
+# 注意，需要设置 Default region name，否则 mkbucket 时将会有报错
+# make_bucket failed: s3://mybucket An error occurred (InvalidLocationConstraint) when calling the CreateBucket operation: The specified location-constraint is not valid
+
+(overcloud) [stack@undercloud ~]$ aws configure 
+AWS Access Key ID [None]: admin
+AWS Secret Access Key [None]: admin123
+Default region name [None]: us-east-1
+Default output format [None]: 
+
+# 查看 bucket
+# 设置环境变量 AWS_CA_BUNDLE
+(overcloud) [stack@undercloud ~]$ export AWS_CA_BUNDLE="/etc/pki/tls/certs/ca-bundle.crt"
+(overcloud) [stack@undercloud ~]$ aws --endpoint=https://overcloud.example.com:13808 s3 ls
+# 创建 bucket
+(overcloud) [stack@undercloud ~]$ aws --endpoint=https://overcloud.example.com:13808 s3 mb s3://mybucket
+make_bucket: mybucket
+# 上传文件到 bucket
+(overcloud) [stack@undercloud ~]$ aws --endpoint=https://overcloud.example.com:13808 s3 cp /home/stack/overcloudrc s3://mybucket
+upload: ./overcloudrc to s3://mybucket/overcloudrc  
+
+# 设置 alias 
+(overcloud) [stack@undercloud ~]$ alias aws='aws --endpoint-url https://overcloud.example.com:13808'
+(overcloud) [stack@undercloud ~]$ aws s3 ls 
+2021-11-30 09:57:51 mybucket
+
+
+```
