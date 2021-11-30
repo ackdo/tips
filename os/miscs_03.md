@@ -1348,6 +1348,7 @@ Default output format [None]:
 
 # 查看 bucket
 # 设置环境变量 AWS_CA_BUNDLE
+# https://www.shellhacks.com/aws-cli-ssl-validation-failed-solved/
 (overcloud) [stack@undercloud ~]$ export AWS_CA_BUNDLE="/etc/pki/tls/certs/ca-bundle.crt"
 (overcloud) [stack@undercloud ~]$ aws --endpoint=https://overcloud.example.com:13808 s3 ls
 # 创建 bucket
@@ -1358,6 +1359,7 @@ make_bucket: mybucket
 upload: ./overcloudrc to s3://mybucket/overcloudrc  
 
 # 设置 alias 
+# https://github.com/aws/aws-cli/issues/4454
 (overcloud) [stack@undercloud ~]$ alias aws='aws --endpoint-url https://overcloud.example.com:13808'
 (overcloud) [stack@undercloud ~]$ aws s3 ls 
 2021-11-30 09:57:51 mybucket
@@ -1512,4 +1514,12 @@ rclone lsd s3:
 (overcloud) [stack@undercloud ~]$ unset AWS_CA_BUNDLE 
 (overcloud) [stack@undercloud ~]$ rclone lsd s3:
           -1 2021-11-30 09:57:51        -1 mybucket
+# 查看 bucket
+(overcloud) [stack@undercloud ~]$ rclone ls s3:mybucket
+     1015 overcloudrc
+
+(overcloud) [stack@undercloud ~]$ rclone copy /home/stack/stackrc s3:mybucket
+(overcloud) [stack@undercloud ~]$ rclone ls s3:mybucket
+     1015 overcloudrc
+      774 stackrc
 ```
