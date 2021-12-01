@@ -1641,8 +1641,33 @@ WHO    MASK LEVEL    OPTION                             VALUE RO
 global      advanced osd_pool_default_pg_autoscale_mode on 
 
 # 手工设置 pool 的 pg_autoscale_mode 为 on
-[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph health detail | grep Pool | awk '{print $2}' | while read i ;do sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set $i pg_autoscale_mode on ; done
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph health detail | grep Pool | awk '{print $2}' | while read i ;do echo sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set $i pg_autoscale_mode on ; done
 
+sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set volumes pg_autoscale_mode on
+sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set images pg_autoscale_mode on
+sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set .rgw.root pg_autoscale_mode on
+sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set default.rgw.control pg_autoscale_mode on
+sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set default.rgw.meta pg_autoscale_mode on
+sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set default.rgw.log pg_autoscale_mode on
+sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set default.rgw.buckets.index pg_autoscale_mode on
+sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set default.rgw.buckets.data pg_autoscale_mode on
+sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set default.rgw.buckets.non-ec pg_autoscale_mode on
+
+# 这些命令执行下来之后，ceph status 转变为 ‘HEALTH_OK’ 了
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph health detail 
+HEALTH_OK
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool autoscale-status
+POOL                         SIZE TARGET SIZE RATE RAW CAPACITY  RATIO TARGET RATIO EFFECTIVE RATIO BIAS PG_NUM NEW PG_NUM AUTOSCALE 
+vms                            0               3.0       899.9G 0.0000                               1.0     32            on        
+volumes                        0               3.0       899.9G 0.0000                               1.0     32            on        
+images                      9421M              3.0       899.9G 0.0307                               1.0     32            on        
+.rgw.root                   3653               3.0       899.9G 0.0000                               1.0     32            on        
+default.rgw.control            0               3.0       899.9G 0.0000                               1.0     32            on        
+default.rgw.meta            1088               3.0       899.9G 0.0000                               1.0     32            on        
+default.rgw.log             4548               3.0       899.9G 0.0000                               1.0     32            on        
+default.rgw.buckets.index  10832               3.0       899.9G 0.0000                               1.0     32            on        
+default.rgw.buckets.data   30919k              3.0       899.9G 0.0001                               1.0     32            on        
+default.rgw.buckets.non-ec     0               3.0       899.9G 0.0000                               1.0     32            on  
 ```
 
 ### 增加 tripleo firewall 规则的模版
