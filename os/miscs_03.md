@@ -1569,3 +1569,60 @@ rclone lsd s3:
      1015 overcloudrc
       774 stackrc
 ```
+
+### 增加 tripleo firewall 规则的模版
+```
+# 注意：
+# 1. 以下模版内容可以在默认 tripleo firewall rule 的基础上追加规则
+# 2. 作用的位置在 'INPUT' Chain 和 'filter' table
+parameter_defaults:
+  PurgeFirewallRules: true 
+  ExtraConfig:
+    tripleo::firewall::firewall_rules:
+      '005 allow SSH from X.X.X.X/24':
+        dport: 22
+        proto: tcp
+        source: X.X.X.X/24
+      '006 allow SSH from X.X.X.X/22':
+        dport: 22
+        proto: tcp
+        source: X.X.X.X/22
+      '007 allow SSH from X.X.X.X/22':
+        dport: 22
+        proto: tcp
+        source: X.X.X.X/22
+      '008 allow SSH from X.X.X.X/21':
+        dport: 22
+        proto: tcp
+        source: X.X.X.X/21
+      '009 allow SSH from X.X.X.X/26':
+        dport: 22
+        proto: tcp
+        source: X.X.X.X/26
+      '010 allow SSH from X.X.X.X/32':
+        dport: 22
+        proto: tcp
+        source: X.X.X.X/32
+      '011 allow SSH from X.X.X.X/25':
+        dport: 22
+        proto: tcp
+        source: X.X.X.X/25
+      '012 allow SSH from X.X.X.X/24':
+        dport: 22
+        proto: tcp
+        source: X.X.X.X/24
+      '300 allow SNMP from NMS 1':
+        dport: 161
+        proto: udp
+        source: X.X.X.X/24
+      '301 allow SNMP from NMS 2':
+        dport: 161
+        proto: udp
+        source: X.X.X.X/22
+      '302 allow connection to Netdata':
+        dport: 19999
+      '303 allow Prometheus connections':
+        dport: 9283
+        proto: tcp
+        source: X.X.X.X/22
+```
