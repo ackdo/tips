@@ -1600,6 +1600,49 @@ default.rgw.log             4519               3.0       899.9G 0.0000          
 default.rgw.buckets.index  10832               3.0       899.9G 0.0000                               1.0    128         32 warn      
 default.rgw.buckets.data   30556k              3.0       899.9G 0.0001                               1.0    128         32 warn      
 default.rgw.buckets.non-ec     0               3.0       899.9G 0.0000                               1.0    128         32 warn   
+
+# 默认的 autoscale 设置为 'warn'，触发告警
+# https://docs.ceph.com/en/latest/rados/operations/placement-groups/
+# 手工调整为 'on'
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph config set global osd_pool_default_pg_autoscale_mode on
+
+# 查看参数调整情况
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph config dump
+WHO    MASK LEVEL    OPTION                                           VALUE                                    RO 
+global      advanced osd_pool_default_pg_autoscale_mode               on                                          
+  mgr       advanced mgr/dashboard/ALERTMANAGER_API_HOST              http://172.16.1.51:9093                  *  
+  mgr       advanced mgr/dashboard/GRAFANA_API_PASSWORD               KpjNWnN7rA9w9AA5SuDvcfK59                *  
+  mgr       advanced mgr/dashboard/GRAFANA_API_SSL_VERIFY             false                                    *  
+  mgr       advanced mgr/dashboard/GRAFANA_API_URL                    https://192.0.2.240:3100                 *  
+  mgr       advanced mgr/dashboard/GRAFANA_API_USERNAME               admin                                    *  
+  mgr       advanced mgr/dashboard/PROMETHEUS_API_HOST                http://172.16.1.51:9092                  *  
+  mgr       advanced mgr/dashboard/RGW_API_ACCESS_KEY                 7LECDPNKIA22FFE78X1Y                     *  
+  mgr       advanced mgr/dashboard/RGW_API_HOST                       172.16.1.51                              *  
+  mgr       advanced mgr/dashboard/RGW_API_PORT                       8080                                     *  
+  mgr       advanced mgr/dashboard/RGW_API_SCHEME                     https                                    *  
+  mgr       advanced mgr/dashboard/RGW_API_SECRET_KEY                 lmJx68zSRUw9M13gAtZIDxzVD0KUxULroXdGInnq *  
+  mgr       advanced mgr/dashboard/RGW_API_USER_ID                    ceph-dashboard                           *  
+  mgr       advanced mgr/dashboard/overcloud-controller-0/server_addr 172.16.1.51                              *  
+  mgr       advanced mgr/dashboard/overcloud-controller-1/server_addr 172.16.1.52                              *  
+  mgr       advanced mgr/dashboard/overcloud-controller-2/server_addr 172.16.1.53                              *  
+  mgr       advanced mgr/dashboard/server_port                        8444                                     *  
+  mgr       advanced mgr/dashboard/ssl                                true                                     *  
+  mgr       advanced mgr/dashboard/ssl_server_port                    8444                                     *  
+
+
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph config get mon.0
+WHO    MASK LEVEL    OPTION                             VALUE RO 
+global      advanced osd_pool_default_pg_autoscale_mode on       
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph config get osd.0
+WHO    MASK LEVEL    OPTION                             VALUE RO 
+global      advanced osd_pool_default_pg_autoscale_mode on       
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph config get osd.1
+WHO    MASK LEVEL    OPTION                             VALUE RO 
+global      advanced osd_pool_default_pg_autoscale_mode on 
+
+# 手工设置 pool 的 pg_autoscale_mode 为 on
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph health detail | grep Pool | awk '{print $2}' | while read i ;do sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set $i pg_autoscale_mode on ; done
+
 ```
 
 ### 增加 tripleo firewall 规则的模版
