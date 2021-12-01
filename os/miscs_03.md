@@ -1669,6 +1669,60 @@ default.rgw.log             4548               3.0       899.9G 0.0000          
 default.rgw.buckets.index  10832               3.0       899.9G 0.0000                               1.0     32            on        
 default.rgw.buckets.data   30919k              3.0       899.9G 0.0001                               1.0     32            on        
 default.rgw.buckets.non-ec     0               3.0       899.9G 0.0000                               1.0     32            on  
+
+# 查看 radosgw user 'ceph-dashboard' 相关信息 
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-rgw-overcloud-controller-0-rgw0 radosgw-admin user info --uid='ceph-dashboard'
+{
+    "user_id": "ceph-dashboard",  
+    "display_name": "Ceph dashboard",
+    "email": "",
+    "suspended": 0,
+    "max_buckets": 1000,
+    "subusers": [],
+    "keys": [
+        {
+            "user": "ceph-dashboard",
+            "access_key": "7LECDPNKIA22FFE78X1Y",
+            "secret_key": "lmJx68zSRUw9M13gAtZIDxzVD0KUxULroXdGInnq"
+        }
+    ],
+    "swift_keys": [],
+    "caps": [],
+    "op_mask": "read, write, delete",
+    "system": "true",
+    "default_placement": "",
+    "default_storage_class": "",
+    "placement_tags": [],
+    "bucket_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },
+    "user_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },                             
+    "temp_url_keys": [],
+    "type": "rgw",
+    "mfa_ids": []
+}
+
+# 在 ceph dashboard 上访问 Object Gateway 时报 404
+# https://docs.ceph.com/en/latest/mgr/dashboard/#dashboard-enabling-object-gateway
+# 设置 ceph dashboard set-rgw-api-ssl-verify False
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph dashboard set-rgw-api-ssl-verify False 
+Option RGW_API_SSL_VERIFY updated
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph config dump 
+WHO    MASK LEVEL    OPTION                                           VALUE                                    RO 
+[TRUNCATED]
+  mgr       advanced mgr/dashboard/RGW_API_SSL_VERIFY                 false                                    *  
+[TRUNCATED]
+
 ```
 
 ### 增加 tripleo firewall 规则的模版
@@ -1726,4 +1780,11 @@ parameter_defaults:
         dport: 9283
         proto: tcp
         source: X.X.X.X/22
+```
+
+### 报错
+```
+(overcloud) [stack@undercloud ~]$ aws s3 mb s3://dashboard
+make_bucket failed: s3://dashboard Unable to parse response (not well-formed (invalid token): line 1, column 0), invalid XML received. Further retries may succeed:
+b'{"entry_point_object_ver":{"tag":"_uSknuO-j1hIYKh1V_6uPxup","ver":1},"object_ver":{"tag":"_kFKbUVxpvcWgz4t71AqWZ2T","ver":1},"bucket_info":{"bucket":{"name":"dashboard","marker":"dd363c96-1c53-4ed7-9f92-b3c2766ef606.294168.1","bucket_id":"dd363c96-1c53-4ed7-9f92-b3c2766ef606.294168.1","tenant":"","explicit_placement":{"data_pool":"","data_extra_pool":"","index_pool":""}},"creation_time":"2021-12-01 07:03:45.758073Z","owner":"ceph-dashboard","flags":0,"zonegroup":"29d0675d-3ba5-452c-b6a7-64c0d9de3859","placement_rule":"default-placement","has_instance_obj":"true","quota":{"enabled":false,"check_on_raw":false,"max_size":-1,"max_size_kb":0,"max_objects":-1},"num_shards":11,"bi_shard_hash_type":0,"requester_pays":"false","has_website":"false","swift_versioning":"false","swift_ver_location":"","index_type":0,"mdsearch_config":[],"reshard_status":0,"new_bucket_instance_id":""}}'
 ```
