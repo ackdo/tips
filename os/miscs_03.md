@@ -1654,6 +1654,7 @@ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set default.r
 sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool set default.rgw.buckets.non-ec pg_autoscale_mode on
 
 # 这些命令执行下来之后，ceph status 转变为 ‘HEALTH_OK’ 了
+# https://docs.ceph.com/en/latest/rados/operations/placement-groups/
 [stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph health detail 
 HEALTH_OK
 [stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool autoscale-status
