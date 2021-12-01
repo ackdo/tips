@@ -1568,6 +1568,25 @@ rclone lsd s3:
 (overcloud) [stack@undercloud ~]$ rclone ls s3:mybucket
      1015 overcloudrc
       774 stackrc
+
+# 查看 pool 的情况
+(overcloud) [stack@undercloud ~]$ ssh stack@192.0.2.51
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd dump | grep pool
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph health detail
+
+# 查看 pool 的 autoscale-status 
+[stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool autoscale-status 
+POOL                         SIZE TARGET SIZE RATE RAW CAPACITY  RATIO TARGET RATIO EFFECTIVE RATIO BIAS PG_NUM NEW PG_NUM AUTOSCALE 
+vms                            0               3.0       899.9G 0.0000                               1.0    128         32 warn      
+volumes                        0               3.0       899.9G 0.0000                               1.0    128         32 warn      
+images                      9216M              3.0       899.9G 0.0300                               1.0    128         32 warn      
+.rgw.root                   3653               3.0       899.9G 0.0000                               1.0    128         32 warn      
+default.rgw.control            0               3.0       899.9G 0.0000                               1.0    128         32 warn      
+default.rgw.meta            1088               3.0       899.9G 0.0000                               1.0    128         32 warn      
+default.rgw.log             4519               3.0       899.9G 0.0000                               1.0    128         32 warn      
+default.rgw.buckets.index  10832               3.0       899.9G 0.0000                               1.0    128         32 warn      
+default.rgw.buckets.data   30556k              3.0       899.9G 0.0001                               1.0    128         32 warn      
+default.rgw.buckets.non-ec     0               3.0       899.9G 0.0000                               1.0    128         32 warn   
 ```
 
 ### 增加 tripleo firewall 规则的模版
