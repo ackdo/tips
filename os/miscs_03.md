@@ -1572,7 +1572,20 @@ rclone lsd s3:
 # 查看 pool 的情况
 (overcloud) [stack@undercloud ~]$ ssh stack@192.0.2.51
 [stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd dump | grep pool
+
 [stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph health detail
+HEALTH_WARN 10 pools have too many placement groups
+POOL_TOO_MANY_PGS 10 pools have too many placement groups
+    Pool vms has 128 placement groups, should have 32
+    Pool volumes has 128 placement groups, should have 32
+    Pool images has 128 placement groups, should have 32
+    Pool .rgw.root has 128 placement groups, should have 32
+    Pool default.rgw.control has 128 placement groups, should have 32
+    Pool default.rgw.meta has 128 placement groups, should have 32
+    Pool default.rgw.log has 128 placement groups, should have 32
+    Pool default.rgw.buckets.index has 128 placement groups, should have 32
+    Pool default.rgw.buckets.data has 128 placement groups, should have 32
+    Pool default.rgw.buckets.non-ec has 128 placement groups, should have 32
 
 # 查看 pool 的 autoscale-status 
 [stack@overcloud-controller-0 ~]$ sudo podman exec -it ceph-mon-overcloud-controller-0 ceph osd pool autoscale-status 
