@@ -1946,6 +1946,20 @@ gpgcheck=0
 
 EOF
 done
+# 使用本地 repo
+> /etc/yum.repos.d/local.repo 
+for i in rhel-8-for-x86_64-baseos-rpms rhel-8-for-x86_64-appstream-rpms ansible-2.9-for-rhel-8-x86_64-rpms rhceph-5-tools-for-rhel-8-x86_64-rpms 
+do
+cat >> /etc/yum.repos.d/local.repo << EOF
+[$i]
+name=$i
+baseurl=file:///var/www/html/repos/rhcs5/$i/
+enabled=1
+gpgcheck=0
+
+EOF
+done
+
 
 # 设置 /etc/hosts
 sed -i '/jwang-ceph04.example.com/d' /etc/hosts
@@ -1984,9 +1998,15 @@ sudo dnf module enable -y container-tools:2.0
 # 更新系统
 dnf update -y
 
+# 禁用 subscription-manager 
+# subscription-manager config --rhsm.auto_enable_yum_plugins=0
+# https://access.redhat.com/solutions/5838131
+
 # 使用本地镜像 
 # 创建单节点集群
 # https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html-single/installation_guide/index#configuring-a-custom-registry-for-disconnected-installation_install
 cephadm --image helper.example.com:5000:rhceph/rhceph-5-rhel8:latest bootstrap --mon-ip 10.66.208.121
 
+# 
+# subscription-manager config --rhsm.auto_enable_yum_plugins=0
 ```
