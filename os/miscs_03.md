@@ -1805,6 +1805,7 @@ https://bugzilla.redhat.com/show_bug.cgi?id=1949701<br>
 cephadm bootstrap --single-host-defaults
 
 # 安装虚拟机 jwang-ceph04
+# rhel 8.4
 # 如果之前未清理磁盘可以执行
 # sgdisk --delete /dev/sda
 # sgdisk --delete /dev/sdb
@@ -1840,4 +1841,62 @@ gdisk
 openssl-perl
 %end
 EOF
+
+# 注册系统到 rhn
+subscription-manager register
+subscription-manager refresh
+subscription-manager list --available --matches 'Red Hat Ceph Storage'
+subscription-manager attach --pool=8a85f99979908877017a0d85b3ab3c37
+subscription-manager repos --disable=*
+subscription-manager repos --enable=rhel-8-for-x86_64-baseos-eus-rpm --enable=rhel-8-for-x86_64-appstream-eus-rpms --enable=rhceph-5-tools-for-rhel-8-x86_64-rpms --enable=ansible-2.9-for-rhel-8-x86_64-rpms
+
+# 同步 rhcs5 镜像
+cat > syncimgs-rhcs5 <<'EOF'
+#!/bin/env bash
+
+PUSHREGISTRY=helper.example.com:5000
+FORK=4
+
+rhosp_namespace=registry.redhat.io/rhosp-rhel8
+rhosp_tag=16.1
+ceph_namespace=registry.redhat.io/rhceph
+ceph_image=rhceph-5-rhel8
+ceph_tag=latest
+ceph_alertmanager_namespace=registry.redhat.io/openshift4
+ceph_alertmanager_image=ose-prometheus-alertmanager
+ceph_alertmanager_tag=v4.6
+ceph_grafana_namespace=registry.redhat.io/rhceph
+ceph_grafana_image=rhceph-5-dashboard-rhel8
+ceph_grafana_tag=5
+ceph_node_exporter_namespace=registry.redhat.io/openshift4
+ceph_node_exporter_image=ose-prometheus-node-exporter
+ceph_node_exporter_tag=v4.6
+ceph_prometheus_namespace=registry.redhat.io/openshift4
+ceph_prometheus_image=ose-prometheus
+ceph_prometheus_tag=v4.6
+
+function copyimg() {
+  image=${1}
+  version=${2}
+
+  release=$(skopeo inspect docker://${image}:${version} | jq -r '.Labels | (.version + "-" + .release)')
+  dest="${PUSHREGISTRY}/${image#*\/}"
+  echo Copying ${image} to ${dest}
+  skopeo copy docker://${image}:${release} docker://${dest}:${release} --quiet
+  skopeo copy docker://${image}:${version} docker://${dest}:${version} --quiet
+}
+
+copyimg "${ceph_namespace}/${ceph_image}" ${ceph_tag} &
+copyimg "${ceph_alertmanager_namespace}/${ceph_alertmanager_image}" ${ceph_alertmanager_tag} &
+copyimg "${ceph_grafana_namespace}/${ceph_grafana_image}" ${ceph_grafana_tag} &
+copyimg "${ceph_node_exporter_namespace}/${ceph_node_exporter_image}" ${ceph_node_exporter_tag} &
+copyimg "${ceph_prometheus_namespace}/${ceph_prometheus_image}" ${ceph_prometheus_tag} &
+wait
+
+#for rhosp_image in $(podman search ${rhosp_namespace} --limit 1000 --format "{{ .Name }}"); do
+#  ((i=i%FORK)); ((i++==0)) && wait
+#  copyimg ${rhosp_image} ${rhosp_tag} &
+#done
+EOF
+
 ```
