@@ -1803,4 +1803,41 @@ https://bugzilla.redhat.com/show_bug.cgi?id=1949701<br>
 # 参考
 # https://docs.ceph.com/en/latest/man/8/cephadm/#bootstrap
 cephadm bootstrap --single-host-defaults
+
+# 安装虚拟机 jwang-ceph04
+# 如果之前未清理磁盘可以执行
+# sgdisk --delete /dev/sda
+# sgdisk --delete /dev/sdb
+# sgdisk --delete /dev/sdc
+# ks=http://10.66.208.115/jwang-ceph04-ks.cfg nameserver=10.64.63.6 ip=10.66.208.125::10.66.208.254:255.255.255.0:jwang-ceph04.example.com:ens3:none
+
+# 生成 ks.cfg - jwang-ceph04
+cat > jwang-ceph04-ks.cfg <<'EOF'
+lang en_US
+keyboard us
+timezone Asia/Shanghai --isUtc
+rootpw $1$PTAR1+6M$DIYrE6zTEo5dWWzAp9as61 --iscrypted
+#platform x86, AMD64, or Intel EM64T
+halt
+text
+cdrom
+bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
+zerombr
+clearpart --all --initlabel
+ignoredisk --only-use=sda
+autopart
+network --device=ens3 --hostname=jwang-ceph04.example.com --bootproto=static --ip=10.66.208.125 --netmask=255.255.255.0 --gateway=10.66.208.254 --nameserver=10.64.63.6
+auth --passalgo=sha512 --useshadow
+selinux --enforcing
+firewall --enabled --ssh
+skipx
+firstboot --disable
+%packages
+@^minimal-environment
+kexec-tools
+tar
+gdisk
+openssl-perl
+%end
+EOF
 ```
