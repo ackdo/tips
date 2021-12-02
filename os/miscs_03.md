@@ -1848,7 +1848,7 @@ subscription-manager refresh
 subscription-manager list --available --matches 'Red Hat Ceph Storage'
 subscription-manager attach --pool=8a85f99979908877017a0d85b3ab3c37
 subscription-manager repos --disable=*
-subscription-manager repos --enable=rhel-8-for-x86_64-baseos-eus-rpm --enable=rhel-8-for-x86_64-appstream-eus-rpms --enable=rhceph-5-tools-for-rhel-8-x86_64-rpms --enable=ansible-2.9-for-rhel-8-x86_64-rpms
+subscription-manager repos --enable=rhel-8-for-x86_64-baseos-rpms --enable=rhel-8-for-x86_64-appstream-rpms --enable=rhceph-5-tools-for-rhel-8-x86_64-rpms --enable=ansible-2.9-for-rhel-8-x86_64-rpms
 
 # 同步 rhcs5 镜像
 cat > syncimgs-rhcs5 <<'EOF'
@@ -1898,5 +1898,95 @@ wait
 #  copyimg ${rhosp_image} ${rhosp_tag} &
 #done
 EOF
+
+# rhcs5 软件仓库同步脚本
+[root@helper repos]# pwd
+/var/www/html/repos
+[root@helper repos]# cat > rhcs5_repo_sync_up.sh <<EOF
+#!/bin/bash
+
+localPath="/var/www/html/repos/rhcs5/"
+fileConn="/getPackage/"
+
+## sync following yum repos 
+# rhel-8-for-x86_64-baseos-rpms
+# rhel-8-for-x86_64-appstream-rpms
+# ansible-2.9-for-rhel-8-x86_64-rpms
+# rhceph-5-tools-for-rhel-8-x86_64-rpms
+
+for i in rhel-8-for-x86_64-baseos-rpms rhel-8-for-x86_64-appstream-rpms ansible-2.9-for-rhel-8-x86_64-rpms rhceph-5-tools-for-rhel-8-x86_64-rpms
+do
+
+  rm -rf "$localPath"$i/repodata
+  echo "sync channel $i..."
+  reposync -n --delete --download-path="$localPath" --repoid $i --downloadcomps --download-metadata
+
+  #echo "create repo $i..."
+  #time createrepo -g $(ls "$localPath"$i/repodata/*comps.xml) --update --skip-stat --cachedir /tmp/empty-cache-dir "$localPath"$i
+
+done
+
+exit 0
+EOF
+
+# 查看更新情况
+watch "ls -ltr \$(ls -ltr | tail -1 | awk '{print \$9}')/\$(ls -ltr \$(ls -ltr | tail -1 | awk '{print \$9}') | tail -1 | awk '{print \$9}')"
+
+# 在 ceph 节点上配置软件仓库
+YUM_REPO_IP="10.66.208.121"
+> /etc/yum.repos.d/local.repo 
+for i in rhel-8-for-x86_64-baseos-eus-rpms rhel-8-for-x86_64-appstream-eus-rpms ansible-2.9-for-rhel-8-x86_64-rpms rhceph-5-tools-for-rhel-8-x86_64-rpms 
+do
+cat >> /etc/yum.repos.d/local.repo << EOF
+[$i]
+name=$i
+baseurl=http://${YUM_REPO_IP}/repos/rhcs5/$i/
+enabled=1
+gpgcheck=0
+
+EOF
+done
+
+# 设置 /etc/hosts
+sed -i '/jwang-ceph04.example.com/d' /etc/hosts
+cat >> /etc/hosts <<EOF
+10.66.208.125   jwang-ceph04.example.com
+EOF
+cat >> /etc/hosts <<EOF
+10.66.208.121   helper.example.com
+EOF
+
+# 更新系统
+dnf makecache
+dnf update -y
+
+# 安装 cephadm
+dnf install -y cephadm
+
+# 安装 podman
+dnf install -y podman
+
+# 拷贝 local registry 证书
+# 建立证书信任
+[root@jwang-ceph04 ~]# scp 10.66.208.121:/opt/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors 
+domain.crt                                                                                               100% 2114   688.3KB/s   00:00    
+[root@jwang-ceph04 ~]# update-ca-trust extract
+# 登陆 local registry
+[root@jwang-ceph04 ~]# podman login helper.example.com:5000 
+Username: 
+Password: 
+Login Succeeded!
+
+# 禁用 container-tools:rhel8 module 启用 container-tools:2.0 模块
+sudo dnf module disable -y container-tools:rhel8
+sudo dnf module enable -y container-tools:2.0
+
+# 更新系统
+dnf update -y
+
+# 使用本地镜像 
+# 创建单节点集群
+# https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html-single/installation_guide/index#configuring-a-custom-registry-for-disconnected-installation_install
+cephadm --image helper.example.com:5000:rhceph/rhceph-5-rhel8:latest bootstrap --mon-ip 10.66.208.121
 
 ```
