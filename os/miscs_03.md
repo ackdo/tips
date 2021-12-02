@@ -1797,3 +1797,10 @@ https://docs.openstack.org/project-deploy-guide/tripleo-docs/latest/features/cep
 
 cinder support is currently not available. it's targeted for OSP-17. It will use a new CinderRbdMultiConfig THT parameter.<br>
 https://bugzilla.redhat.com/show_bug.cgi?id=1949701<br>
+
+### 部署单节点 rhcs 5 
+```
+# 参考
+# https://docs.ceph.com/en/latest/man/8/cephadm/#bootstrap
+cephadm bootstrap --single-host-defaults
+```
