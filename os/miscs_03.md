@@ -2176,4 +2176,10 @@ HEALTH_WARN 1 pool(s) have no replicas configured
 HEALTH_WARN insufficient standby MDS daemons available
 [WRN] MDS_INSUFFICIENT_STANDBY: insufficient standby MDS daemons available
     have 0; want 1 more
+
+ceph fs ls
+ceph mds stat
+ceph health detail
+
+
 ```
