@@ -1216,6 +1216,10 @@ MES - Manufacturing Execution System - 制造执行系统 - 面向制造企业�
 PLM - Product Lifecycle Management - 产品生命周期管理 - 
 ERP - Enterprise Resource Planning - 企业资源计划管理 全程企业资源规划 公司综合管理系统 - 管理层
 
+https://zhuanlan.zhihu.com/p/43002417
+什么是GitOps？
+GitOps是一种持续交付的方式。它的核心思想是将应用系统的声明性基础架构和应用程序存放在Git版本库中。
+
 DaemonSet 确保所有（或部分）节点运行一个 Pod 的副本。 如果 Node 与集群断开连接，那么 k8s API 中的 Daemonset Pod 将不会改变状态，并将继续保持上次报告的状态。
 
 在网络中断期间如果节点重新启动，将不重新启动工作负载
@@ -2023,9 +2027,18 @@ ssh-copy-id 10.66.208.125
 # 创建时可以为 bootstrap 传递初始配置文件
 cat <<EOF > initial-ceph.conf
 [global]
-osd crush chooseleaf type = 0
+osd_crush_choose_leaf_type = 0
 EOF
-cephadm --image helper.example.com:5000/rhceph/rhceph-5-rhel8:latest bootstrap --config initial-ceph.conf --mon-ip 10.66.208.125 --allow-fqdn-hostname
+cephadm --image helper.example.com:5000/rhceph/rhceph-5-rhel8:latest bootstrap --config ./initial-ceph.conf --mon-ip 10.66.208.125 --allow-fqdn-hostname
+# 目前看这种方法并不生效
+cephadm shell
+[ceph: root@jwang-ceph04 /]# ceph config set global osd_crush_chooseleaf_type 0
+[ceph: root@jwang-ceph04 /]# ceph config dump
+...
+global        dev       osd_crush_chooseleaf_type              0                                                                                                                      * 
+...
+[ceph: root@jwang-ceph04 /]# ceph config set global osd_pool_default_size 1
+[ceph: root@jwang-ceph04 /]# ceph config set global osd_pool_default_min_size 1
 
 # 设置别名
 echo "alias ceph='cephadm shell -- ceph'" >> ~/.bashrc
@@ -2114,4 +2127,50 @@ ceph orch apply mds cephfs --placement="1 jwang-ceph04.example.com"
 #   id:     0c1839ae-5349-11ec-9989-001a4a16016f
 [root@jwang-ceph04 ~]# cephadm rm-cluster --fsid 0c1839ae-5349-11ec-9989-001a4a16016f --force
 
+# 部署完的信息
+Ceph Dashboard is now available at:
+
+             URL: https://jwang-ceph04.example.com:8443/
+            User: admin
+        Password: rvg20bg7zv
+
+You can access the Ceph CLI with:
+
+        sudo /usr/sbin/cephadm shell --fsid 88946910-53f0-11ec-ab5a-001a4a16016f -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyr
+ing
+
+Please consider enabling telemetry to help improve Ceph:
+
+        ceph telemetry on
+
+For more information see:
+
+        https://docs.ceph.com/docs/pacific/mgr/telemetry/
+
+# 通过改 crush 设置 single node cluster
+# https://linoxide.com/hwto-configure-single-node-ceph-cluster/
+
+# 清理节点上的 osd 磁盘 device mapper
+# https://www.cnblogs.com/deny/p/14214963.html
+# 查看磁盘
+dmsetup ls
+
+# 删除磁盘
+dmsetup remove ceph--d534c556--1abd--4739--94c8--4c6fa8bfe12c-osd--block--65634030--05cd--4305--b08a--6bd8c43d8c76
+dmsetup remove ceph--55676940--281c--43fc--9b71--d359acecb778-osd--block--e0b08b95--d184--4dd8--9748--e495c5225caa
+dmsetup remove ceph--9cb74522--f080--4e25--a6fa--3b6b8a893444-osd--block--82b96e58--bb69--4492--a320--993a963890c6
+
+# 报错
+# WARNING: The same type, major and minor should not be used for multiple devices.
+# https://tracker.ceph.com/issues/51668
+
+
+[root@jwang-ceph04 ~]# ceph health detail 
+Inferring fsid a31452c6-53f2-11ec-a115-001a4a16016f
+Inferring config /var/lib/ceph/a31452c6-53f2-11ec-a115-001a4a16016f/mon.jwang-ceph04.example.com/config
+Using recent ceph image helper.example.com:5000/rhceph/rhceph-5-rhel8@sha256:7f374a6e1e8af2781a19a37146883597e7a422160ee86219ce6a5117e05a1682
+...
+HEALTH_WARN 1 pool(s) have no replicas configured
+[WRN] POOL_NO_REDUNDANCY: 1 pool(s) have no replicas configured
+    pool 'device_health_metrics' has no replicas configured
 ```
