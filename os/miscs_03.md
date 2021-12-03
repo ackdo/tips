@@ -2103,5 +2103,15 @@ set -e
 ceph fs volume create cephfs
 ceph orch apply mds cephfs --placement="1 jwang-ceph04.example.com"
 
-# 创建时可以为 bootstrap 传递初始配置文件
+# rhcs5 purge/remove cluster
+# https://bugzilla.redhat.com/show_bug.cgi?id=1881192
+
+# ceph status
+# insufficient standby MDS daemons available
+# Degraded data redundancy: 30/56 objects degraded (53.571%), 14 pgs degraded, 65 pgs undersized
+# fsid 是通过 ceph status 获取到的
+#   cluster:
+#   id:     0c1839ae-5349-11ec-9989-001a4a16016f
+[root@jwang-ceph04 ~]# cephadm rm-cluster --fsid 0c1839ae-5349-11ec-9989-001a4a16016f --force
+
 ```
