@@ -1205,7 +1205,16 @@ set -o history
  
 ### 记录
 ```
-
+https://www.jianshu.com/p/55c22e455ec9
+https://zhuanlan.zhihu.com/p/84026420
+术语
+PLC - Programmable Logic Controller- 可编程逻辑控制器 - 现场设备层
+SCADA - Supervisory Control And Data AcquiSition System - 数据采集与监控系统 - 调度管理层
+HMI - Human Machine Interface - 人机界面 - 是系统和用户之间进行交互和信息交换的媒介
+PPS - Production Pull System - 生产拉动系统 - 基于预测未来消耗，有计划补充物料
+MES - Manufacturing Execution System - 制造执行系统 - 面向制造企业车间执行层的生产信息化管理系统
+PLM - Product Lifecycle Management - 产品生命周期管理 - 
+ERP - Enterprise Resource Planning - 企业资源计划管理 全程企业资源规划 公司综合管理系统 - 管理层
 
 DaemonSet 确保所有（或部分）节点运行一个 Pod 的副本。 如果 Node 与集群断开连接，那么 k8s API 中的 Daemonset Pod 将不会改变状态，并将继续保持上次报告的状态。
 
