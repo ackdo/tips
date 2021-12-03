@@ -1991,9 +1991,10 @@ Username:
 Password: 
 Login Succeeded!
 
+# 不需要执行
 # 禁用 container-tools:rhel8 module 启用 container-tools:2.0 模块
-sudo dnf module disable -y container-tools:rhel8
-sudo dnf module enable -y container-tools:2.0
+# sudo dnf module disable -y container-tools:rhel8
+# sudo dnf module enable -y container-tools:2.0
 
 # 更新系统
 dnf update -y
@@ -2002,11 +2003,96 @@ dnf update -y
 # subscription-manager config --rhsm.auto_enable_yum_plugins=0
 # https://access.redhat.com/solutions/5838131
 
+# 生成 ssh keypair 
+ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa
+ssh-copy-id 10.66.208.125 
+
 # 使用本地镜像 
 # 创建单节点集群
 # https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html-single/installation_guide/index#configuring-a-custom-registry-for-disconnected-installation_install
-cephadm --image helper.example.com:5000:rhceph/rhceph-5-rhel8:latest bootstrap --mon-ip 10.66.208.121
+# https://docs.ceph.com/en/latest/cephadm/install/
+# 创建时可以为 bootstrap 传递初始配置文件
+cat <<EOF > initial-ceph.conf
+[global]
+osd crush chooseleaf type = 0
+EOF
+cephadm --image helper.example.com:5000/rhceph/rhceph-5-rhel8:latest bootstrap --config initial-ceph.conf --mon-ip 10.66.208.125 --allow-fqdn-hostname
 
-# 
-# subscription-manager config --rhsm.auto_enable_yum_plugins=0
+# 设置别名
+echo "alias ceph='cephadm shell -- ceph'" >> ~/.bashrc
+source ~/.bashrc
+
+# 为节点打标签 mon
+ceph orch host ls
+ceph orch host label add jwang-ceph04.example.com mon
+
+# 设置时间同步
+sed -i 's|pool 2.rhel.pool.ntp.org iburst|server clock.corp.redhat.com iburst|' /etc/chrony.conf
+systemctl restart chronyd
+chronyc -n sources
+
+# 查看可用设备
+ceph orch device ls --refresh
+
+# 手工添加设备
+ceph orch daemon add osd jwang-ceph04.example.com:/dev/sdb
+ceph orch daemon add osd jwang-ceph04.example.com:/dev/sdc
+ceph orch daemon add osd jwang-ceph04.example.com:/dev/sdd
+
+# 告警，后续分析
+WARNING: The same type, major and minor should not be used for multiple devices.
+WARNING: The same type, major and minor should not be used for multiple devices.
+
+[ceph: root@jwang-ceph04 /]# ceph health detail 
+HEALTH_WARN 1 failed cephadm daemon(s); Reduced data availability: 1 pg inactive; Degraded data redundancy: 1 pg undersized
+[WRN] CEPHADM_FAILED_DAEMON: 1 failed cephadm daemon(s)
+    daemon node-exporter.jwang-ceph04 on jwang-ceph04.example.com is in error state
+[WRN] PG_AVAILABILITY: Reduced data availability: 1 pg inactive
+    pg 1.0 is stuck inactive for 5m, current state undersized+peered, last acting [1]
+[WRN] PG_DEGRADED: Degraded data redundancy: 1 pg undersized
+    pg 1.0 is stuck undersized for 5m, current state undersized+peered, last acting [1]
+
+# 获取 pool 的信息
+[ceph: root@jwang-ceph04 /]# ceph osd dump | grep pool 
+pool 1 'device_health_metrics' replicated size 3 min_size 2 crush_rule 0 object_hash rjenkins pg_num 1 pgp_num 1 autoscale_mode on last_change 22 flags hashpspool stripe_width 0 pg_num_min 1 application mgr_devicehealth
+# 设置 pool 的 min_size
+[ceph: root@jwang-ceph04 /]# ceph osd pool set device_health_metrics min_size 1 
+set pool 1 min_size to 1
+
+[ceph: root@jwang-ceph04 /]# ceph osd dump | grep pool 
+pool 1 'device_health_metrics' replicated size 3 min_size 1 crush_rule 0 object_hash rjenkins pg_num 1 pgp_num 1 autoscale_mode on last_change 23 flags hashpspool stripe_width 0 pg_num_min 1 application mgr_devicehealth
+
+# 检查 ceph 的 health 状态
+[ceph: root@jwang-ceph04 /]# ceph health detail        
+HEALTH_WARN 1 failed cephadm daemon(s)
+[WRN] CEPHADM_FAILED_DAEMON: 1 failed cephadm daemon(s)
+    daemon node-exporter.jwang-ceph04 on jwang-ceph04.example.com is in error state
+
+# 为节点打标签 osd
+ceph orch host label add jwang-ceph04.example.com osd
+
+# 为节点打标签 mds
+ceph orch host label add jwang-ceph04.example.com mds
+
+# 关于 failed cephadm daemon(s)
+# 原因是在节点上的 node-exporter 无法启动
+# 检查 node-exporter unit 文件内容
+[root@jwang-ceph04 ~]# cat /var/lib/ceph/0c1839ae-5349-11ec-9989-001a4a16016f/node-exporter.jwang-ceph04/unit.run 
+set -e
+# node-exporter.jwang-ceph04
+! /bin/podman rm -f ceph-0c1839ae-5349-11ec-9989-001a4a16016f-node-exporter.jwang-ceph04 2> /dev/null
+! /bin/podman rm -f ceph-0c1839ae-5349-11ec-9989-001a4a16016f-node-exporter-jwang-ceph04 2> /dev/null
+! /bin/podman rm -f --storage ceph-0c1839ae-5349-11ec-9989-001a4a16016f-node-exporter-jwang-ceph04 2> /dev/null
+! /bin/podman rm -f --storage ceph-0c1839ae-5349-11ec-9989-001a4a16016f-node-exporter.jwang-ceph04 2> /dev/null
+/bin/podman run --rm --ipc=host --net=host --init --name ceph-0c1839ae-5349-11ec-9989-001a4a16016f-node-exporter-jwang-ceph04 --user 65534 -d --log-driver journald --conmon-pidfile /run/ceph-0c1839ae-5349-11ec-9989-001a4a16016f@node-exporter.jwang-ceph04.service-pid --cidfile /run/ceph-0c1839ae-5349-11ec-9989-001a4a16016f@node-exporter.jwang-ceph04.service-cid -e CONTAINER_IMAGE=registry.redhat.io/openshift4/ose-prometheus-node-exporter:v4.6 -e NODE_NAME=jwang-ceph04.example.com -e CEPH_USE_RANDOM_NONCE=1 -e TCMALLOC_MAX_TOTAL_THREAD_CACHE_BYTES=134217728 -v /proc:/host/proc:ro -v /sys:/host/sys:ro -v /:/rootfs:ro registry.redhat.io/openshift4/ose-prometheus-node-exporter:v4.6 --no-collector.timex
+
+# 解决方法是在对应节点上手工执行 podman pull 和 podman tag
+[root@jwang-ceph04 ~]# podman pull helper.example.com:5000/openshift4/ose-prometheus-node-exporter:v4.6
+[root@jwang-ceph04 ~]# podman tag helper.example.com:5000/openshift4/ose-prometheus-node-exporter:v4.6 registry.redhat.io/openshift4/ose-prometheus-node-exporter:v4.6
+
+# 看看 cephfs mds 服务
+ceph fs volume create cephfs
+ceph orch apply mds cephfs --placement="1 jwang-ceph04.example.com"
+
+# 创建时可以为 bootstrap 传递初始配置文件
 ```
