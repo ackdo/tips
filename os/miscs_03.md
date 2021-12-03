@@ -2093,9 +2093,6 @@ HEALTH_WARN 1 failed cephadm daemon(s)
 # 为节点打标签 osd
 ceph orch host label add jwang-ceph04.example.com osd
 
-# 为节点打标签 mds
-ceph orch host label add jwang-ceph04.example.com mds
-
 # 关于 failed cephadm daemon(s)
 # 原因是在节点上的 node-exporter 无法启动
 # 检查 node-exporter unit 文件内容
@@ -2112,6 +2109,8 @@ set -e
 [root@jwang-ceph04 ~]# podman pull helper.example.com:5000/openshift4/ose-prometheus-node-exporter:v4.6
 [root@jwang-ceph04 ~]# podman tag helper.example.com:5000/openshift4/ose-prometheus-node-exporter:v4.6 registry.redhat.io/openshift4/ose-prometheus-node-exporter:v4.6
 
+# 为节点打标签 mds
+ceph orch host label add jwang-ceph04.example.com mds
 # 看看 cephfs mds 服务
 ceph fs volume create cephfs
 ceph orch apply mds cephfs --placement="1 jwang-ceph04.example.com"
@@ -2173,4 +2172,8 @@ Using recent ceph image helper.example.com:5000/rhceph/rhceph-5-rhel8@sha256:7f3
 HEALTH_WARN 1 pool(s) have no replicas configured
 [WRN] POOL_NO_REDUNDANCY: 1 pool(s) have no replicas configured
     pool 'device_health_metrics' has no replicas configured
+
+HEALTH_WARN insufficient standby MDS daemons available
+[WRN] MDS_INSUFFICIENT_STANDBY: insufficient standby MDS daemons available
+    have 0; want 1 more
 ```
