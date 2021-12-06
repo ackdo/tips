@@ -2293,7 +2293,29 @@ ceph fs set cephfs standby_count_wanted 0
 # 以下命令在 Window 10 Education 版上无需执行
 # Dism /online /Get-Features
 # Dism /online /Enable-Feature:NFS-Administration
+# https://blog.csdn.net/liuqun69/article/details/82457617
+# https://cloud.tencent.com/developer/article/1840455
+# 重启 nfs client
+# nfsadmin client stop
+# nfsadmin client start
+# https://docs.datafabric.hpe.com/62/AdministratorGuide/MountingNFSonWindowsClient.html
+# ERROR: Unsupported Windows Version
 
-
+cephadm shell
+[ceph: root@jwang-ceph04 /]# ceph mgr module enable nfs
+[ceph: root@jwang-ceph04 /]# ceph nfs cluster info nfs1 
+{
+    "nfs1": [
+        {
+            "hostname": "jwang-ceph04.example.com",
+            "ip": "10.66.208.125",
+            "port": 2049
+        }
+    ]
+}
 
 ```
+
+### Windows 11 and KVM
+https://getlabsdone.com/how-to-install-windows-11-on-kvm/<br>
+https://blogs.ovirt.org/wp-content/uploads/2021/09/05-TPM-support-in-oVirt-Milan-Zamazal-Tomas-Golembiovsky.pdf<br>
