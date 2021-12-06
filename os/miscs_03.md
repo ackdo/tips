@@ -2273,6 +2273,15 @@ touch: setting times of 'a': No such file or directory
 # 用 s3 上传文件后
 # nfs 加载可以拷贝文件并且创建文件了
 
+# 根据 ceph orch ls 的输出调整 mon 和 mgr 的 placement
+ceph orch ls
+ceph orch apply mon --placement="1 jwang-ceph04.example.com"
+ceph orch apply mgr --placement="1 jwang-ceph04.example.com"
 # Window 10 nfs 文件
 # https://blog.csdn.net/qq_34158598/article/details/81976063
+# https://kenvix.com/post/win10-mount-nfs/
+# https://blog.csdn.net/a603423130/article/details/100139226
+# https://jermsmit.com/mount-nfs-share-in-windows-10/
+# Win_R: OptionalFeatures 
+
 ```
