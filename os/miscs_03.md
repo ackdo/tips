@@ -2229,4 +2229,50 @@ ceph dashboard set-ganesha-clusters-rados-pool-namespace nfs_ganesha/nfs1
 
 [root@jwang-ceph04 ~]# ceph dashboard set-ganesha-clusters-rados-pool-namespace nfs_ganesha/nfs1
 Option GANESHA_CLUSTERS_RADOS_POOL_NAMESPACE updated
+
+# 配置 nfs export object gateway
+# https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html-single/dashboard_guide/index#management-of-nfs-ganesha-exports-on-the-ceph-dashboard
+# https://docs.google.com/document/d/1DxS3oKsBvzgcYmnERfoIpULcJVmpPG0rIzMSgRgFL24/edit?usp=sharing
+
+[ceph: root@jwang-ceph04 /]# ceph status
+  cluster:
+    id:     a31452c6-53f2-11ec-a115-001a4a16016f
+    health: HEALTH_WARN
+            insufficient standby MDS daemons available
+ 
+  services:
+    mon:     1 daemons, quorum jwang-ceph04.example.com (age 2d)
+    mgr:     jwang-ceph04.example.com.myares(active, since 3d)
+    mds:     1/1 daemons up
+    osd:     3 osds: 3 up (since 2d), 3 in (since 2d)
+    rgw:     1 daemon active (1 hosts, 1 zones)
+    rgw-nfs: 1 daemon active (1 hosts, 1 zones)
+ 
+  data:
+    volumes: 1/1 healthy
+    pools:   8 pools, 201 pgs
+    objects: 253 objects, 7.9 KiB
+    usage:   69 MiB used, 30 GiB / 30 GiB avail
+    pgs:     201 active+clean
+ 
+  io:
+    client:   7.2 KiB/s rd, 170 B/s wr, 8 op/s rd, 2 op/s wr
+
+# 安装 nfs 客户端
+[root@jwang-ceph04 ~]# yum install -y nfs-utils 
+[root@jwang-ceph04 ~]# mkdir -p /tmp/nfs
+[root@jwang-ceph04 ~]# mount -t nfs 10.66.208.125:/test /tmp/nfs
+[root@jwang-ceph04 ~]# mount | grep nfs
+10.66.208.125:/ on /tmp/nfs type nfs4 (rw,relatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=10.66.208.125,local_lock=none,addr=10.66.208.125)
+[root@jwang-ceph04 ~]# cd /tmp/nfs
+
+# 报错
+overlayfs: unrecognized mount option "volatile" or missing value
+touch: setting times of 'a': No such file or directory
+
+# 用 s3 上传文件后
+# nfs 加载可以拷贝文件并且创建文件了
+
+# Window 10 nfs 文件
+# https://blog.csdn.net/qq_34158598/article/details/81976063
 ```
