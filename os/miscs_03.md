@@ -2212,6 +2212,9 @@ ceph dashboard set-rgw-api-secret-key -i secret_key
 ceph dashboard set-rgw-api-host 10.66.208.125
 ceph dashboard set-rgw-api-port 80
 
+# 查看 ceph dashboard feature
+ceph dashboard feature status
+
 # 部署 nfs 服务
 # https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html-single/dashboard_guide/index#management-of-nfs-ganesha-exports-on-the-ceph-dashboard
 [ceph: root@jwang-ceph04 /]# ceph osd pool create nfs_ganesha 32 32 
