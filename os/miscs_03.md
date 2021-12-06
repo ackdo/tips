@@ -1977,7 +1977,7 @@ done
 # 设置 /etc/hosts
 sed -i '/jwang-ceph04.example.com/d' /etc/hosts
 cat >> /etc/hosts <<EOF
-10.66.208.125   jwang-ceph04.example.com
+10.66.208.125   jwang-ceph04.example.com    jwang-ceph04
 EOF
 cat >> /etc/hosts <<EOF
 10.66.208.121   helper.example.com
@@ -2180,6 +2180,50 @@ HEALTH_WARN insufficient standby MDS daemons available
 ceph fs ls
 ceph mds stat
 ceph health detail
+# 部署 nfs ganesha daemon
+# https://docs.ceph.com/en/pacific/cephadm/services/nfs/
+
+# 部署 rgw 服务
+ceph orch host label add jwang-ceph04.example.com rgw
+ceph orch apply rgw default default --placement='1 jwang-ceph04.example.com'
+
+# 下载镜像
+[root@jwang-ceph04 rhcs5]# podman pull helper.example.com:5000/openshift4/ose-prometheus:v4.6
+[root@jwang-ceph04 rhcs5]# podman tag helper.example.com:5000/openshift4/ose-prometheus:v4.6 registry.redhat.io/openshift4/ose-prometheus:v4.6
+[root@jwang-ceph04 rhcs5]# podman pull helper.example.com:5000/openshift4/ose-prometheus-alertmanager:v4.6
+[root@jwang-ceph04 rhcs5]# podman tag helper.example.com:5000/openshift4/ose-prometheus-alertmanager:v4.6 registry.redhat.io/openshift4/ose-prometheus-alertmanager:v4.6
+[root@jwang-ceph04 rhcs5]# podman pull helper.example.com:5000/rhceph/rhceph-5-dashboard-rhel8:5 
+[root@jwang-ceph04 rhcs5]# podman tag helper.example.com:5000/rhceph/rhceph-5-dashboard-rhel8:5 registry.redhat.io/rhceph/rhceph-5-dashboard-rhel8:5
+[root@jwang-ceph04 rhcs5]# podman tag helper.example.com:5000/rhceph/rhceph-5-dashboard-rhel8:5 registry.redhat.io/rhceph/rhceph-5-dashboard-rhel8:latest
+
+# 更改 ceph dashboard admin password
+echo -n "p@ssw0rd" > password.txt
+# ceph dashboard ac-user-create admin -i password.txt administrator
+ceph dashboard ac-user-set-password admin -i password.txt 
+
+# 把 ceph dashboard 和 rgw 集成起来
+# https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html-single/dashboard_guide/index#management-of-ceph-object-gateway-using-the-dashboard
+radosgw-admin user create --uid=test_user --display-name=TEST_USER --system
+radosgw-admin user info --uid test_user
+echo -n $(radosgw-admin user info --uid test_user | grep access_key | awk '{print $2}' | sed -e 's|"||g' -e 's|,$||') > access_key
+echo -n $(radosgw-admin user info --uid test_user | grep secret_key | awk '{print $2}' | sed -e 's|"||g' -e 's|,$||')  > secret_key
+ceph dashboard set-rgw-api-access-key -i access_key
+ceph dashboard set-rgw-api-secret-key -i secret_key
+ceph dashboard set-rgw-api-host 10.66.208.125
+ceph dashboard set-rgw-api-port 80
+
+# 部署 nfs 服务
+# https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html-single/dashboard_guide/index#management-of-nfs-ganesha-exports-on-the-ceph-dashboard
+[ceph: root@jwang-ceph04 /]# ceph osd pool create nfs_ganesha 32 32 
+pool 'nfs_ganesha' created
+[ceph: root@jwang-ceph04 /]# ceph osd dump | grep pool
 
 
+ceph osd pool create nfs_ganesha
+ceph osd pool application enable nfs_ganesha rgw
+ceph orch apply nfs nfs1 --pool nfs_ganesha --namespace nfs-ns --placement="1 jwang-ceph04.example.com"
+ceph dashboard set-ganesha-clusters-rados-pool-namespace nfs_ganesha/nfs1
+
+[root@jwang-ceph04 ~]# ceph dashboard set-ganesha-clusters-rados-pool-namespace nfs_ganesha/nfs1
+Option GANESHA_CLUSTERS_RADOS_POOL_NAMESPACE updated
 ```
