@@ -2113,7 +2113,7 @@ set -e
 ceph orch host label add jwang-ceph04.example.com mds
 # 看看 cephfs mds 服务
 ceph fs volume create cephfs
-ceph orch apply mds cephfs --placement="1 jwang-ceph04.example.com"
+ceph orch apply mds cephfs --placement="2 jwang-ceph04.example.com jwang-ceph04.example.com"
 
 # rhcs5 purge/remove cluster
 # https://bugzilla.redhat.com/show_bug.cgi?id=1881192
@@ -2277,6 +2277,13 @@ touch: setting times of 'a': No such file or directory
 ceph orch ls
 ceph orch apply mon --placement="1 jwang-ceph04.example.com"
 ceph orch apply mgr --placement="1 jwang-ceph04.example.com"
+
+# 设置 ceph fs 需要的 standby mds 的数量
+ceph fs ls
+ceph fs set cephfs standby_count_wanted 0
+# 尝试在 single node 上起两个 mds 实例，上面的命令生效了，无需执行
+# ceph orch apply mds cephfs --placement="2 jwang-ceph04.example.com jwang-ceph04.example.com"
+
 # Window 10 nfs 文件
 # https://blog.csdn.net/qq_34158598/article/details/81976063
 # https://kenvix.com/post/win10-mount-nfs/
