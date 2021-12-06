@@ -2290,5 +2290,10 @@ ceph fs set cephfs standby_count_wanted 0
 # https://blog.csdn.net/a603423130/article/details/100139226
 # https://jermsmit.com/mount-nfs-share-in-windows-10/
 # Win_R: OptionalFeatures 
+# 以下命令在 Window 10 Education 版上无需执行
+# Dism /online /Get-Features
+# Dism /online /Enable-Feature:NFS-Administration
+
+
 
 ```
