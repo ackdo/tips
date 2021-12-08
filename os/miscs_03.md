@@ -2308,7 +2308,8 @@ ceph fs set cephfs standby_count_wanted 0
 # 尝试用 nfs-win
 # https://github.com/billziss-gh/nfs-win
 net use x: "\\nfs\test=0.0@10.66.208.125\test"
-# 尝试用 dokany
+# 尝试用 fuse-nfs + dokany
+# https://github.com/Daniel-Abrecht/fuse-nfs-crossbuild-scripts/
 # https://github.com/dokan-dev/dokany
 
 cephadm shell
