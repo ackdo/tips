@@ -2319,3 +2319,16 @@ cephadm shell
 ### Windows 11 and KVM
 https://getlabsdone.com/how-to-install-windows-11-on-kvm/<br>
 https://blogs.ovirt.org/wp-content/uploads/2021/09/05-TPM-support-in-oVirt-Milan-Zamazal-Tomas-Golembiovsky.pdf<br>
+
+### 用 openssl s_client 命令检查站点是否支持 TLSv1 和 SSLv3 
+```
+# 出于安全的考量 TLSv1 和 SSLv3 应该关闭
+# echo|openssl s_client -connect xx.xxx.xx.xx:8443 -ssl3 2>/dev/null|grep -e 'Secure Renegotiation IS' -e 'Cipher is ' -e 'Protocol :'
+New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-SHA
+Secure Renegotiation IS supported
+ Protocol : SSLv3
+# echo|openssl s_client -connect xx.xxx.xx.xx:8443 -tls1 2>/dev/null|grep -e 'Secure Renegotiation IS' -e 'Cipher is ' -e 'Protocol :'
+New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-SHA
+Secure Renegotiation IS supported
+ Protocol : TLSv1
+```
