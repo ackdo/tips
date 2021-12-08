@@ -2300,6 +2300,16 @@ ceph fs set cephfs standby_count_wanted 0
 # nfsadmin client start
 # https://docs.datafabric.hpe.com/62/AdministratorGuide/MountingNFSonWindowsClient.html
 # ERROR: Unsupported Windows Version
+# https://graspingtech.com/mount-nfs-share-windows-10/
+# https://github.com/nfs-ganesha/nfs-ganesha/issues/281
+# 为了让 windows nfs client 工作，需要先用 linux 客户端使用 nfs v3 mount 加载 nfs export
+# 08/12/2021 03:55:57 : epoch 61b02c72 : jwang-ceph04.example.com : ganesha.nfsd-6[reaper] rados_cluster_end_grace :CLIENT ID :EVENT :Failed to remove rec-0000000000000007:nfs.nfs1.jwang-ceph04: -2
+# 08/12/2021 03:55:57 : epoch 61b02c72 : jwang-ceph04.example.com : ganesha.nfsd-6[reaper] nfs_lift_grace_locked :STATE :EVENT :NFS Server Now NOT IN GRACE
+# 尝试用 nfs-win
+# https://github.com/billziss-gh/nfs-win
+net use x: "\\nfs\test=0.0@10.66.208.125\test"
+# 尝试用 dokany
+# https://github.com/dokan-dev/dokany
 
 cephadm shell
 [ceph: root@jwang-ceph04 /]# ceph mgr module enable nfs
