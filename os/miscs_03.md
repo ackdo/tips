@@ -2269,9 +2269,11 @@ Option GANESHA_CLUSTERS_RADOS_POOL_NAMESPACE updated
 # podman exec -it <nfspod> bash
 # 编辑 /etc/ganesha/ganesha.conf
 # 把 Protocols 改为 3,4
+# 添加 Bind_Addr 
 NFS_CORE_PARAM {
         Enable_NLM = false;
         Enable_RQUOTA = false;
+        Bind_Addr = 10.66.208.125;
         Protocols = 3,4;
 }
 # 退出 nfspod，重启 nfs 服务
@@ -2279,7 +2281,15 @@ systemctl restart ceph-a31452c6-53f2-11ec-a115-001a4a16016f@nfs.nfs1.jwang-ceph0
 systemctl status ceph-a31452c6-53f2-11ec-a115-001a4a16016f@nfs.nfs1.jwang-ceph04.service
 
 # 挂载 nfsver3 
-mount -t nfs -o nfsvers=3,noacl 10.66.208.125:/test /tmp/nfs 
+# 添加 mountd port
+[root@jwang-ceph04 ~]# rpcinfo -p 10.66.208.125 | grep -E " 3 " | grep -E "tcp"
+    100000    3   tcp    111  portmapper
+    100003    3   tcp   2049  nfs
+    100005    3   tcp  38733  mountd
+[root@jwang-ceph04 ~]# firewall-cmd 
+firewall-cmd --add-port=38733/tcp --permanent
+firewall-cmd --reload
+mount -t nfs -o nfsvers=3,proto=tcp,noacl 10.66.208.125:/test /tmp/nfs 
 
 # 报错
 mount.nfs: access denied by server while mounting 10.66.208.125:/test
@@ -2330,6 +2340,26 @@ EOF
 [ceph: root@jwang-ceph04 /]# rados -p nfs_ganesha -N nfs-ns put export-1 export-1
 # 检查更新
 [ceph: root@jwang-ceph04 /]# rados -p nfs_ganesha -N nfs-ns get export-1 -
+
+# 重启 nfs ganesha
+[root@jwang-ceph04 ~]# systemctl restart ceph-a31452c6-53f2-11ec-a115-001a4a16016f@nfs.nfs1.jwang-ceph04.service 
+# 添加 nfs version3 防火墙规则
+firewall-cmd --add-service={nfs3,mountd,rpc-bind} --permanent 
+firewall-cmd --reload
+
+# 报错
+[root@jwang-ceph04 ~]# mount -t nfs -o nfsvers=3 10.66.208.125:/test /tmp/nfs
+...
+mount.nfs: access denied by server while mounting 10.66.208.125:/test
+
+# rpcinfo 显示 nfs vers 3 是存在的
+[root@jwang-ceph04 ~]# rpcinfo -p 10.66.208.125 | grep " 3 " 
+    100000    3   tcp    111  portmapper
+    100000    3   udp    111  portmapper
+    100003    3   udp   2049  nfs
+    100003    3   tcp   2049  nfs
+    100005    3   udp  59743  mountd
+    100005    3   tcp  35325  mountd
 
 
 # 报错
