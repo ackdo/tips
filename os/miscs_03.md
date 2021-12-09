@@ -2390,8 +2390,9 @@ cat > /etc/exports <<EOF
 /srv/nfs4         *(rw,sync,no_subtree_check,no_root_squash)
 EOF
 
-sudo firewall-cmd --new-zone=nfs --permanent
-sudo firewall-cmd --zone=nfs --add-service=nfs --permanent
+# https://computingforgeeks.com/install-and-configure-nfs-server-on-centos-rhel/
+sudo firewall-cmd --add-service=nfs --permanent
+sudo firewall-cmd --add-service={nfs3,mountd,rpc-bind} --permanent 
 sudo firewall-cmd --reload
 
 # export nfs share on nfs server
@@ -2399,4 +2400,11 @@ sudo exportfs -r
 
 # check nfsd versions
 sudo cat /proc/fs/nfsd/versions
+
+# mount nfs with version 3
+mkdir -p /tmp/nfs
+mount -t nfs -o nfsvers=3 10.66.208.121:/srv/nfs4 /tmp/nfs
+ls /tmp/nfs
+touch /tmp/nfs/aaa
+umount /tmp/nfs
 ```
