@@ -2364,4 +2364,7 @@ $ kubectl config use-context project/apihostfqdn:port:6443/youruser
 # grub2-mkconfig -o /boot/grub2/grub.cfg
 # grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg
 # grub2-install --force --target=i386-pc /dev/vda
+
+# in order to change the boot from UEFI to BIOS, you would also need to make sure that the boot loader 
+# is installed to the master boot record (on MBR systems) or create a BIOS boot partition (on GPT systems).
 ```
