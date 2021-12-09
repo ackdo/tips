@@ -2437,3 +2437,7 @@ ls /tmp/nfs
 touch /tmp/nfs/aaa
 umount /tmp/nfs
 ```
+
+### 一些关于 Edge 和 IoT 的链接
+https://docs.microsoft.com/en-us/answers/questions/611375/installing-iot-edge-on-rhel-8.html<br>
+https://mobyproject.org/<br>
