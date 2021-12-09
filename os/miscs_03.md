@@ -2357,3 +2357,11 @@ $ kubectl config set-credentials youruser/apihostfqdn:port --token=tokenfromwebc
 $ kubectl config set-context project/apihostfqdn:port/youruser --cluster=apihostfqdn:port --user=youruser/apihostfqdn:port --namespace=project
 $ kubectl config use-context project/apihostfqdn:port:6443/youruser
 ```
+
+### CentOS 在 UEFI 部署下兼容 BIOS 启动的步骤
+```
+# yum -y install grub2-pc
+# grub2-mkconfig -o /boot/grub2/grub.cfg
+# grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg
+# grub2-install --force --target=i386-pc /dev/vda
+```
