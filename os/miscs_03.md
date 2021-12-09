@@ -2288,9 +2288,15 @@ systemctl status ceph-a31452c6-53f2-11ec-a115-001a4a16016f@nfs.nfs1.jwang-ceph04
     100005    3   tcp  38733  mountd
 [root@jwang-ceph04 ~]# firewall-cmd 
 firewall-cmd --add-port=38733/tcp --permanent
+firewall-cmd --add-port=57897/tcp --permanent
+
 firewall-cmd --reload
 mount -t nfs -o nfsvers=3,proto=tcp,noacl 10.66.208.125:/test /tmp/nfs 
+mount -t nfs -vvvv 10.66.208.125:/test /tmp/nfs 
+mount -t nfs -o nfsvers=3,proto=tcp -vvvv 10.66.208.125:/test /tmp/nfs 
 
+# nfs-ganesha 日志
+# https://documentation.suse.com/ses/7/html/ses-all/bp-troubleshooting-nfs.html
 # 报错
 mount.nfs: access denied by server while mounting 10.66.208.125:/test
 # 社区文档 radosgw + nfs ganesha
