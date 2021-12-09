@@ -2308,7 +2308,7 @@ ceph fs set cephfs standby_count_wanted 0
 # 尝试用 nfs-win
 # https://github.com/billziss-gh/nfs-win
 net use x: "\\nfs\test=0.0@10.66.208.125\test"
-# 尝试用 fuse-nfs + dokany
+# 尝试用 fuse-nfs +  dokany
 # https://github.com/Daniel-Abrecht/fuse-nfs-crossbuild-scripts/
 # https://github.com/dokan-dev/dokany
 
@@ -2342,4 +2342,18 @@ Secure Renegotiation IS supported
 New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-SHA
 Secure Renegotiation IS supported
  Protocol : TLSv1
+```
+
+### 手工生成 kubeconfig 的方法
+```
+# log in on the web console and select youruser > get login command
+# authenticate with your user/password and click “display token”, copy the API URL and token values from there.
+### replace dots with dashes on the FQDN of your API host in the following commands, EXCEPT when it is an actual URL (argument to --server)
+### replace apihostfqdn, port, youruser, project, and tokenfromwebconsole with values that match your cluster
+
+### kubectl does not require that you use those long and redundant keys, not requires that the key of a context matches the name of the project and so on, but this is how oc commands set the kubeconfig file so if you follow its conventions you should be able to switch from kubectl to oc and vice-versa if you need.
+$ kubectl config set-cluster apihostfqdn:port --server=https://apihostfqdn:port
+$ kubectl config set-credentials youruser/apihostfqdn:port --token=tokenfromwebconsole
+$ kubectl config set-context project/apihostfqdn:port/youruser --cluster=apihostfqdn:port --user=youruser/apihostfqdn:port --namespace=project
+$ kubectl config use-context project/apihostfqdn:port:6443/youruser
 ```
