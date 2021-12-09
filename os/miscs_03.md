@@ -2297,6 +2297,21 @@ mount -t nfs -o nfsvers=3,proto=tcp -vvvv 10.66.208.125:/test /tmp/nfs
 
 # nfs-ganesha 日志
 # https://documentation.suse.com/ses/7/html/ses-all/bp-troubleshooting-nfs.html
+# 获取 fsid 
+# [root@jwang-ceph04 ~]# cephadm ls | grep fsid 
+# 获取 instance name
+# [root@jwang-ceph04 ~]# cephadm ls | grep name 
+[root@jwang-ceph04 ~]# cephadm logs --fsid a31452c6-53f2-11ec-a115-001a4a16016f --name nfs.nfs1.jwang-ceph04 
+
+# 登陆 nfs pod
+# 修改 /etc/ganesha/ganesha.conf 
+LOG {   
+        COMPONENTS {
+                ALL=FULL_DEBUG;
+        }
+}
+# 重启 nfs ganesha 服务 
+
 # 报错
 mount.nfs: access denied by server while mounting 10.66.208.125:/test
 # 社区文档 radosgw + nfs ganesha
@@ -2367,6 +2382,23 @@ mount.nfs: access denied by server while mounting 10.66.208.125:/test
     100005    3   udp  59743  mountd
     100005    3   tcp  35325  mountd
 
+# 报错
+mnt_Mnt :NFS3 :INFO :MOUNT: Export entry / does not support NFS v3
+# http://lists.ceph.com/pipermail/ceph-users-ceph.com/2018-June/027675.html
+# https://access.redhat.com/documentation/zh-cn/red_hat_ceph_storage/3/html/object_gateway_guide_for_ubuntu/exporting-the-namespace-to-nfs-ganesha-rgw
+# 登陆 nfs pod
+# 修改 /etc/ganesha/ganesha.conf 
+# 在 NFS_CORE_PARAM 里添加 mount_path_pseudo
+NFS_CORE_PARAM {
+        Enable_NLM = false;
+        Enable_RQUOTA = false;
+        Bind_Addr = 10.66.208.125;
+        Protocols = 3,4;
+        mount_path_pseudo = true;
+}
+# 重启 nfs ganesha 服务
+# 这次可以用 nfsvers=3 加载 nfs ganesha 共享了
+mount -t nfs -o nfsvers=3,proto=tcp -vvvv 10.66.208.125:/test /tmp/nfs 
 
 # 报错
 overlayfs: unrecognized mount option "volatile" or missing value
