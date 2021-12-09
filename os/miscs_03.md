@@ -2266,6 +2266,72 @@ Option GANESHA_CLUSTERS_RADOS_POOL_NAMESPACE updated
 10.66.208.125:/ on /tmp/nfs type nfs4 (rw,relatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=10.66.208.125,local_lock=none,addr=10.66.208.125)
 [root@jwang-ceph04 ~]# cd /tmp/nfs
 
+# podman exec -it <nfspod> bash
+# 编辑 /etc/ganesha/ganesha.conf
+# 把 Protocols 改为 3,4
+NFS_CORE_PARAM {
+        Enable_NLM = false;
+        Enable_RQUOTA = false;
+        Protocols = 3,4;
+}
+# 退出 nfspod，重启 nfs 服务
+systemctl restart ceph-a31452c6-53f2-11ec-a115-001a4a16016f@nfs.nfs1.jwang-ceph04.service
+systemctl status ceph-a31452c6-53f2-11ec-a115-001a4a16016f@nfs.nfs1.jwang-ceph04.service
+
+# 挂载 nfsver3 
+mount -t nfs -o nfsvers=3,noacl 10.66.208.125:/test /tmp/nfs 
+
+# 报错
+mount.nfs: access denied by server while mounting 10.66.208.125:/test
+# 社区文档 radosgw + nfs ganesha
+# https://docs.ceph.com/en/latest/radosgw/nfs/
+
+cephadm shell
+# %url    rados://nfs_ganesha/nfs-ns/conf-nfs.nfs1
+# rados -p nfs_ganesha -N nfs-ns get conf-nfs.nfs1 -
+# %url "rados://nfs_ganesha/nfs-ns/export-1"
+# rados -p nfs_ganesha -N nfs-ns get export-1 -
+[ceph: root@jwang-ceph04 /]# rados -p nfs_ganesha -N nfs-ns get export-1 -
+EXPORT {
+    export_id = 1;
+    path = "test";
+    pseudo = "/test";
+    access_type = "RW";
+    squash = "no_root_squash";
+    protocols = 4;
+    transports = "TCP";
+    FSAL {
+        name = "RGW";
+        user_id = "test_user";
+        access_key_id = "JKT0TCBHNQPAZ8BGH9SP";
+        secret_access_key = "aBm3DNOwicyhgy9EBNTWLISQBvZeJgNA5ArUTp1K";
+    }
+
+}
+# 更新这个对象, protocols 为 3,4
+[ceph: root@jwang-ceph04 /]# cat > export-1 <<EOF
+EXPORT {
+    export_id = 1;
+    path = "test";
+    pseudo = "/test";
+    access_type = "RW";
+    squash = "no_root_squash";
+    protocols = 3,4;
+    transports = "TCP";
+    FSAL {
+        name = "RGW";
+        user_id = "test_user";
+        access_key_id = "JKT0TCBHNQPAZ8BGH9SP";
+        secret_access_key = "aBm3DNOwicyhgy9EBNTWLISQBvZeJgNA5ArUTp1K";
+    }
+
+}
+EOF
+[ceph: root@jwang-ceph04 /]# rados -p nfs_ganesha -N nfs-ns put export-1 export-1
+# 检查更新
+[ceph: root@jwang-ceph04 /]# rados -p nfs_ganesha -N nfs-ns get export-1 -
+
+
 # 报错
 overlayfs: unrecognized mount option "volatile" or missing value
 touch: setting times of 'a': No such file or directory
