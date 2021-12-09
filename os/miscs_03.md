@@ -2311,6 +2311,11 @@ net use x: "\\nfs\test=0.0@10.66.208.125\test"
 # 尝试用 fuse-nfs +  dokany
 # https://github.com/Daniel-Abrecht/fuse-nfs-crossbuild-scripts/
 # https://github.com/dokan-dev/dokany
+# fuse-nfs.exec -D -n nfs://10.66.208.121/srv/nfs4 -m 'X:'
+# Dokan Error: DokanMount Failed
+# Ioctl failed with waif for code 995
+# 经过测试，支持命令是
+# fuse-nfs.exec -D -n nfs://10.66.208.121/srv/nfs4 -m X
 
 cephadm shell
 [ceph: root@jwang-ceph04 /]# ceph mgr module enable nfs
