@@ -2325,6 +2325,15 @@ cephadm shell
     ]
 }
 
+# 日志报错
+# Dec 09 09:39:26 jwang-ceph04.example.com conmon[1848901]: level=error ts=2021-12-09T01:39:26.452Z caller=dispatch.go:309 component=dispatcher msg="Notify for alerts failed" num_alerts=1 err="ceph-dashboard/webhook[0]: notify retry canceled after 7 attempts: Post \"https://10.66.208.125:8443/api/prometheus_receiver\": x509: cannot validate certificate for 10.66.208.125 because it doesn't contain any IP SANs"
+# https://github.com/prometheus/prometheus/issues/1654
+
+# 设置 dashboard set-prometheus-api-ssl-verify 
+# https://docs.ceph.com/en/latest/api/mon_command_api/
+ceph dashboard set-prometheus-api-ssl-verify false
+ceph orch rm prometheus
+ceph orch apply prometheus
 ```
 
 ### Windows 11 and KVM
@@ -2367,4 +2376,27 @@ $ kubectl config use-context project/apihostfqdn:port:6443/youruser
 
 # in order to change the boot from UEFI to BIOS, you would also need to make sure that the boot loader 
 # is installed to the master boot record (on MBR systems) or create a BIOS boot partition (on GPT systems).
+```
+
+### CentOS 8 上的 nfsd 默认启用 v3, v4, v4.1 和 v4.2
+https://linuxize.com/post/how-to-install-and-configure-an-nfs-server-on-centos-8/
+```
+sudo dnf install nfs-utils
+sudo systemctl enable --now nfs-server
+
+sudo mkdir -p /srv/nfs4/{backups,www}
+
+cat > /etc/exports <<EOF
+/srv/nfs4         *(rw,sync,no_subtree_check,no_root_squash)
+EOF
+
+sudo firewall-cmd --new-zone=nfs --permanent
+sudo firewall-cmd --zone=nfs --add-service=nfs --permanent
+sudo firewall-cmd --reload
+
+# export nfs share on nfs server
+sudo exportfs -r 
+
+# check nfsd versions
+sudo cat /proc/fs/nfsd/versions
 ```
