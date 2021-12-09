@@ -2334,6 +2334,30 @@ cephadm shell
 # Dec 09 09:39:26 jwang-ceph04.example.com conmon[1848901]: level=error ts=2021-12-09T01:39:26.452Z caller=dispatch.go:309 component=dispatcher msg="Notify for alerts failed" num_alerts=1 err="ceph-dashboard/webhook[0]: notify retry canceled after 7 attempts: Post \"https://10.66.208.125:8443/api/prometheus_receiver\": x509: cannot validate certificate for 10.66.208.125 because it doesn't contain any IP SANs"
 # https://github.com/prometheus/prometheus/issues/1654
 
+# systemctl -l | grep prom
+# alert manager 的配置文件也在 /var/lib/ceph/a31452c6-53f2-11ec-a115-001a4a16016f/ 下
+# /var/lib/ceph/a31452c6-53f2-11ec-a115-001a4a16016f/alertmanager.jwang-ceph04/etc/alertmanager/alertmanager.yml
+# 添加 http_config: tls_config: insecure_skip_verify: true
+global:
+  resolve_timeout: 5m
+  http_config:
+    tls_config:
+      insecure_skip_verify: true
+# 重启 alertmanager service
+
+[root@jwang-ceph04 ~]# systemctl status ceph-a31452c6-53f2-11ec-a115-001a4a16016f@prometheus.jwang-ceph04.service 
+ ceph-a31452c6-53f2-11ec-a115-001a4a16016f@prometheus.jwang-ceph04.service - Ceph prometheus.jwang-ceph04 for a31452c6-53f2-11ec-a115-001>
+   Loaded: loaded (/etc/systemd/system/ceph-a31452c6-53f2-11ec-a115-001a4a16016f@.service; enabled; vendor preset: disabled)
+   Active: active (running) since Thu 2021-12-09 10:33:57 CST; 3h 29min ago
+  Process: 2411084 ExecStopPost=/bin/rm -f //run/ceph-a31452c6-53f2-11ec-a115-001a4a16016f@prometheus.jwang-ceph04.service-pid //run/ceph->
+  Process: 2411083 ExecStopPost=/bin/bash /var/lib/ceph/a31452c6-53f2-11ec-a115-001a4a16016f/prometheus.jwang-ceph04/unit.poststop (code=e>
+  Process: 2410974 ExecStop=/bin/bash -c /bin/podman stop ceph-a31452c6-53f2-11ec-a115-001a4a16016f-prometheus.jwang-ceph04 ; bash /var/li>
+  Process: 2411088 ExecStart=/bin/bash /var/lib/ceph/a31452c6-53f2-11ec-a115-001a4a16016f/prometheus.jwang-ceph04/unit.run (code=exited, s>
+  Process: 2411086 ExecStartPre=/bin/rm -f //run/ceph-a31452c6-53f2-11ec-a115-001a4a16016f@prometheus.jwang-ceph04.service-pid //run/ceph->
+ Main PID: 2411209 (conmon)
+
+
+
 # 设置 dashboard set-prometheus-api-ssl-verify 
 # https://docs.ceph.com/en/latest/api/mon_command_api/
 ceph dashboard set-prometheus-api-ssl-verify false
