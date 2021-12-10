@@ -2290,6 +2290,9 @@ systemctl status ceph-a31452c6-53f2-11ec-a115-001a4a16016f@nfs.nfs1.jwang-ceph04
 firewall-cmd --add-port=38733/tcp --permanent
 firewall-cmd --add-port=57897/tcp --permanent
 
+# mountd 的 tcp 端口每次都改变如何处理
+# https://www.ibm.com/support/pages/how-force-mountdlockd-use-specific-port
+
 firewall-cmd --reload
 mount -t nfs -o nfsvers=3,proto=tcp,noacl 10.66.208.125:/test /tmp/nfs 
 mount -t nfs -vvvv 10.66.208.125:/test /tmp/nfs 
@@ -2450,6 +2453,25 @@ net use x: "\\nfs\test=0.0@10.66.208.125\test"
 # Ioctl failed with waif for code 995
 # 经过测试，支持命令是
 # fuse-nfs.exec -D -n nfs://10.66.208.121/srv/nfs4 -m X
+# 加载 nfs-ganesha pseudo path mount
+# https://github.com/sahlberg/fuse-nfs
+# fuse-nfs.exec -D -u 0 -g 0 -r -n nfs://10.66.208.125/test?version=4 -m P
+
+# 为了兼容 fuse-nfs.exe 的 libnfs version=4
+# 登陆 nfs pod
+# 修改 /etc/ganesha/ganesha.conf 
+# 在 NFSv4 Minor_Versions 里 0
+NFSv4 { 
+        Delegations = false;
+        RecoveryBackend = 'rados_cluster';
+        Minor_Versions = 0, 1, 2;
+}
+# 重启 nfs pod
+# 测试的情况是 fuse-nfs.exe 不稳定
+# https://blog.csdn.net/qq_25675517/article/details/112339045
+# NFSClient 是 ms-nfs41-client
+# https://cloud.tencent.com/developer/article/1605657
+# NFSClient 使用 v4.1 协议目前看效果还行
 
 cephadm shell
 [ceph: root@jwang-ceph04 /]# ceph mgr module enable nfs
