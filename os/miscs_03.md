@@ -2243,7 +2243,6 @@ eb37459b8812  helper.example.com:5000/rhceph/rhceph-5-rhel8@sha256:7f374a6e1e8af
 # 从 aws 客户端访问 rgw s3 服务
 [root@jwang-ceph04 ~]# export AWS_CA_BUNDLE="/etc/pki/tls/certs/ca-bundle.crt"
 [root@jwang-ceph04 ~]# aws --endpoint=https://jwang-ceph04.example.com:443 s3 ls
-urllib3/connection.py:460: SubjectAltNameWarning: Certificate for jwang-ceph04.example.com has no `subjectAltName`, falling back to check for a `commonName` for now. This feature is being removed by major browsers and deprecated by RFC 2818. (See https://github.com/urllib3/urllib3/issues/497 for details.)
 2021-12-06 13:50:00 test
 
 # 添加 https 到防火墙
