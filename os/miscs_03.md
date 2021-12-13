@@ -2145,8 +2145,7 @@ Ceph Dashboard is now available at:
 
 You can access the Ceph CLI with:
 
-        sudo /usr/sbin/cephadm shell --fsid 88946910-53f0-11ec-ab5a-001a4a16016f -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyr
-ing
+        sudo /usr/sbin/cephadm shell --fsid 88946910-53f0-11ec-ab5a-001a4a16016f -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring
 
 Please consider enabling telemetry to help improve Ceph:
 
@@ -2197,7 +2196,7 @@ ceph health detail
 ceph orch host label add jwang-ceph04.example.com rgw
 ceph orch apply rgw default default --placement='1 jwang-ceph04.example.com'
 
-# 下载镜像
+# 下载镜像并且tag镜像
 [root@jwang-ceph04 rhcs5]# podman pull helper.example.com:5000/openshift4/ose-prometheus:v4.6
 [root@jwang-ceph04 rhcs5]# podman tag helper.example.com:5000/openshift4/ose-prometheus:v4.6 registry.redhat.io/openshift4/ose-prometheus:v4.6
 [root@jwang-ceph04 rhcs5]# podman pull helper.example.com:5000/openshift4/ose-prometheus-alertmanager:v4.6
@@ -2291,7 +2290,8 @@ systemctl restart ceph-a31452c6-53f2-11ec-a115-001a4a16016f@nfs.nfs1.jwang-ceph0
 systemctl status ceph-a31452c6-53f2-11ec-a115-001a4a16016f@nfs.nfs1.jwang-ceph04.service
 
 # 挂载 nfsver3 
-# 添加 mountd port
+# 为 firewall 添加 mountd port
+# 每次重启 nfs ganesha mountd port 都会改变
 [root@jwang-ceph04 ~]# rpcinfo -p 10.66.208.125 | grep -E " 3 " | grep -E "tcp"
     100000    3   tcp    111  portmapper
     100003    3   tcp   2049  nfs
