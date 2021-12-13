@@ -1736,6 +1736,16 @@ WHO    MASK LEVEL    OPTION                                           VALUE     
   mgr       advanced mgr/dashboard/RGW_API_SSL_VERIFY                 false                                    *  
 [TRUNCATED]
 
+这是一些 s3 图形化客户端软件
+winscp - Windows
+https://winscp.net/eng/docs/guide_amazon_s3
+cloudberry - Windows
+https://cloudberry-explorer-for-amazon-s3.en.softonic.com/
+cyberduck - Mac, Windows
+https://cyberduck.io/s3/
+rclone - Linux, Windows
+https://rclone.org/gui/
+https://github.com/guimou/rclone-web-on-openshift
 ```
 
 ### 增加 tripleo firewall 规则的模版
@@ -2597,3 +2607,7 @@ umount /tmp/nfs
 ### 一些关于 Edge 和 IoT 的链接
 https://docs.microsoft.com/en-us/answers/questions/611375/installing-iot-edge-on-rhel-8.html<br>
 https://mobyproject.org/<br>
+
+### OSP 16.2 关于 virt:av module 的问题
+https://bugzilla.redhat.com/show_bug.cgi?id=2027787#c4<br>
+https://bugzilla.redhat.com/show_bug.cgi?id=2030377<br>
