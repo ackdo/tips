@@ -2196,6 +2196,45 @@ ceph health detail
 ceph orch host label add jwang-ceph04.example.com rgw
 ceph orch apply rgw default default --placement='1 jwang-ceph04.example.com'
 
+# 创建证书
+[root@jwang-ceph04 ~]# mkdir -p /opt/rgw/certs
+[root@jwang-ceph04 ~]# cd /opt/rgw/certs
+[root@jwang-ceph04 certs]# openssl req -newkey rsa:4096 -nodes -sha256 -keyout domain.key -x509 -days 3650 -out domain.crt  -subj "/C=CN/ST=GD/L=SZ/O=Global Security/OU=IT Department/CN=jwang-ceph04.example.com"
+[root@jwang-ceph04 certs]# cp /opt/rgw/certs/domain.crt /etc/pki/ca-trust/source/anchors/
+[root@jwang-ceph04 certs]# update-ca-trust extract
+# 参考：https://greenstatic.dev/posts/2020/ssl-tls-rgw-ceph-config/
+[root@jwang-ceph04 ~]# cephadm shell
+[ceph: root@jwang-ceph04 /]# mkdir -p /opt/rgw/certs
+
+# 回到主机，找到 cephadm shell 对应的 pod id
+[root@jwang-ceph04 ~]# podman ps | grep ceph
+...
+5f9feddeb888  helper.example.com:5000/rhceph/rhceph-5-rhel8@sha256:7f374a6e1e8af2781a19a37146883597e7a422160ee86219ce6a5117e05a1682  -F -L STDERR -N N...  3 days ago     Up 3 days ago                 ceph-a31452c6-53f2-11ec-a115-001a4a16016f-nfs-nfs1-jwang-ceph04
+eb37459b8812  helper.example.com:5000/rhceph/rhceph-5-rhel8@sha256:7f374a6e1e8af2781a19a37146883597e7a422160ee86219ce6a5117e05a1682                        3 minutes ago  Up 3 minutes ago              interesting_poincare
+[root@jwang-ceph04 ~]# podman cp /opt/rgw/certs/. eb37459b8812:/opt/rgw/certs
+
+# 回到 cephadm shell 容器
+# https://greenstatic.dev/posts/2020/ssl-tls-rgw-ceph-config/
+# https://lists.ceph.io/hyperkitty/list/ceph-users@ceph.io/thread/ATIT67EMNE6VBNESBJO4JCIVCJ7Y75Q4/
+[ceph: root@jwang-ceph04 /]# ceph config-key set rgw/cert//default.crt -i /opt/rgw/certs/domain.crt
+[ceph: root@jwang-ceph04 /]# ceph config-key set rgw/cert//default.key -i /opt/rgw/certs/domain.key
+[ceph: root@jwang-ceph04 /]# ceph config dump | grep rgw_frontends
+[ceph: root@jwang-ceph04 /]# ceph config set client.rgw.default.jwang-ceph04.gscijv rgw_frontends "beast port=80 ssl_port=443 ssl_certificate=config://rgw/cert//default.crt ssl_private_key=config://rgw/cert//default.key"
+
+# 从 aws 客户端访问 rgw s3 服务
+[root@jwang-ceph04 ~]# export AWS_CA_BUNDLE="/etc/pki/tls/certs/ca-bundle.crt"
+[root@jwang-ceph04 ~]# aws --endpoint=https://jwang-ceph04.example.com:443 s3 ls
+urllib3/connection.py:460: SubjectAltNameWarning: Certificate for jwang-ceph04.example.com has no `subjectAltName`, falling back to check for a `commonName` for now. This feature is being removed by major browsers and deprecated by RFC 2818. (See https://github.com/urllib3/urllib3/issues/497 for details.)
+2021-12-06 13:50:00 test
+
+
+
+# 回到 ceph 主机
+# 查看 ceph 服务
+[root@jwang-ceph04 ~]# ceph orch ls
+# 重启 rgw.default
+[root@jwang-ceph04 ~]# ceph orch restart rgw.default
+
 # 下载镜像并且tag镜像
 # 需要在每个节点上做一遍
 [root@jwang-ceph04 rhcs5]# podman pull helper.example.com:5000/openshift4/ose-prometheus:v4.6
