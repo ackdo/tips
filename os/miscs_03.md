@@ -2231,8 +2231,9 @@ urllib3/connection.py:460: SubjectAltNameWarning: Certificate for jwang-ceph04.e
 [root@jwang-ceph04 ~]# firewall-cmd --add-service=https --permanent
 [root@jwang-ceph04 ~]# firewall-cmd --reload
 
-# Ceph使用系列之——Ceph RGW使用
-# https://www.codenong.com/cs106856875/
+# 查看 ceph config-key rgw/cert//default.crt 与 rgw/cert//default.key
+[ceph: root@jwang-ceph04 /]# ceph config-key get rgw/cert//default.crt
+[ceph: root@jwang-ceph04 /]# ceph config-key get rgw/cert//default.key
 
 
 # 回到 ceph 主机
