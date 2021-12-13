@@ -2195,8 +2195,8 @@ ceph health detail
 
 # 生成 cephfs client authorize
 ceph fs authorize cephfs client.cephfs.1 / rw
-# 注意创建 keyring 适合的文件
-ceph auth get-key client.cephfs.1 > /etc/ceph/keyring
+# 注意创建适合的 keyring 文件
+ceph auth get client.cephfs.1 > /etc/ceph/keyring
 mkdir /tmp/cephfs
 # 安装 cephfs 客户端
 yum install ceph-common
@@ -2204,8 +2204,10 @@ yum install ceph-fuse
 # 通过 ceph-fuse 挂载 cephfs
 ceph-fuse -n client.cephfs.1 -m jwang-ceph04:6789 --keyring=/etc/ceph/keyring /tmp/cephfs
 # 通过 kernel client 挂载 cephfs
+# 注意创建适合的 secret 文件
+ceph auth get-key client.cephfs.1 > /etc/ceph/secret
 # https://docs.ceph.com/en/latest/cephfs/mount-using-kernel-driver/#which-kernel-version
-mount -t ceph 10.66.208.125:6789:/ /tmp/cephfs -o name=cephfs.1,secretfile=/etc/ceph/keyring
+mount -t ceph 10.66.208.125:6789:/ /tmp/cephfs -o name=cephfs.1,secretfile=/etc/ceph/secret
 
 # 部署 rgw 服务
 ceph orch host label add jwang-ceph04.example.com rgw
@@ -2758,13 +2760,17 @@ C:/ProgrameData/ceph/ceph.conf
 # ceph auth list
 # 例如
 cat > keyring <<'EOF'
-[client.admin]
-   key = AQDnnqlhDzxCLRAAz7g8uQBaZGt8mmXQss8UaA==
+[client.cephfs.1]
+   key = AQCG6LZhcpH5GhAA2qal1ZACWGTJgiFsJlhjcw==
 EOF
+# 目前测试的情况是 client.admin 可以用 ceph-dokan.exe 挂载
+# client.cephfs.1 不行
 
 # 到 ceph-dokan.exe 所在的文件夹，挂载 cephfs 文件系统
 e:\
 cd "Program Files\Ceph\bin"
 ceph-dokan.exe -l x
+
+# 报错处理
 
 ```
