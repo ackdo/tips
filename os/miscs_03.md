@@ -2216,7 +2216,7 @@ ceph orch apply rgw default default --placement='1 jwang-ceph04.example.com'
 # 创建证书
 [root@jwang-ceph04 ~]# mkdir -p /opt/rgw/certs
 [root@jwang-ceph04 ~]# cd /opt/rgw/certs
-[root@jwang-ceph04 certs]# openssl req -newkey rsa:4096 -nodes -sha256 -keyout domain.key -x509 -days 3650 -out domain.crt  -subj "/C=CN/ST=GD/L=SZ/O=Global Security/OU=IT Department/CN=jwang-ceph04.example.com"
+[root@jwang-ceph04 certs]# openssl req -newkey rsa:4096 -nodes -sha256 -keyout domain.key -x509 -days 3650 -out domain.crt  -addext "subjectAltName = DNS:jwang-ceph04.example.com" -subj "/C=CN/ST=GD/L=SZ/O=Global Security/OU=IT Department/CN=jwang-ceph04.example.com"
 [root@jwang-ceph04 certs]# cp /opt/rgw/certs/domain.crt /etc/pki/ca-trust/source/anchors/
 [root@jwang-ceph04 certs]# update-ca-trust extract
 # 参考：https://greenstatic.dev/posts/2020/ssl-tls-rgw-ceph-config/
@@ -2236,7 +2236,9 @@ eb37459b8812  helper.example.com:5000/rhceph/rhceph-5-rhel8@sha256:7f374a6e1e8af
 [ceph: root@jwang-ceph04 /]# ceph config-key set rgw/cert//default.crt -i /opt/rgw/certs/domain.crt
 [ceph: root@jwang-ceph04 /]# ceph config-key set rgw/cert//default.key -i /opt/rgw/certs/domain.key
 [ceph: root@jwang-ceph04 /]# ceph config dump | grep rgw_frontends
+[ceph: root@jwang-ceph04 /]# ceph config set client.rgw.default.default rgw_frontends "beast port=80 ssl_port=443 ssl_certificate=config://rgw/cert//default.crt ssl_private_key=config://rgw/cert//default.key"
 [ceph: root@jwang-ceph04 /]# ceph config set client.rgw.default.jwang-ceph04.gscijv rgw_frontends "beast port=80 ssl_port=443 ssl_certificate=config://rgw/cert//default.crt ssl_private_key=config://rgw/cert//default.key"
+[ceph: root@jwang-ceph04 /]# ceph config dump | grep rgw_frontends
 
 # 从 aws 客户端访问 rgw s3 服务
 [root@jwang-ceph04 ~]# export AWS_CA_BUNDLE="/etc/pki/tls/certs/ca-bundle.crt"
