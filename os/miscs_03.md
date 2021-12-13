@@ -2188,6 +2188,7 @@ HEALTH_WARN insufficient standby MDS daemons available
 
 ceph fs ls
 ceph mds stat
+ceph fs status 
 ceph health detail
 # 部署 nfs ganesha daemon
 # https://docs.ceph.com/en/pacific/cephadm/services/nfs/
@@ -2234,6 +2235,7 @@ urllib3/connection.py:460: SubjectAltNameWarning: Certificate for jwang-ceph04.e
 # 查看 ceph config-key rgw/cert//default.crt 与 rgw/cert//default.key
 [ceph: root@jwang-ceph04 /]# ceph config-key get rgw/cert//default.crt
 [ceph: root@jwang-ceph04 /]# ceph config-key get rgw/cert//default.key
+[ceph: root@jwang-ceph04 /]# ceph config get client.rgw.default.jwang-ceph04.gscijv.rgw_frontends 
 
 
 # 回到 ceph 主机
@@ -2576,6 +2578,17 @@ global:
 ceph dashboard set-prometheus-api-ssl-verify false
 ceph orch rm prometheus
 ceph orch apply prometheus
+
+# 设置防火墙
+# https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html/configuration_guide/ceph-network-configuration
+# Mon
+[root@jwang-ceph04 ~]# firewall-cmd --zone=public --add-port=6789/tcp --permanent
+[root@jwang-ceph04 ~]# firewall-cmd --zone=public --add-port=3300/tcp --permanent
+# OSDs and MDS
+[root@jwang-ceph04 ~]# firewall-cmd --zone=public --add-port=6800-6830/tcp --permanent
+[root@jwang-ceph04 ~]# firewall-cmd --reload
+
+
 ```
 
 ### Windows 11 and KVM
@@ -2691,3 +2704,53 @@ Advanced -> Environment -> S3 -> URL style = Path
 
 ### Ceph使用系列之——Ceph RGW使用
 https://www.codenong.com/cs106856875/
+
+### ceph-dokan MOUNT CEPHFS ON WINDOWS
+https://docs.ceph.com/en/latest/cephfs/ceph-dokan/
+```
+# 参考: https://docs.ceph.com/en/latest/cephfs/ceph-dokan/
+# 参考: https://docs.ceph.com/en/latest/install/windows-install/
+# 从以下网址下载：https://cloudbase.it/ceph-for-windows/
+# Mount a Ceph cluster on Windows 10 using Ceph Dokan
+# https://www.youtube.com/watch?v=MAPMO9Z7kbE
+# https://cloudbase.it/ceph-on-windows-part-1/
+
+# Windows 配置文件
+C:/ProgrameData/ceph/ceph.conf
+
+[global]
+    log to stderr = true
+    ; Uncomment the following to use Windows Event Log
+    ; log to syslog = true
+ 
+    run dir = C:/ProgramData/ceph/out
+    crash dir = C:/ProgramData/ceph/out
+ 
+    ; Use the following to change the cephfs client log level
+    ; debug client = 2
+[client]
+    keyring = C:/ProgramData/ceph/keyring
+    ; log file = C:/ProgramData/ceph/out/$name.$pid.log
+    admin socket = C:/ProgramData/ceph/out/$name.$pid.asok
+ 
+    ; client_permissions = true
+    ; client_mount_uid = 1000
+    ; client_mount_gid = 1000
+[global]
+    mon host = 10.66.208.125
+
+# 创建文件 C:/ProgrameData/ceph/keyring
+# 为文件添加合适的 keyring 内容
+# ceph auth list
+# 例如
+cat > keyring <<'EOF'
+[client.admin]
+   key = AQDnnqlhDzxCLRAAz7g8uQBaZGt8mmXQss8UaA==
+EOF
+
+# 到 ceph-dokan.exe 所在的文件夹，挂载 cephfs 文件系统
+e:\
+cd "Program Files\Ceph\bin"
+ceph-dokan.exe -l x
+
+```
