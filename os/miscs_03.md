@@ -2195,13 +2195,16 @@ ceph health detail
 
 # 生成 cephfs client authorize
 ceph fs authorize cephfs client.cephfs.1 / rw
-ceph auth get client.cephfs.1 > /etc/ceph/keyring
+ceph auth get-key client.cephfs.1 > /etc/ceph/keyring
 mkdir /tmp/cephfs
 # 安装 cephfs 客户端
 yum install ceph-common
 yum install ceph-fuse
 # 通过 ceph-fuse 挂载 cephfs
 ceph-fuse -n client.cephfs.1 -m jwang-ceph04:6789 --keyring=/etc/ceph/keyring /tmp/cephfs
+# 通过 kernel client 挂载 cephfs
+# https://docs.ceph.com/en/latest/cephfs/mount-using-kernel-driver/#which-kernel-version
+mount -t ceph 10.66.208.125:6789:/ /tmp/cephfs -o name=cephfs.1,secretfile=/etc/ceph/keyring
 
 # 部署 rgw 服务
 ceph orch host label add jwang-ceph04.example.com rgw
