@@ -2195,6 +2195,7 @@ ceph health detail
 
 # 生成 cephfs client authorize
 ceph fs authorize cephfs client.cephfs.1 / rw
+# 注意创建 keyring 适合的文件
 ceph auth get-key client.cephfs.1 > /etc/ceph/keyring
 mkdir /tmp/cephfs
 # 安装 cephfs 客户端
