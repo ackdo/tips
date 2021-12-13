@@ -2227,6 +2227,12 @@ eb37459b8812  helper.example.com:5000/rhceph/rhceph-5-rhel8@sha256:7f374a6e1e8af
 urllib3/connection.py:460: SubjectAltNameWarning: Certificate for jwang-ceph04.example.com has no `subjectAltName`, falling back to check for a `commonName` for now. This feature is being removed by major browsers and deprecated by RFC 2818. (See https://github.com/urllib3/urllib3/issues/497 for details.)
 2021-12-06 13:50:00 test
 
+# 添加 https 到防火墙
+[root@jwang-ceph04 ~]# firewall-cmd --add-service=https --permanent
+[root@jwang-ceph04 ~]# firewall-cmd --reload
+
+# Ceph使用系列之——Ceph RGW使用
+# https://www.codenong.com/cs106856875/
 
 
 # 回到 ceph 主机
@@ -2681,3 +2687,6 @@ https://konsole.zendesk.com/hc/en-us/articles/360037885173-How-to-Access-Imports
 需要注意设置: 
 Advanced -> Environment -> S3 -> URL style = Path
 ```
+
+### Ceph使用系列之——Ceph RGW使用
+https://www.codenong.com/cs106856875/
