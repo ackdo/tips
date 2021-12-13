@@ -2611,3 +2611,6 @@ https://mobyproject.org/<br>
 ### OSP 16.2 关于 virt:av module 的问题
 https://bugzilla.redhat.com/show_bug.cgi?id=2027787#c4<br>
 https://bugzilla.redhat.com/show_bug.cgi?id=2030377<br>
+
+### Load Balancer 与 Kerberos
+http://ssimo.org/blog/id_019.html
