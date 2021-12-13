@@ -2774,3 +2774,11 @@ ceph-dokan.exe -l x
 # 报错处理
 
 ```
+
+### NetApp 加密
+https://www.netapp.com/company/trust-center/security/encryption/
+```
+Encryption of data in transit - 传输中的数据
+Encryption of data at rest - 存储上未使用的数据
+Encryption of data in use - 正在使用中的数据
+```
