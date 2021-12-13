@@ -2614,3 +2614,23 @@ https://bugzilla.redhat.com/show_bug.cgi?id=2030377<br>
 
 ### Load Balancer 与 Kerberos
 http://ssimo.org/blog/id_019.html
+
+### 在 Windows 上配置 Acrylic DNS Proxy 实现通配符域名解析
+https://mayakron.altervista.org/support/acrylic/Windows10Configuration.htm<br>
+https://stackoverflow.com/questions/138162/wildcards-in-a-windows-hosts-file<br>
+
+### Log4Shell 的缓解方法
+https://access.redhat.com/security/cve/CVE-2021-44228<br>
+https://access.redhat.com/solutions/6578421<br>
+```
+CVE-2021-44228
+
+Mitigation
+There are two possible mitigations for this flaw in versions from 2.10 to 2.14.1:
+- Set the system property log4j2.formatMsgNoLookups to true, or
+- Remove the JndiLookup class from the classpath. For example:
+
+zip -q -d log4j-core-*.jar org/apache/logging/log4j/core/lookup/JndiLookup.class
+
+On OpenShift 4 and in OpenShift Logging, the above mitigation can be applied by following this article: https://access.redhat.com/solutions/6578421
+```
