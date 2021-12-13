@@ -2637,3 +2637,7 @@ On OpenShift 4 and in OpenShift Logging, the above mitigation can be applied by 
 
 ### WinSCP 与 S3
 https://konsole.zendesk.com/hc/en-us/articles/360037885173-How-to-Access-Imports-Exports-on-S3-Using-WinSCP<br>
+```
+需要注意设置: 
+Advanced -> Environment -> S3 -> URL style = Path
+```
