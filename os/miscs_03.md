@@ -2197,6 +2197,7 @@ ceph orch host label add jwang-ceph04.example.com rgw
 ceph orch apply rgw default default --placement='1 jwang-ceph04.example.com'
 
 # 下载镜像并且tag镜像
+# 需要在每个节点上做一遍
 [root@jwang-ceph04 rhcs5]# podman pull helper.example.com:5000/openshift4/ose-prometheus:v4.6
 [root@jwang-ceph04 rhcs5]# podman tag helper.example.com:5000/openshift4/ose-prometheus:v4.6 registry.redhat.io/openshift4/ose-prometheus:v4.6
 [root@jwang-ceph04 rhcs5]# podman pull helper.example.com:5000/openshift4/ose-prometheus-alertmanager:v4.6
