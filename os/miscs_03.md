@@ -2786,3 +2786,12 @@ Encryption of data in use - 正在使用中的数据
 
 ### Encrypting NFSv4 with TLS and STunnel
 https://www.linuxjournal.com/content/encrypting-nfsv4-stunnel-tls
+
+### radosgw encryption
+https://docs.ceph.com/en/latest/radosgw/encryption/
+
+### Ceph CSI encrypted pvc
+https://github.com/ceph/ceph-csi/blob/devel/docs/design/proposals/encrypted-pvc.md
+
+### NFS-RGW
+https://docs.ceph.com/en/latest/radosgw/nfs/
