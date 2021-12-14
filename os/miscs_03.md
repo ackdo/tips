@@ -2165,8 +2165,27 @@ dmsetup ls
 
 # 删除磁盘
 dmsetup remove ceph--d534c556--1abd--4739--94c8--4c6fa8bfe12c-osd--block--65634030--05cd--4305--b08a--6bd8c43d8c76
+rm -f /dev/mapper/ceph--d534c556--1abd--4739--94c8--4c6fa8bfe12c-osd--block--65634030--05cd--4305--b08a--6bd8c43d8c76
+
 dmsetup remove ceph--55676940--281c--43fc--9b71--d359acecb778-osd--block--e0b08b95--d184--4dd8--9748--e495c5225caa
+rm -f /dev/mapper/ceph--55676940--281c--43fc--9b71--d359acecb778-osd--block--e0b08b95--d184--4dd8--9748--e495c5225caa
+
 dmsetup remove ceph--9cb74522--f080--4e25--a6fa--3b6b8a893444-osd--block--82b96e58--bb69--4492--a320--993a963890c6
+rm -f /dev/mapper/ceph--9cb74522--f080--4e25--a6fa--3b6b8a893444-osd--block--82b96e58--bb69--4492--a320--993a963890c6
+
+# 查看 device-mapper 设备
+[root@jwang-ceph04 ~]# dmsetup ls
+rhel_jwang--ceph04-home (253:2)
+ceph--5c2ef1ac--2a33--42e7--bc7c--96aec8a2550b-osd--block--5ece89a4--cabb--4d7a--8b8b--c7baa75a1cb6     (253:3)
+ceph--31c8737c--4ec0--49ea--b26b--e733989461c3-osd--block--fded4dd6--696e--43df--9247--8df0cd161ce5     (253:5)
+rhel_jwang--ceph04-swap (253:1)
+rhel_jwang--ceph04-root (253:0)
+ceph--20632c65--91ac--4924--849b--f54e392a3999-osd--block--6be9216c--153d--4959--b818--498c1e1f79b4     (253:4)
+# 移除 device-mapper 设备
+[root@jwang-ceph04 ~]# mkdir -p /root/backup
+[root@jwang-ceph04 ~]# mv /dev/dm-3 /root/backup/
+[root@jwang-ceph04 ~]# mv /dev/dm-4 /root/backup/
+[root@jwang-ceph04 ~]# mv /dev/dm-5 /root/backup/
 
 # 报错
 # WARNING: The same type, major and minor should not be used for multiple devices.
@@ -2819,4 +2838,52 @@ ceph health detail | ag 'not deep-scrubbed since' | awk '{print $2}' | while rea
 ceph health detail | grep -E 'not scrubbed since' | awk '{print $2}' | while read pg; do echo ceph pg scrub $pg; done
 ceph health detail | grep -E 'not scrubbed since' | awk '{print $2}' | while read pg; do ceph pg scrub $pg; done
 
+# 测试重启 ceph mgr systemd 服务
+systemctl stop ceph-a31452c6-53f2-11ec-a115-001a4a16016f@mgr.jwang-ceph04.example.com.myares.service
+systemctl start ceph-a31452c6-53f2-11ec-a115-001a4a16016f@mgr.jwang-ceph04.example.com.myares.service
+systemctl status ceph-a31452c6-53f2-11ec-a115-001a4a16016f@mgr.jwang-ceph04.example.com.myares.service
+
+# 通过 orch module 重启 mgr
+cephadm shell -- ceph orch restart mgr
+
+# 报错 WARNING: The same type, major and minor should not be used for multiple devices.
+# 这个报错是来自 podman 
+# https://github.com/opencontainers/runtime-tools/issues/695
+# https://tracker.ceph.com/issues/51668
+# 参考本文移除 device-mapper 设备部分，可以消除这个告警
+[root@jwang-ceph04 ceph]# ls -l /dev/dm*
+brw-rw----. 1 root disk 253, 0 Dec  2 09:38 /dev/dm-0
+brw-rw----. 1 root disk 253, 1 Dec  2 09:38 /dev/dm-1
+brw-rw----. 1 root disk 253, 2 Dec  2 09:38 /dev/dm-2
+brw-rw----. 1 root disk 253, 3 Dec  3 14:11 /dev/dm-3
+brw-rw----. 1 root disk 253, 4 Dec  3 14:11 /dev/dm-4
+brw-rw----. 1 root disk 253, 5 Dec  3 14:13 /dev/dm-5
+[root@jwang-ceph04 ceph]# ls -l /dev/mapper/
+total 0
+brw-rw----. 1 ceph ceph 253,   4 Dec 14 15:11 ceph--20632c65--91ac--4924--849b--f54e392a3999-osd--block--6be9216c--153d--4959--b818--498c1e1f79b4
+brw-rw----. 1 ceph ceph 253,   5 Dec 14 15:11 ceph--31c8737c--4ec0--49ea--b26b--e733989461c3-osd--block--fded4dd6--696e--43df--9247--8df0cd161ce5
+brw-rw----. 1 ceph ceph 253,   4 Dec  3 08:07 ceph--55676940--281c--43fc--9b71--d359acecb778-osd--block--e0b08b95--d184--4dd8--9748--e495c5225caa
+brw-rw----. 1 ceph ceph 253,   3 Dec 14 15:11 ceph--5c2ef1ac--2a33--42e7--bc7c--96aec8a2550b-osd--block--5ece89a4--cabb--4d7a--8b8b--c7baa75a1cb6
+brw-rw----. 1 ceph ceph 253,   5 Dec  2 17:25 ceph--9cb74522--f080--4e25--a6fa--3b6b8a893444-osd--block--82b96e58--bb69--4492--a320--993a963890c6
+brw-rw----. 1 ceph ceph 253,   3 Dec  2 17:25 ceph--d534c556--1abd--4739--94c8--4c6fa8bfe12c-osd--block--65634030--05cd--4305--b08a--6bd8c43d8c76
+
+
+# 查看 cephadm shell - ceph-volume lvm list
+cephadm shell -- ceph-volume lvm list
+# 查看节点磁盘
+cephadm shell -- ceph-volume inventory
+
+# 获取 mgr 实例
+ceph status 
+# 查看 mgr osd_deep_scrub_interval 和 mon_warn_pg_not_deep_scrubbed_ratio 的设置
+ceph config show-with-defaults mgr.jwang-ceph04.example.com.myares | egrep "osd_deep_scrub_interval|mon_warn_pg_not_deep_scrubbed_ratio"
+
+
 ```
+
+### F5 SPK and ICNI
+Service Proxy for Kubernetes<br>
+https://clouddocs.f5.com/service-proxy/latest/spk-sp-deploy-openshift.html<br>
+Intelligent CNI 2.0<br>
+https://clouddocs.f5.com/service-proxy/latest/spk-sp-deploy-openshift.html<br>
+https://clouddocs.f5.com/service-proxy/latest/spk-network-overview.html<br>
