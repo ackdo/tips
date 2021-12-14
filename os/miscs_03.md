@@ -2795,3 +2795,28 @@ https://github.com/ceph/ceph-csi/blob/devel/docs/design/proposals/encrypted-pvc.
 
 ### NFS-RGW
 https://docs.ceph.com/en/latest/radosgw/nfs/
+
+### stunnel and OpenShift
+http://cpitman.github.io/openshift/tcp/networking/2016/12/28/stunnel-and-openshift.html#.Ybfz-L1BxfV
+
+### Ceph Mgr
+https://zhuanlan.zhihu.com/p/52139003<br>
+https://docs.ceph.com/en/pacific/mgr/index.html<br>
+https://docs.ceph.com/en/latest/mgr/administrator/<br>
+
+### ceph 报错信息分析
+```
+[root@jwang-ceph04 ~]# ceph health detail
+HEALTH_WARN 96 pgs not scrubbed in time
+[WRN] PG_NOT_SCRUBBED: 96 pgs not scrubbed in time
+...
+    pg 2.10 not scrubbed since 2021-12-03T07:00:48.798209+0000
+    46 more pgs... 
+
+https://tracker.ceph.com/issues/44959
+ceph health detail | ag 'not deep-scrubbed since' | awk '{print $2}' | while read pg; do ceph pg deep-scrub $pg; done
+
+ceph health detail | grep -E 'not scrubbed since' | awk '{print $2}' | while read pg; do echo ceph pg scrub $pg; done
+ceph health detail | grep -E 'not scrubbed since' | awk '{print $2}' | while read pg; do ceph pg scrub $pg; done
+
+```
