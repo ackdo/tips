@@ -2895,3 +2895,8 @@ https://collectd.org/wiki/index.php/Table_of_Plugins<br>
 
 ### Ceph and LUA Scripting
 https://docs.ceph.com/en/latest/radosgw/lua-scripting/
+
+### 设置 osd-max-backfills 和 osd-recovery-max-active 参数
+```
+podman exec <CEPH-MON> ceph tell 'osd.*' injectargs --osd-max-backfills=2 --osd-recovery-max-active=6
+```
