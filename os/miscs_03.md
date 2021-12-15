@@ -2979,12 +2979,18 @@ domain-needed
 resolv-file=/etc/resolv.conf.upstream
 strict-order
 local=/.ocp4-1.example.com/192.168.122.101
+local=/.apps.ocp4-1.example.com/192.168.122.101
 address=/console-openshift-console.apps.ocp4-1.example.com/192.168.122.101
 address=/oauth-openshift.apps.ocp4-1.example.com/192.168.122.101
 address=/master-0.ocp4-1.example.com/192.168.122.101
 address=/etcd-0.ocp4-1.example.com/192.168.122.101
 address=/api.ocp4-1.example.com/192.168.122.101
 address=/api-int.ocp4-1.example.com/192.168.122.101
+address=/grafana-openshift-monitoring.apps.ocp4-1.example.com/192.168.122.101
+address=/thanos-querier-openshift-monitoring.apps.ocp4-1.example.com/192.168.122.101
+address=/prometheus-k8s-openshift-monitoring.apps.ocp4-1.example.com/192.168.122.101
+address=/alertmanager-main-openshift-monitoring.apps.ocp4-1.example.com/192.168.122.101
+address=/canary-openshift-ingress-canary.apps.ocp4-1.example.com/192.168.122.101
 srv-host=_etcd-server-ssl._tcp.ocp4-1.example.com,etcd-0.ocp4-1.example.com,2380
 
 no-hosts
@@ -3011,4 +3017,17 @@ https://cloud.redhat.com/blog/deploy-openshift-at-the-edge-with-single-node-open
 https://cloud.redhat.com/blog/using-the-openshift-assisted-installer-service-to-deploy-an-openshift-cluster-on-metal-and-vsphere<br>
 
 ### sshuttle for VPN
-https://morning.work/page/2019-06/sshuttle.html
+https://morning.work/page/2019-06/sshuttle.html<br>
+https://linux.cn/article-11476-1.html<br>
+```
+安装 sshuttle
+brew install sshuttle
+
+转发
+sshuttle --dns -r user@remotehost 192.168.122.0/0
+
+openshift 报错
+ingress                                    4.9.9     True        False         True       5h14m   The "default" ingress controller reports Degraded=True: DegradedConditions: One or more other status conditions indicate a degraded state: CanaryChecksSucceeding=False (CanaryChecksRepetitiveFailures: Canary route checks for the default ingress controller are failing)
+
+https://issueexplorer.com/issue/openshift/okd/771
+```
