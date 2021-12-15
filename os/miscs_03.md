@@ -2900,3 +2900,18 @@ https://docs.ceph.com/en/latest/radosgw/lua-scripting/
 ```
 podman exec <CEPH-MON> ceph tell 'osd.*' injectargs --osd-max-backfills=2 --osd-recovery-max-active=6
 ```
+
+### 测试虚拟机
+```
+qemu-img create -f qcow2 -o preallocation=metadata /data/kvm/jwang-ocp-bHehlper.qcow2 120G 
+
+# single node 
+# 为单节点服务器定义 
+# nameserver=192.168.122.1 ip=192.168.122.101::192.168.122.1:255.255.255.0:master-0.ocp4-1.example.com:ens3:none
+
+# SNO 的文档
+# https://github.com/cchen666/OpenShift-Labs/blob/main/Installation/Single-Node-Openshift.md
+
+
+```
+
