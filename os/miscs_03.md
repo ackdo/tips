@@ -2887,3 +2887,11 @@ https://clouddocs.f5.com/service-proxy/latest/spk-sp-deploy-openshift.html<br>
 Intelligent CNI 2.0<br>
 https://clouddocs.f5.com/service-proxy/latest/spk-sp-deploy-openshift.html<br>
 https://clouddocs.f5.com/service-proxy/latest/spk-network-overview.html<br>
+
+### collectd 相关
+https://github.com/voxpupuli/puppet-collectd/tree/v12.2.0<br>
+https://collectd.org/wiki/index.php/Table_of_Plugins<br>
+仔细想想 collectd 并不是适合的日志转发组件
+
+### Ceph and LUA Scripting
+https://docs.ceph.com/en/latest/radosgw/lua-scripting/
