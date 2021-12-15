@@ -2912,6 +2912,103 @@ qemu-img create -f qcow2 -o preallocation=metadata /data/kvm/jwang-ocp-bHehlper.
 # SNO 的文档
 # https://github.com/cchen666/OpenShift-Labs/blob/main/Installation/Single-Node-Openshift.md
 
+# 编辑 libvirt 网络
+virsh net-edit default
+...
+  <dns>
+    <host ip='192.168.122.101'>
+      <hostname>api.ocp4-1.example.com</hostname>
+    </host>
+  </dns>
+  <ip address='192.168.122.1' netmask='255.255.255.0'>
+    <dhcp>
+      <host mac='52:54:00:1c:14:57' name='master-0.ocp4-1.example.com' ip='192.168.122.101'/>
+    </dhcp>
+  </ip>
+  <dnsmasq:options>
+    <!-- fix for the 5s timeout on DNS -->
+    <!-- see https://www.math.tamu.edu/~comech/tools/linux-slow-dns-lookup/ -->
+    <dnsmasq:option value="auth-server=ocp4-1.example.com,"/><!-- yes, there is a trailing coma -->
+    <dnsmasq:option value="auth-zone=ocp4-1.example.com"/>
+    <!-- Wildcard route -->
+    <dnsmasq:option value="host-record=lb.ocp4-1.example.com,192.168.123.5"/>
+    <dnsmasq:option value="cname=*.apps.ocp4-1.example.com,lb.ocp4-1.example.com"/>
+  </dnsmasq:options>
+
+
+# https://aboullaite.me/effectively-restarting-kvm-libvirt-network/
+# https://fabianlee.org/2018/10/22/kvm-using-dnsmasq-for-libvirt-dns-resolution/
+
+# https://serverfault.com/questions/1068551/wildcard-cname-record-specified-by-libvirts-dnsmasqoptions-namespace-doesnt-wo
+# dnsmasq and libvirt
+# /var/lib/libvirt/dnsmasq/default.conf
+# host-record
+
+host-record=lb.ocp4-1.example.com,192.168.122.101
+host-record=master-0.ocp4-1.example.com,192.168.122.101
+address=/ocp4-1.example.com/192.168.122.101
+address=/apps.ocp4-1.example.com/192.168.122.101
+cname=ocp4-1.example.com,lb.ocp4-1.example.com
+cname=*.apps.ocp4-1.example.com,lb.ocp4-1.example.com
+auth-zone=ocp4-1.example.com
+auth-server=ocp4-1.example.com,*
+
+/usr/sbin/dnsmasq --conf-file=/var/lib/libvirt/dnsmasq/default.conf 
+
+
+local=/.ocp4-1.example.com/192.168.122.101
+local=/.apps.ocp4-1.example.com/192.168.122.101
+address=/console-openshift-console.apps.ocp4.terry.com/10.72.44.132
+address=/oauth-openshift.apps.ocp4.terry.com/10.72.44.132
+address=/bastion.ocp4.terry.com/10.72.44.127
+address=/bootstrap.ocp4.terry.com/10.72.44.128
+17:04 <yaoli> address=/master1.ocp4.terry.com/10.72.44.129
+17:04 <yaoli> address=/master2.ocp4.terry.com/10.72.44.130
+17:04 <yaoli> address=/master3.ocp4.terry.com/10.72.44.131
+17:04 <yaoli> address=/etcd-0.ocp4.terry.com/10.72.44.129
+17:04 <yaoli> address=/etcd-1.ocp4.terry.com/10.72.44.130
+17:04 <yaoli> address=/etcd-2.ocp4.terry.com/10.72.44.131
+17:04 <yaoli> address=/worker1.ocp4.terry.com/10.72.44.132
+17:04 <yaoli> address=/worker2.ocp4.terry.com/10.72.44.133
+17:04 <yaoli> address=/api.ocp4.terry.com/10.72.44.127
+17:04 <yaoli> address=/api-int.ocp4.terry.com/10.72.44.127
+
+
+cat > /etc/dnsmasq.conf <<EOF
+domain-needed
+resolv-file=/etc/resolv.conf.upstream
+strict-order
+local=/.ocp4-1.example.com/192.168.122.101
+address=/console-openshift-console.apps.ocp4-1.example.com/192.168.122.101
+address=/oauth-openshift.apps.ocp4-1.example.com/192.168.122.101
+address=/master-0.ocp4-1.example.com/192.168.122.101
+address=/etcd-0.ocp4-1.example.com/192.168.122.101
+address=/api.ocp4-1.example.com/192.168.122.101
+address=/api-int.ocp4-1.example.com/192.168.122.101
+srv-host=_etcd-server-ssl._tcp.ocp4-1.example.com,etcd-0.ocp4-1.example.com,2380
+
+no-hosts
+bind-dynamic
+EOF
+
+cat > /etc/resolv.conf.upstream <<EOF
+search ocp4-1.example.com
+nameserver 10.64.63.6
+EOF
+
+cat > /etc/resolv.conf <<EOF
+search ocp4-1.example.com
+nameserver 127.0.0.1
+EOF
+
+systemctl restart dnsmasq
 
 ```
 
+### Single Node OpenShift PoC
+https://github.com/eranco74/bootstrap-in-place-poc<br>
+https://cloud.redhat.com/blog/deploy-openshift-at-the-edge-with-single-node-openshift<br>
+https://cloud.redhat.com/blog/using-the-openshift-assisted-installer-service-to-deploy-an-openshift-cluster-on-metal-and-vsphere<br>
+
+### sshuttle for VPN
+https://morning.work/page/2019-06/sshuttle.html
