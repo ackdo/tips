@@ -2980,6 +2980,7 @@ resolv-file=/etc/resolv.conf.upstream
 strict-order
 local=/.ocp4-1.example.com/192.168.122.101
 local=/.apps.ocp4-1.example.com/192.168.122.101
+address=/lb.ocp4-1.example.com/192.168.122.101
 address=/console-openshift-console.apps.ocp4-1.example.com/192.168.122.101
 address=/oauth-openshift.apps.ocp4-1.example.com/192.168.122.101
 address=/master-0.ocp4-1.example.com/192.168.122.101
@@ -3035,4 +3036,114 @@ https://issueexplorer.com/issue/openshift/okd/771
 # need to set the value of bootstrapInPlace.installationDisk (in install-config.yaml) to use the value --copy-network <install disk>
 # https://github.com/openshift/installer/blob/release-4.9/data/data/bootstrap/bootstrap-in-place/files/usr/local/bin/install-to-disk.sh.template#L19
 # https://docs.openshift.com/container-platform/4.9/installing/installing_sno/install-sno-installing-sno.html#generating-the-discovery-iso-manually_install-sno-installing-sno-with-the-assisted-installer
+
+# 手工生成使用静态IP地址的 SNO Discovery ISO
+# 参考: https://docs.openshift.com/container-platform/4.9/installing/installing_sno/install-sno-installing-sno.html#generating-the-discovery-iso-manually_install-sno-installing-sno-with-the-assisted-installer
+
+
+tar -xzf ${OCP_PATH}/ocp-installer/openshift-install-linux-${OCP_VER}.tar.gz -C /usr/local/sbin/
+
+export CLUSTER_ID="ocp4-1"
+export CLUSTER_PATH=/data/ocp-cluster/${CLUSTER_ID}
+export IGN_PATH=${CLUSTER_PATH}/ignition
+export SSH_KEY_PATH=${CLUSTER_PATH}/ssh-key
+mkdir -p ${IGN_PATH}
+mkdir -p ${SSH_KEY_PATH}
+
+# 生成 CoreOS ssh key
+ssh-keygen -t rsa -f ${SSH_KEY_PATH}/id_rsa -N '' 
+
+
+# 生成 install-config.yaml
+
+export PULL_SECRET_STR=$(cat ${PULL_SECRET_FILE}) 
+echo ${PULL_SECRET_STR}
+
+cat > ${IGN_PATH}/install-config.yaml <<EOF
+apiVersion: v1
+baseDomain: example.com
+compute:
+- name: worker
+  replicas: 0
+controlPlane:
+  name: master
+  replicas: 1
+metadata:
+  name: ${CLUSTER_ID}
+networking:
+  networkType: OVNKubernetes
+  clusterNetworks:
+  - cidr: 10.254.0.0/16
+    hostPrefix: 24
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  none: {}
+BootstrapInPlace:
+  InstallationDisk: --copy-network /dev/vda
+pullSecret: '${PULL_SECRET_STR}'
+sshKey: |
+$( cat ${SSH_KEY_PATH}/id_rsa.pub | sed 's/^/  /g' )
+EOF
+
+mkdir -p ${CLUSTER_PATH}/sno
+cd ${CLUSTER_PATH}
+cp ${IGN_PATH}/install-config.yaml sno
+openshift-install --dir=sno create single-node-ignition-config
+
+alias coreos-installer='podman run --privileged --rm \
+        -v /dev:/dev -v /run/udev:/run/udev -v $PWD:/data \
+        -w /data quay.io/coreos/coreos-installer:release'
+
+cp sno/bootstrap-in-place-for-live-iso.ign iso.ign
+
+cp ${OCP_PATH}/rhcos/rhcos-${RHCOS_VER}-x86_64-live.x86_64.iso rhcos-live.x86_64.iso
+
+coreos-installer iso ignition embed -fi iso.ign rhcos-live.x86_64.iso
+
+# 等待安装完成
+openshift-install --dir=sno wait-for install-complete
+
+# https://github.com/openshift/enhancements/blob/master/enhancements/rhcos/static-networking-enhancements.md
+# https://access.redhat.com/solutions/6135171
+# 按照这个步骤尝试为 assisted installer 部署的节点设置静态 IP 地址
+cat > sno.yaml <<EOF
+dns-resolver:
+  config:
+    server:
+    - 192.168.122.1
+interfaces:
+- ipv4:
+    address:
+    - ip: 192.168.122.101
+      prefix-length: 24
+    dhcp: false
+    enabled: true
+  name: ens3
+  state: up
+  type: ethernet
+routes:
+  config:
+  - destination: 0.0.0.0/0
+    next-hop-address: 192.168.122.1
+    next-hop-interface: eth0
+    table-id: 254
+EOF
+
+ASSISTED_SERVICE_URL=https://api.openshift.com
+CLUSTER_ID="07a16d7e-604c-4949-b4a7-901512140825"
+NODE_SSH_KEY="..."
+request_body=$(mktemp)
+
+jq -n --arg SSH_KEY "$NODE_SSH_KEY" --arg NMSTATE_YAML1 "$(cat sno.yaml)" \
+'{
+  "ssh_public_key": $SSH_KEY,
+  "image_type": "full-iso",
+  "static_network_config": [
+    {
+      "network_yaml": $NMSTATE_YAML1,
+      "mac_interface_map": [{"mac_address": "02:00:00:2c:23:a5", "logical_nic_name": "eth0"}, {"mac_address": "02:00:00:68:73:dc", "logical_nic_name": "eth1"}]
+    }
+  ]
+}' >> $request_body
 ```
