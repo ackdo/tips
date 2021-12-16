@@ -3104,6 +3104,7 @@ coreos-installer iso ignition embed -fi iso.ign rhcos-live.x86_64.iso
 # 等待安装完成
 openshift-install --dir=sno wait-for install-complete
 
+# 通过调用 Assisted Installer API 生成节点控制平面静态 IP 
 # https://github.com/openshift/enhancements/blob/master/enhancements/rhcos/static-networking-enhancements.md
 # https://access.redhat.com/solutions/6135171
 # 按照这个步骤尝试为 assisted installer 部署的节点设置静态 IP 地址
