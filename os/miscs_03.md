@@ -3030,4 +3030,9 @@ openshift 报错
 ingress                                    4.9.9     True        False         True       5h14m   The "default" ingress controller reports Degraded=True: DegradedConditions: One or more other status conditions indicate a degraded state: CanaryChecksSucceeding=False (CanaryChecksRepetitiveFailures: Canary route checks for the default ingress controller are failing)
 
 https://issueexplorer.com/issue/openshift/okd/771
+
+# Single Node OpenShift 设置使用静态 IP 地址
+# need to set the value of bootstrapInPlace.installationDisk (in install-config.yaml) to use the value --copy-network <install disk>
+# https://github.com/openshift/installer/blob/release-4.9/data/data/bootstrap/bootstrap-in-place/files/usr/local/bin/install-to-disk.sh.template#L19
+# https://docs.openshift.com/container-platform/4.9/installing/installing_sno/install-sno-installing-sno.html#generating-the-discovery-iso-manually_install-sno-installing-sno-with-the-assisted-installer
 ```
