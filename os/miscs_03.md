@@ -3204,4 +3204,7 @@ auth-server=ocp4-1.example.com,*
     </dhcp>
   </ip>
 </network>
+
+# openshift 4.9 sample operator
+# https://docs.openshift.com/container-platform/4.9/openshift_images/configuring-samples-operator.html
 ```
