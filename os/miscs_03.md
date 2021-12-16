@@ -3147,4 +3147,39 @@ jq -n --arg SSH_KEY "$NODE_SSH_KEY" --arg NMSTATE_YAML1 "$(cat sno.yaml)" \
     }
   ]
 }' >> $request_body
+
+# 单节点 OpenShift 部署时，检查 SNO 的 DNS 可解析
+# lb.ocp4-1.example.com
+# api.ocp4-1.example.com
+# api-int.ocp4-1.example.com
+# 其他的域名目前尚不知道是否需要
+
+# 环境里的 libvirt default network 的 dnsmasq 文件内容
+# cat /var/lib/libvirt/dnsmasq/default.conf
+##WARNING:  THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+##OVERWRITTEN AND LOST.  Changes to this configuration should be made using:
+##    virsh net-edit default
+## or other application using the libvirt API.
+##
+## dnsmasq conf file created by libvirt
+strict-order
+local=/.ocp4-1.example.com/192.168.122.101
+local=/.apps.ocp4-1.example.com/192.168.122.101
+pid-file=/var/run/libvirt/network/default.pid
+except-interface=lo
+bind-dynamic
+interface=virbr0
+dhcp-range=192.168.122.1,static
+dhcp-no-override
+dhcp-authoritative
+dhcp-hostsfile=/var/lib/libvirt/dnsmasq/default.hostsfile
+addn-hosts=/var/lib/libvirt/dnsmasq/default.addnhosts
+host-record=lb.ocp4-1.example.com,192.168.122.101
+host-record=master-0.ocp4-1.example.com,192.168.122.101
+#cname=ocp4-1.example.com,lb.ocp4-1.example.com
+#cname=*.apps.ocp4-1.example.com,lb.ocp4-1.example.com
+auth-zone=ocp4-1.example.com
+auth-server=ocp4-1.example.com,*
+# 执行的启动命令是 /usr/sbin/dnsmasq --conf-file=/var/lib/libvirt/dnsmasq/default.conf
+
 ```
