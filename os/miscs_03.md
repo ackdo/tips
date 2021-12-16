@@ -2978,8 +2978,8 @@ cat > /etc/dnsmasq.conf <<EOF
 domain-needed
 resolv-file=/etc/resolv.conf.upstream
 strict-order
-local=/.ocp4-1.example.com/192.168.122.101
-local=/.apps.ocp4-1.example.com/192.168.122.101
+address=/.ocp4-1.example.com/192.168.122.101
+address=/.apps.ocp4-1.example.com/192.168.122.101
 address=/lb.ocp4-1.example.com/192.168.122.101
 address=/console-openshift-console.apps.ocp4-1.example.com/192.168.122.101
 address=/oauth-openshift.apps.ocp4-1.example.com/192.168.122.101
@@ -3009,7 +3009,7 @@ nameserver 127.0.0.1
 EOF
 
 systemctl restart dnsmasq
-
+dnsmasq -q 
 ```
 
 ### Single Node OpenShift PoC
@@ -3207,4 +3207,61 @@ auth-server=ocp4-1.example.com,*
 
 # openshift 4.9 sample operator
 # https://docs.openshift.com/container-platform/4.9/openshift_images/configuring-samples-operator.html
+
+# 为虚拟机做一个直接桥接物理网卡网桥的 dnsmasq.conf
+cat > /etc/dnsmasq.conf <<EOF
+domain-needed
+resolv-file=/etc/resolv.conf.upstream
+strict-order
+address=/.ocp4-1.example.com/10.66.208.241
+address=/.apps.ocp4-1.example.com/10.66.208.241
+address=/lb.ocp4-1.example.com/10.66.208.241
+address=/console-openshift-console.apps.ocp4-1.example.com/10.66.208.241
+address=/oauth-openshift.apps.ocp4-1.example.com/10.66.208.241
+address=/master-0.ocp4-1.example.com/10.66.208.241
+address=/etcd-0.ocp4-1.example.com/10.66.208.241
+address=/api.ocp4-1.example.com/10.66.208.241
+address=/api-int.ocp4-1.example.com/10.66.208.241
+address=/grafana-openshift-monitoring.apps.ocp4-1.example.com/10.66.208.241
+address=/thanos-querier-openshift-monitoring.apps.ocp4-1.example.com/10.66.208.241
+address=/prometheus-k8s-openshift-monitoring.apps.ocp4-1.example.com/10.66.208.241
+address=/alertmanager-main-openshift-monitoring.apps.ocp4-1.example.com/10.66.208.241
+address=/canary-openshift-ingress-canary.apps.ocp4-1.example.com/10.66.208.241
+srv-host=_etcd-server-ssl._tcp.ocp4-1.example.com,etcd-0.ocp4-1.example.com,2380
+
+no-hosts
+bind-dynamic
+EOF
+
+# 不知道为什么，dnsmasq 突然不工作了
+cat > /etc/dnsmasq.conf <<EOF
+domain-needed
+resolv-file=/etc/resolv.conf.upstream
+strict-order
+address=/.ocp4-1.example.com/10.66.208.241
+address=/.apps.ocp4-1.example.com/10.66.208.241
+no-hosts
+bind-dynamic
+EOF
+
+# brctl show 
+bridge name bridge id           STP enabled     interfaces
+br0         8000.782bcb199eba   no              em1
+                                        vnet1
+# ip a s dev br0 
+6: br0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 78:2b:cb:19:9e:ba brd ff:ff:ff:ff:ff:ff
+    inet 10.66.208.240/24 brd 10.66.208.255 scope global noprefixroute br0
+
+# virsh dumpxml jwang-ocp452-master0 | grep interface -B5 -A5 
+...
+    <interface type='bridge'>
+      <mac address='52:54:00:1c:14:57'/>
+      <source bridge='br0'/>
+      <target dev='vnet1'/>
+      <model type='virtio'/>
+      <alias name='net0'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    </interface>
+
 ```
