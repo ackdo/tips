@@ -3182,4 +3182,26 @@ auth-zone=ocp4-1.example.com
 auth-server=ocp4-1.example.com,*
 # 执行的启动命令是 /usr/sbin/dnsmasq --conf-file=/var/lib/libvirt/dnsmasq/default.conf
 
+# virsh net-dumpxml default 的内容
+<network>
+  <name>default</name>
+  <uuid>4eb93b42-faf0-43aa-913e-8a454d7c0a0d</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='virbr0' stp='on' delay='0'/>
+  <mac address='52:54:00:4e:2e:84'/>
+  <dns>
+    <host ip='192.168.122.101'>
+      <hostname>api.ocp4-1.example.com</hostname>
+    </host>
+  </dns>
+  <ip address='192.168.122.1' netmask='255.255.255.0'>
+    <dhcp>
+      <host mac='52:54:00:1c:14:57' name='master-0.ocp4-1.example.com' ip='192.168.122.101'/>
+    </dhcp>
+  </ip>
+</network>
 ```
