@@ -3264,4 +3264,34 @@ br0         8000.782bcb199eba   no              em1
       <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
     </interface>
 
+
+# 创建 bridge 的命令
+# 创建 bridge 类型的 conn br0
+[root@undercloud #] nmcli con add type bridge con-name br0 ifname br0
+# (可选) 根据实际情况设置 bridge.stp，有时可能因为 bridge.stp 设置导致网络通信不正常，⚠️：在 lab 环境不需要执行
+[root@undercloud #] nmcli con mod br0 bridge.stp no
+
+# 修改 vlan 类型的 conn ens4 设置 master 为 br0 （参考）
+[root@undercloud #] nmcli con mod ens4 connection.master br0 connection.slave-type 'bridge'
+
+[root@undercloud #] nmcli con mod br0 \
+    connection.autoconnect 'yes' \
+    connection.autoconnect-slaves 'yes' \
+    ipv4.method 'manual' \
+    ipv4.address '10.25.149.21/24' \
+    ipv4.gateway '10.25.149.1' 
+
+cat << EOF > /root/host-bridge.xml
+<network>
+  <name>br0</name>
+  <forward mode="bridge"/>
+  <bridge name="br0"/>
+</network>
+EOF
+
+virsh net-define /root/host-bridge.xml
+virsh net-start br0
+virsh net-autostart --network br0
+#virsh net-autostart --network default --disable
+#virsh net-destroy default
 ```
