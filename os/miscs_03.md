@@ -2945,6 +2945,8 @@ virsh net-edit default
 # host-record
 
 host-record=lb.ocp4-1.example.com,192.168.122.101
+host-record=api.ocp4-1.example.com,192.168.122.101
+host-record=api-int.ocp4-1.example.com,192.168.122.101
 host-record=master-0.ocp4-1.example.com,192.168.122.101
 address=/ocp4-1.example.com/192.168.122.101
 address=/apps.ocp4-1.example.com/192.168.122.101
@@ -3297,4 +3299,20 @@ virsh net-start br0
 virsh net-autostart --network br0
 #virsh net-autostart --network default --disable
 #virsh net-destroy default
+
+# 报错
+[root@base-pvg ocp4-cluster]# oc --kubeconfig /root/jwang/ocp4-cluster/kubeconfig get nodes
+Unable to connect to the server: x509: certificate signed by unknown authority (possibly because of "crypto/rsa: verification error" while trying to verify candidate authority certificate "kube-apiserver-lb-signer")
+[root@base-pvg ocp4-cluster]# oc --kubeconfig /root/jwang/ocp4-cluster/kubeconfig login --loglevel=10 
+The server uses a certificate signed by an unknown authority.
+You can bypass the certificate check, but any data you send to the server could be intercepted by others.
+Use insecure connections? (y/n): y
+
+error: couldn't get https://api.ocp4-1.example.com:6443/.well-known/oauth-authorization-server: unexpected response status 404
+[root@base-pvg ocp4-cluster]# oc --kubeconfig /root/jwang/ocp4-cluster/kubeconfig login --loglevel=10 
+
+# 报错 
+Error starting build: an image stream cannot be used as build output because the integrated container image registry is not configured
+# https://access.redhat.com/solutions/3931871
+
 ```
