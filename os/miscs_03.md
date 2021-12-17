@@ -2911,7 +2911,7 @@ qemu-img create -f qcow2 -o preallocation=metadata /data/kvm/jwang-ocp-bHehlper.
 
 # SNO 的文档
 # https://github.com/cchen666/OpenShift-Labs/blob/main/Installation/Single-Node-Openshift.md
-
+# libvirt 网络所提供的 dhcp 服务还是需要的，因为虚拟机默认通过 dhcp 获取 ip 地址
 # 编辑 libvirt 网络
 virsh net-edit default
 ...
