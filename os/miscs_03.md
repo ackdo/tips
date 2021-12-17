@@ -3209,11 +3209,14 @@ auth-server=ocp4-1.example.com,*
 # https://docs.openshift.com/container-platform/4.9/openshift_images/configuring-samples-operator.html
 
 # 为虚拟机做一个直接桥接物理网卡网桥的 dnsmasq.conf
+# 其中 assisited installer 要求不能设置 ocp4-1.example.com 的通配 dns 解析
+# 因此不能设置 address=/.ocp4-1.example.com/10.66.208.241
+
 cat > /etc/dnsmasq.conf <<EOF
 domain-needed
 resolv-file=/etc/resolv.conf.upstream
 strict-order
-address=/.ocp4-1.example.com/10.66.208.241
+local=/.ocp4-1.example.com/10.66.208.241
 address=/.apps.ocp4-1.example.com/10.66.208.241
 address=/lb.ocp4-1.example.com/10.66.208.241
 address=/console-openshift-console.apps.ocp4-1.example.com/10.66.208.241
