@@ -3315,4 +3315,17 @@ error: couldn't get https://api.ocp4-1.example.com:6443/.well-known/oauth-author
 Error starting build: an image stream cannot be used as build output because the integrated container image registry is not configured
 # https://access.redhat.com/solutions/3931871
 
+# 测试
+PROXY_URL="http://10.66.208.240:3128/"
+
+export http_proxy="$PROXY_URL"
+export https_proxy="$PROXY_URL"
+export ftp_proxy="$PROXY_URL"
+export no_proxy="127.0.0.1,localhost,.rhsacn.org"
+
+# For curl
+export HTTP_PROXY="$PROXY_URL"
+export HTTPS_PROXY="$PROXY_URL"
+export FTP_PROXY="$PROXY_URL"
+export NO_PROXY="127.0.0.1,localhost,.rhsacn.org"
 ```
