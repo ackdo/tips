@@ -3425,7 +3425,7 @@ export NFS_DOMAIN=nfs.${DOMAIN}
 ## 在OCP上运行NFS Client的项目
 export NFS_CLIENT_NAMESPACE="csi-nfs"
 ## NFS Client Image
-export NFS_CLIENT_PROVISIONER_IMAGE="${REGISTRY_DOMAIN}/${NFS_CLIENT_NAMESPACE}/nfs-client-provisioner"  
+export NFS_CLIENT_PROVISIONER_IMAGE="quay.io/external_storage/nfs-client-provisioner"  
 export PROVISIONER_NAME="kubernetes-nfs"
 export STORAGECLASS_NAME="sc-csi-nfs"
 export OCP_REGISTRY_PVC_NAME="pvc-ocp-registry"
