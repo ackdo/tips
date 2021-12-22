@@ -3334,3 +3334,35 @@ export NO_PROXY="127.0.0.1,localhost,.rhsacn.org"
 下面这个不是原创，哎...<br>
 https://blog.51cto.com/u_15127570/2712896<br>
 https://docs.openshift.com/container-platform/4.7/operators/admin/olm-restricted-networks.html<br>
+https://access.redhat.com/articles/4740011<br>
+https://docs.openshift.com/container-platform/4.7/operators/understanding/olm-rh-catalogs.html#olm-rh-catalogs<br>
+https://docs.openshift.com/container-platform/4.7/operators/operator_sdk/osdk-generating-csvs.html#olm-enabling-operator-for-restricted-network_osdk-generating-csvs<br>
+https://docs.openshift.com/container-platform/4.7/cli_reference/opm-cli.html#opm-cli<br>
+ 
+```
+# 对于纯离线环境，首先需要修改 OperatorHub/cluster 对象，设置 /spec/disableAllDefaultSources 为 true
+# Disable the sources for the default catalogs by adding disableAllDefaultSources: true to the OperatorHub object:
+oc patch OperatorHub cluster --type json -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
+
+# 可选步骤:
+# Pruning an index image 
+# 修剪 index image
+# 如果不想用默认的 source index image，而是只想使用原有的 source index image 的部分 operator
+# 可以参考： https://docs.openshift.com/container-platform/4.7/operators/admin/olm-restricted-networks.html#olm-pruning-index-image_olm-restricted-networks
+podman login registry.redhat.io
+podman login <target_registry>
+
+podman run -p50051:50051 -it registry.redhat.io/redhat/redhat-operator-index:v4.7
+grpcurl -plaintext localhost:50051 api.Registry/ListPackages > packages.out
+# Inspect the packages.out file and identify which package names from this list you want to keep in your pruned index. For example:
+# In the terminal session where you executed the podman run command, press Ctrl and C to stop the container process.
+
+# 以下命令用 source index image - registry.redhat.io/redhat/redhat-operator-index:v4.7 
+# 里选择 advanced-cluster-management,jaeger-product,quay-operator 这几个 index content
+# 生成修剪后的 local index image
+# 修剪后的 local index image 是 <target_registry>:<port>/<namespace>/redhat-operator-index:v4.7
+opm index prune -f registry.redhat.io/redhat/redhat-operator-index:v4.7 -p advanced-cluster-management,jaeger-product,quay-operator [-i registry.redhat.io/openshift4/ose-operator-registry:v4.7] -t <target_registry>:<port>/<namespace>/redhat-operator-index:v4.7 
+
+# 将修剪后的 local index image 推送到离线 registry 
+podman push <target_registry>:<port>/<namespace>/redhat-operator-index:v4.7
+```
