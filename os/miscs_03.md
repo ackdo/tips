@@ -3385,9 +3385,11 @@ kubectl patch secret -n kube-system kubeadmin --type json -p '[{"op": "replace",
 
 # 恢复 system:admin 用户的 kubeconfig 
 https://access.redhat.com/solutions/4679661
+# bootstrap 虚拟机的 /var/opt/openshift/auth/kubeconfig 是 system:admin 用户的 kubeconfig
 
 # 安装完 ocp4 后更新 ssh key 
 https://access.redhat.com/solutions/3868301
 
-
+# OCP4 如何为 KubeAPIServer 添加 feature-gates
+https://access.redhat.com/solutions/5685971
 ```
