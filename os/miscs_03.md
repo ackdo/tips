@@ -3392,6 +3392,7 @@ https://access.redhat.com/solutions/3868301
 
 # OCP4 如何为 KubeAPIServer 添加 feature-gates
 https://access.redhat.com/solutions/5685971
+oc edit kubeapiservers.operator.openshift.io cluster
 
 # azure disconnected operator catalog
 https://github.com/deewhyweb/azure-disconnected-operator-catalog
@@ -3401,4 +3402,149 @@ JundeMacBook-Pro:docs junwang$ oc --loglevel=10 login https://api.cluster-d8x7p.
 I1222 15:45:32.302463   96181 request.go:1181] Response Body: {"kind":"Status","apiVersion":"v1","metadata":{},"status":"Failure","message":"configmaps 
 \"motd\" is forbidden: User \"system:anonymous\" cannot get resource \"configmaps\" in API group \"\" in the namespace \"openshift\"","reason":"Forbidde
 n","details":{"name":"motd","kind":"configmaps"},"code":403}    
+
+oc adm release mirror -a ${PULL_SECRET_FILE} \
+     --from=quay.io/openshift-release-dev/ocp-release:${OCP_VER}-x86_64 --to-dir=${OCP_PATH}/operator-image/mirror_${OCP_VER}
+
+# https://www.its404.com/article/lwlfox/110442762
+
+```
+
+
+### ocp nfs 设置
+```
+## 存放本集群Registry数据的根目录
+export OCP_CLUSTER_ID="ocp4-1"
+export CLUSTER_PATH="/data/ocp-cluster/${OCP_CLUSTER_ID}"
+export NFS_OCP_REGISTRY_PATH="/data/ocp-cluster/${OCP_CLUSTER_ID}/nfs/ocp-registry"
+## 存放本集群用户数据的根目录
+export NFS_USER_FILE_PATH="/data/ocp-cluster/${OCP_CLUSTER_ID}/nfs/userfile"
+## 运行NFS Server的域名
+export DOMAIN="example.com"
+export NFS_DOMAIN=nfs.${DOMAIN}
+## 在OCP上运行NFS Client的项目
+export NFS_CLIENT_NAMESPACE="csi-nfs"
+## NFS Client Image
+export NFS_CLIENT_PROVISIONER_IMAGE="${REGISTRY_DOMAIN}/${NFS_CLIENT_NAMESPACE}/nfs-client-provisioner"  
+export PROVISIONER_NAME="kubernetes-nfs"
+export STORAGECLASS_NAME="sc-csi-nfs"
+export OCP_REGISTRY_PVC_NAME="pvc-ocp-registry"
+export OCP_REGISTRY_PV_NAME="pv-ocp-registry"
+
+
+cat << EOF > ${CLUSTER_PATH}/rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sa-nfs-client-provisioner
+  namespace: ${NFS_CLIENT_NAMESPACE}
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cr-nfs-client-provisioner
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "update", "patch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: crb-nfs-client-provisioner
+subjects:
+  - kind: ServiceAccount
+    name: sa-nfs-client-provisioner
+    namespace: ${NFS_CLIENT_NAMESPACE}
+roleRef:
+  kind: ClusterRole
+  name: cr-nfs-client-provisioner
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: r-nfs-client-provisioner
+  namespace: ${NFS_CLIENT_NAMESPACE}
+rules:
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rb-nfs-client-provisioner
+  namespace: ${NFS_CLIENT_NAMESPACE}
+subjects:
+  - kind: ServiceAccount
+    name: sa-nfs-client-provisioner
+    namespace: ${NFS_CLIENT_NAMESPACE}
+roleRef:
+  kind: Role
+  name: r-nfs-client-provisioner
+  apiGroup: rbac.authorization.k8s.io
+EOF
+
+# 8.3.4.2.4	创建deployment.yaml文件
+cat << EOF > ${CLUSTER_PATH}/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfs-client-provisioner
+  namespace: ${NFS_CLIENT_NAMESPACE}
+  labels:
+    app: nfs-client-provisioner
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nfs-client-provisioner
+  template:
+    metadata:
+      labels:
+        app: nfs-client-provisioner
+    spec:
+      serviceAccountName: sa-nfs-client-provisioner
+      containers:
+        - name: nfs-client-provisioner
+          image: ${NFS_CLIENT_PROVISIONER_IMAGE}:latest
+          volumeMounts:
+            - name: nfs-client-root
+              mountPath: /persistentvolumes
+          env:
+            - name: PROVISIONER_NAME
+              value: ${PROVISIONER_NAME}
+            - name: NFS_SERVER
+              value: ${NFS_DOMAIN}
+            - name: NFS_PATH
+              value: ${NFS_USER_FILE_PATH}
+      volumes:
+        - name: nfs-client-root
+          nfs:
+            server: ${NFS_DOMAIN}
+            path: ${NFS_USER_FILE_PATH}
+EOF
+
+# 8.3.4.2.5	创建storageclass.yaml文件
+cat << EOF > ${CLUSTER_PATH}/storageclass.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ${STORAGECLASS_NAME}
+provisioner: ${PROVISIONER_NAME}
+parameters:
+  archiveOnDelete: "false"
+EOF
 ```
