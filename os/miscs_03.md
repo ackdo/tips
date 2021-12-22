@@ -3329,3 +3329,8 @@ export HTTPS_PROXY="$PROXY_URL"
 export FTP_PROXY="$PROXY_URL"
 export NO_PROXY="127.0.0.1,localhost,.rhsacn.org"
 ```
+
+### OpenShift 4.2环境离线部署Operatorhub
+下面这个不是原创，哎...<br>
+https://blog.51cto.com/u_15127570/2712896<br>
+https://docs.openshift.com/container-platform/4.7/operators/admin/olm-restricted-networks.html<br>
