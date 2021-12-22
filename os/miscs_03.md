@@ -3370,3 +3370,24 @@ podman push <target_registry>:<port>/<namespace>/redhat-operator-index:v4.7
 # Mirroring an Operator catalog
 
 ```
+
+### 更新 kubeadmin password
+https://blog.andyserver.com/2021/07/rotating-the-openshift-kubeadmin-password/<br>
+https://go.dev/play/<br>
+```
+Actual Password: BeFXW-cCUiE-LEzjW-p8yXz
+Hashed Password: $2a$10$PJtmeqhl70nKFA6edvDvmOL675aiVxft33deqx6.P86NGGhl9LA0m
+Data to Change in Secret: JDJhJDEwJFBKdG1lcWhsNzBuS0ZBNmVkdkR2bU9MNjc1YWlWeGZ0MzNkZXF4Ni5QODZOR0dobDlMQTBt
+Program exited.
+
+SECRET_DATA="JDJhJDEwJFBKdG1lcWhsNzBuS0ZBNmVkdkR2bU9MNjc1YWlWeGZ0MzNkZXF4Ni5QODZOR0dobDlMQTBt"
+kubectl patch secret -n kube-system kubeadmin --type json -p '[{"op": "replace", "path": "/data/kubeadmin", "value": "${SECRET_DATA}"}]
+
+# 恢复 system:admin 用户的 kubeconfig 
+https://access.redhat.com/solutions/4679661
+
+# 安装完 ocp4 后更新 ssh key 
+https://access.redhat.com/solutions/3868301
+
+
+```
