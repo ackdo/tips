@@ -3392,4 +3392,13 @@ https://access.redhat.com/solutions/3868301
 
 # OCP4 如何为 KubeAPIServer 添加 feature-gates
 https://access.redhat.com/solutions/5685971
+
+# azure disconnected operator catalog
+https://github.com/deewhyweb/azure-disconnected-operator-catalog
+
+# 报错
+JundeMacBook-Pro:docs junwang$ oc --loglevel=10 login https://api.cluster-d8x7p.d8x7p.sandbox580.opentlc.com:6443 -u user1 
+I1222 15:45:32.302463   96181 request.go:1181] Response Body: {"kind":"Status","apiVersion":"v1","metadata":{},"status":"Failure","message":"configmaps 
+\"motd\" is forbidden: User \"system:anonymous\" cannot get resource \"configmaps\" in API group \"\" in the namespace \"openshift\"","reason":"Forbidde
+n","details":{"name":"motd","kind":"configmaps"},"code":403}    
 ```
