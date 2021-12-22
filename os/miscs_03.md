@@ -3365,4 +3365,8 @@ opm index prune -f registry.redhat.io/redhat/redhat-operator-index:v4.7 -p advan
 
 # 将修剪后的 local index image 推送到离线 registry 
 podman push <target_registry>:<port>/<namespace>/redhat-operator-index:v4.7
+
+# 根据 index image 
+# Mirroring an Operator catalog
+
 ```
