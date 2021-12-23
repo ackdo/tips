@@ -3369,6 +3369,12 @@ podman push <target_registry>:<port>/<namespace>/redhat-operator-index:v4.7
 # 根据 index image 
 # Mirroring an Operator catalog
 
+# 在 support.example.com 节点上
+podman pull --authfile ${PULL_SECRET_FILE} registry.redhat.io/redhat/redhat-operator-index:v${OCP_MAJOR_VER}
+podman pull --authfile ${PULL_SECRET_FILE} registry.redhat.io/redhat/certified-operator-index:v${OCP_MAJOR_VER}
+podman pull --authfile ${PULL_SECRET_FILE} registry.redhat.io/redhat/community-operator-index:v${OCP_MAJOR_VER}
+podman pull --authfile ${PULL_SECRET_FILE} registry.redhat.io/redhat/community-operator-index:v${OCP_MAJOR_VER}
+
 ```
 
 ### 更新 kubeadmin password
@@ -3547,4 +3553,14 @@ provisioner: ${PROVISIONER_NAME}
 parameters:
   archiveOnDelete: "false"
 EOF
+```
+
+### ironic inspector 检查交换机端口特性
+https://docs.openstack.org/python-ironic-inspector-client/wallaby/reference/api/ironic_inspector_client.resource.html
+```
+(undercloud) [stack@undercloud ~]$ openstack baremetal introspection interface list LAB01PCRENK017
+(undercloud) [stack@undercloud ~]$ openstack baremetal introspection interface show LAB01PCRENK017 ens11f0
+switch_port_link_aggregation_enabled
+switch_port_link_aggregation_id
+switch_port_link_aggregation_support
 ```
