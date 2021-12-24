@@ -3711,7 +3711,8 @@ EOF
 https://www.yinxiang.com/everhub/note/89e026c1-c57b-433e-a5d6-78646ec7b6cd
 
 ### koji 架构
-https://fedoraproject.org/wiki/Koji
+https://fedoraproject.org/wiki/Koji<br>
+https://oepkgs.net/zh/<br>
 
 ### OpenShift Automated Release Team tooling
 https://github.com/openshift/art-tools
