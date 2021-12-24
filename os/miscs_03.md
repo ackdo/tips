@@ -3623,4 +3623,7 @@ https://www.youtube.com/watch?v=wVBXkS1AgHg<br>
 https://www.techradar.com/news/new-ai-tool-eliminates-a-common-nightmare-for-hard-drive-users
 
 ### Rancher Longhorn
-https://github.com/longhorn/longhorn
+https://github.com/longhorn/longhorn<br>
+
+### Code Ready Container
+https://www.linuxtechi.com/setup-single-node-openshift-cluster-rhel-8/
