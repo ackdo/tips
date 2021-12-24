@@ -3607,6 +3607,7 @@ ${var:-VALUE}：如果变量var为空或者未设置，则返回VALUE；否则�
 ${var:=VALUE}：如果变量var为空或者未设置，则返回VALUE，并将VALUE赋值给变量var；否则返回变量var的值
 ${var:+VALUE}：如果变量var为空或者未设置，那么不会返回任何值。否则则返回VALUE的值。注意，变量var本身的值不会被修改。
 ${var:?ERROR_INFO}：如果变量var为空或者未设置，则返回错误信息ERROR_INFO；否则返回变量var的值。
-
-
 ```
+
+### 关于 bash 的 extglob
+https://www.linuxjournal.com/content/bash-extended-globbing
