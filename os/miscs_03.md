@@ -3611,3 +3611,11 @@ ${var:?ERROR_INFO}：如果变量var为空或者未设置，则返回错误信�
 
 ### 关于 bash 的 extglob
 https://www.linuxjournal.com/content/bash-extended-globbing
+
+### D 语言
+https://dlang.org/
+
+### Harvester HCI
+https://harvesterhci.io/<br>
+https://www.youtube.com/watch?v=wVBXkS1AgHg<br>
+
