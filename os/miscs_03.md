@@ -3630,6 +3630,82 @@ https://www.linuxtechi.com/setup-single-node-openshift-cluster-rhel-8/
 
 ### Single Node OpenShift
 https://www.itix.fr/blog/deploy-openshift-single-node-in-kvm/
+```
+为单节点 OpenShift 配置使用本地目录的 PV, StorageClass 
+# 登陆 SNO 节点
+# 创建 /srv/openshift/pv-{0..99} 目录
+# 设置目录的访问模式 (777) 和 selinux context (svirt_sanbox_file_t)
+ssh core@node.itix-dev.ocp.itix "sudo /bin/bash -c 'mkdir -p /srv/openshift/pv-{0..99} ; chmod -R 777 /srv/openshift ; chcon -R -t svirt_sandbox_file_t /srv/openshift'"
+
+# 创建 PV 
+for i in {0..99}; do
+  oc create -f - <<EOF
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-$i
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+  - ReadWriteOnce
+  - ReadWriteMany
+  persistentVolumeReclaimPolicy: Recycle
+  hostPath:
+    path: "/srv/openshift/pv-$i"
+EOF
+done
+
+# 创建 StorageClass
+oc create -f - <<EOF
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: manual
+  annotations:
+    storageclass.kubernetes.io/is-default-class: 'true'
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+EOF
+
+# 创建为内部 image-registry 准备的 pvc 
+oc create -f - <<EOF
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: registry-storage
+  namespace: openshift-image-registry
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+EOF
+
+# 将 SNO 原来的 configs.imageregistry.operator.openshift.io/cluster 的 /spec/storge 删除
+# 然后添加 
+# spec:
+#   storage:
+#     pvc:
+#       claim: "registry-storage"
+oc patch configs.imageregistry.operator.openshift.io cluster --type=json --patch-file=/dev/fd/0 <<EOF
+[{"op": "remove", "path": "/spec/storage" },{"op": "add", "path": "/spec/storage", "value": {"pvc":{"claim": "registry-storage"}}}]
+EOF
+
+# 将 configs.imageregistry.operator.openshift.io/cluster 的 spec.managemntState 设置为 Managed
+# spec:
+#   managementState: "Managed"
+oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch-file=/dev/fd/0 <<EOF
+{"spec":{"managementState": "Managed"}}
+EOF
+
+配置 openshift-image-registry 使用
+```
 
 ### dnsmasq 做 dns 服务器和 dhcp 服务器
 https://www.yinxiang.com/everhub/note/89e026c1-c57b-433e-a5d6-78646ec7b6cd
