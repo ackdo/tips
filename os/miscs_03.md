@@ -3630,3 +3630,6 @@ https://www.linuxtechi.com/setup-single-node-openshift-cluster-rhel-8/
 
 ### Single Node OpenShift
 https://www.itix.fr/blog/deploy-openshift-single-node-in-kvm/
+
+### dnsmasq 做 dns 服务器和 dhcp 服务器
+https://www.yinxiang.com/everhub/note/89e026c1-c57b-433e-a5d6-78646ec7b6cd
