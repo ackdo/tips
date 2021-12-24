@@ -3627,3 +3627,6 @@ https://github.com/longhorn/longhorn<br>
 
 ### Code Ready Container
 https://www.linuxtechi.com/setup-single-node-openshift-cluster-rhel-8/
+
+### Single Node OpenShift
+https://www.itix.fr/blog/deploy-openshift-single-node-in-kvm/
