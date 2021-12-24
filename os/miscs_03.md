@@ -3619,3 +3619,8 @@ https://dlang.org/
 https://harvesterhci.io/<br>
 https://www.youtube.com/watch?v=wVBXkS1AgHg<br>
 
+### AI 工具帮助用户
+https://www.techradar.com/news/new-ai-tool-eliminates-a-common-nightmare-for-hard-drive-users
+
+### Rancher Longhorn
+https://github.com/longhorn/longhorn
