@@ -3709,3 +3709,6 @@ EOF
 
 ### dnsmasq 做 dns 服务器和 dhcp 服务器
 https://www.yinxiang.com/everhub/note/89e026c1-c57b-433e-a5d6-78646ec7b6cd
+
+### koji 架构
+https://fedoraproject.org/wiki/Koji
