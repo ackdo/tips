@@ -3880,3 +3880,146 @@ exit
 exit
 
 ```
+
+### 参考以下步骤，安装 single node openshift
+https://github.com/wangjun1974/tips/blob/master/ocp/offline/4.6/0-prepare.md
+```
+# 4.6.3	配置Zone区域        
+# 4.6.3.1	设置DNS环境变量
+setVAR DOMAIN example.com
+setVAR OCP_CLUSTER_ID ocp4-1
+setVAR BASTION_IP 192.168.122.13
+setVAR SUPPORT_IP 192.168.122.12
+setVAR DNS_IP 192.168.122.12
+setVAR NTP_IP 192.168.122.12
+setVAR YUM_IP 192.168.122.12
+setVAR NFS_IP 192.168.122.12
+setVAR REGISTRY_IP 192.168.122.12
+setVAR USIP 192.168.122.12
+setVAR LB_IP 192.168.122.12  
+setVAR BOOTSTRAP_IP 192.168.122.200
+setVAR MASTER0_IP 192.168.122.201
+
+# 4.6.3.2	添加解析Zone区域
+# 执行以下命令添加3个解析ZONE（如果要执行多次，需要手动删除以前增加的内容），它们分别为：
+# 域名后缀              解释
+# example.com          集群内部域名后缀：集群内部所有节点的主机名均采用该域名后缀
+# ocp4-1.example.com   OCP集群的域名，如本例中的集群名为ocp4-1，则域名为ocp4-1.example.com
+# 168.192.in-addr.arpa 用于集群内所有节点的反向解析
+cat >> /etc/named.rfc1912.zones << EOF
+
+zone "${DOMAIN}" IN {
+        type master;
+        file "${DOMAIN}.zone";
+        allow-transfer { any; };
+};
+
+zone "${OCP_CLUSTER_ID}.${DOMAIN}" IN {
+        type master;
+        file "${OCP_CLUSTER_ID}.${DOMAIN}.zone";
+        allow-transfer { any; };
+};
+
+zone "168.192.in-addr.arpa" IN {
+        type master;
+        file "168.192.in-addr.arpa.zone";
+        allow-transfer { any; };
+};
+
+EOF
+
+# 4.6.3.3	创建example.com.zone区域配置文件
+cat > /var/named/${DOMAIN}.zone << EOF
+\$ORIGIN ${DOMAIN}.
+\$TTL 1D
+@           IN SOA  ${DOMAIN}. admin.${DOMAIN}. (
+                                        0          ; serial
+                                        1D         ; refresh
+                                        1H         ; retry
+                                        1W         ; expire
+                                        3H )       ; minimum
+
+@             IN NS                         dns.${DOMAIN}.
+
+bastion       IN A                          ${BASTION_IP}
+support       IN A                          ${SUPPORT_IP}
+dns           IN A                          ${DNS_IP}
+ntp           IN A                          ${NTP_IP}
+yum           IN A                          ${YUM_IP}
+registry      IN A                          ${REGISTRY_IP}
+nfs           IN A                          ${NFS_IP}
+
+EOF
+
+# 4.6.3.4	创建ocp4-1.example.com.zone区域配置文件
+cat > /var/named/${OCP_CLUSTER_ID}.${DOMAIN}.zone << EOF
+\$ORIGIN ${OCP_CLUSTER_ID}.${DOMAIN}.
+\$TTL 1D
+@           IN SOA  ${OCP_CLUSTER_ID}.${DOMAIN}. admin.${OCP_CLUSTER_ID}.${DOMAIN}. (
+                                        0          ; serial
+                                        1D         ; refresh
+                                        1H         ; retry
+                                        1W         ; expire
+                                        3H )       ; minimum
+
+@             IN NS                         dns.${DOMAIN}.
+
+lb             IN A                          ${LB_IP}
+
+api            IN A                          ${LB_IP}
+api-int        IN A                          ${LB_IP}
+*.apps         IN A                          ${LB_IP}
+
+bootstrap      IN A                          ${BOOTSTRAP_IP}
+
+master-0       IN A                          ${MASTER0_IP}
+
+etcd-0         IN A                          ${MASTER0_IP}
+
+_etcd-server-ssl._tcp.${OCP_CLUSTER_ID}.${DOMAIN}. 8640 IN SRV 0 10 2380 etcd-0.${OCP_CLUSTER_ID}.${DOMAIN}.
+
+EOF
+
+# 4.6.3.5	创建168.192.in-addr.arpa.zone反向解析区域配置文件
+# 注意：以下脚本中的反向IP如果有变化需要在此手动修改。
+cat > /var/named/168.192.in-addr.arpa.zone << EOF
+\$TTL 1D
+@           IN SOA  ${DOMAIN}. admin.${DOMAIN}. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+                                        
+@                              IN NS       dns.${DOMAIN}.
+
+13.122.168.192.in-addr.arpa.     IN PTR      bastion.${DOMAIN}.
+
+12.122.168.192.in-addr.arpa.     IN PTR      support.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      dns.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      ntp.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      yum.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      registry.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      nfs.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      lb.${OCP_CLUSTER_ID}.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      api.${OCP_CLUSTER_ID}.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      api-int.${OCP_CLUSTER_ID}.${DOMAIN}.
+
+200.122.168.192.in-addr.arpa.    IN PTR      bootstrap.${OCP_CLUSTER_ID}.${DOMAIN}.
+
+201.122.168.192.in-addr.arpa.    IN PTR      master-0.${OCP_CLUSTER_ID}.${DOMAIN}.
+EOF
+
+# 4.6.4	重启BIND服务
+# 重启BIND服务，然后检查没有错误日志。
+systemctl restart named
+rndc reload
+journalctl -u named
+
+# 4.6.5	将Support节点的DNS配置指向自己
+nmcli c mod "$(nmcli --fields name con show |awk 'NR==2{print}' | sed -e 's, $,,g')" ipv4.dns "${DNS_IP}"
+systemctl restart network
+nmcli c show "$(nmcli --fields name con show |awk 'NR==2{print}' | sed -e 's, $,,g')" | grep ipv4.dns
+
+
+```
