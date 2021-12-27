@@ -3746,7 +3746,7 @@ cat /sys/block/sdd/device/scsi_disk/3\:0\:0\:2/provisioning_mode
 
 ### kickstart file
 ```
-cat > jwang-ocp4-aHelper-ks.cfg <<EOF
+cat > jwang-ocp4-aHelper-ks.cfg <<'EOF'
 lang en_US
 keyboard us
 timezone Asia/Shanghai --isUtc
@@ -3811,6 +3811,7 @@ done
 
 du -lh ${YUM_PATH} --max-depth=1
 
+cd ${YUM_PATH}
 for dir in $(ls --indicator-style=none ${YUM_PATH}/); do
     tar -zcvf ${YUM_PATH}/${dir}.tar.gz ${dir}; 
 done
