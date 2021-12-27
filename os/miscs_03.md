@@ -3841,7 +3841,8 @@ ll -h ${OCP_PATH}/rhcos
 curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OCP_VER}/openshift-install-linux-${OCP_VER}.tar.gz -o ${OCP_PATH}/ocp-installer/openshift-install-linux-${OCP_VER}.tar.gz
 ll -h ${OCP_PATH}/ocp-installer
 tar -xzf ${OCP_PATH}/ocp-installer/openshift-install-linux-${OCP_VER}.tar.gz -C /usr/local/sbin/
-
-
-
 ```
+
+
+### Single Node OpenShift
+https://github.com/eranco74/bootstrap-in-place-poc/blob/main/README.md<br>
