@@ -3776,3 +3776,72 @@ EOF
 # ks=http://10.66.208.115/jwang-ocp4-aHelper-ks.cfg nameserver=192.168.122.1 ip=192.168.122.12::192.168.122.1:255.255.255.0:support.example.com:eth0:none
 
 ```
+
+### 下载 OCP 介质
+```
+export OCP_MAJOR_VER=4.9
+export OCP_VER=4.9.9
+export OCP_PATH=/data/OCP-${OCP_VER}/ocp
+export YUM_PATH=/data/OCP-${OCP_VER}/yum
+
+mkdir -p ${OCP_PATH}/{app-image,ocp-client,ocp-image,ocp-installer,rhcos,secret}  ${YUM_PATH}
+
+rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+
+export SUB_USER=XXXXX
+export SUB_PASSWD=XXXXX
+
+subscription-manager register --force --user ${SUB_USER} --password ${SUB_PASSWD}
+subscription-manager refresh
+subscription-manager list --available --matches 'OpenShift Container Platform.*' | grep "Pool ID"
+
+subscription-manager attach --pool=<ONE-POOL-ID>
+
+subscription-manager repos --disable="*"
+subscription-manager repos \
+    --enable="rhel-7-server-rpms" \
+    --enable="rhel-7-server-extras-rpms" \
+    --enable="rhel-7-server-ose-${OCP_MAJOR_VER}-rpms" 
+
+yum -y install yum-utils createrepo 
+for repo in $(subscription-manager repos --list-enabled | grep "Repo ID" | awk '{print $3}'); do
+    reposync --gpgcheck -lmn --repoid=${repo} --download_path=${YUM_PATH}
+    createrepo -v ${YUM_PATH}/${repo} -o ${YUM_PATH}/${repo} 
+done
+
+du -lh ${YUM_PATH} --max-depth=1
+
+for dir in $(ls --indicator-style=none ${YUM_PATH}/); do
+    tar -zcvf ${YUM_PATH}/${dir}.tar.gz ${dir}; 
+done
+
+rm -rf $(ls ${YUM_PATH} |egrep -v gz)
+subscription-manager unregister
+
+curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OCP_VER}/openshift-client-linux-${OCP_VER}.tar.gz -o ${OCP_PATH}/ocp-client/openshift-client-linux-${OCP_VER}.tar.gz
+tar -xzf ${OCP_PATH}/ocp-client/openshift-client-linux-${OCP_VER}.tar.gz -C /usr/local/sbin/
+oc version
+
+export PULL_SECRET_FILE=${OCP_PATH}/secret/redhat-pull-secret.json
+
+oc adm release info "quay.io/openshift-release-dev/ocp-release:${OCP_VER}-x86_64" 
+oc adm release mirror -a ${PULL_SECRET_FILE} \
+     --from=quay.io/openshift-release-dev/ocp-release:${OCP_VER}-x86_64 --to-dir=${OCP_PATH}/ocp-image/mirror_${OCP_VER}
+oc adm release info ${OCP_VER} --dir=${OCP_PATH}/ocp-image/mirror_${OCP_VER}  
+tar -zcvf ${OCP_PATH}/ocp-image/ocp-image-${OCP_VER}.tar -C ${OCP_PATH}/ocp-image ./mirror_${OCP_VER}
+rm -rf ${OCP_PATH}/ocp-image/mirror_${OCP_VER}
+
+RHCOS_VER=$(curl -s https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/${OCP_MAJOR_VER}/latest/sha256sum.txt | grep x86_64-live.x86_64 | awk -F\- '{print $2}' | head -1)
+echo ${RHCOS_VER}
+
+curl -s https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/${OCP_MAJOR_VER}/latest/sha256sum.txt | awk '{print $2}' | grep rhcos
+curl -L https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/${OCP_MAJOR_VER}/${RHCOS_VER}/rhcos-${RHCOS_VER}-x86_64-live.x86_64.iso -o ${OCP_PATH}/rhcos/rhcos-${RHCOS_VER}-x86_64-live.x86_64.iso
+ll -h ${OCP_PATH}/rhcos
+
+curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OCP_VER}/openshift-install-linux-${OCP_VER}.tar.gz -o ${OCP_PATH}/ocp-installer/openshift-install-linux-${OCP_VER}.tar.gz
+ll -h ${OCP_PATH}/ocp-installer
+tar -xzf ${OCP_PATH}/ocp-installer/openshift-install-linux-${OCP_VER}.tar.gz -C /usr/local/sbin/
+
+
+
+```
