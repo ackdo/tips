@@ -3766,7 +3766,7 @@ firewall --enabled --ssh
 skipx
 firstboot --disable
 %packages
-@^minimal-environment
+@^minimal
 kexec-tools
 tar
 %end
