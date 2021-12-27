@@ -3772,6 +3772,7 @@ tar
 %end
 EOF
 
+# rhel 7.8
 # ks=http://10.66.208.115/jwang-ocp4-aHelper-ks.cfg nameserver=192.168.122.1 ip=192.168.122.12::192.168.122.1:255.255.255.0:support.example.com:eth0:none
 
 ```
