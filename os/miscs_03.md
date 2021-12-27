@@ -3793,7 +3793,7 @@ export SUB_PASSWD=XXXXX
 
 subscription-manager register --force --user ${SUB_USER} --password ${SUB_PASSWD}
 subscription-manager refresh
-subscription-manager list --available --matches 'OpenShift Container Platform.*' | grep "Pool ID"
+LC_ALL="en_US.UTF-8" LANG="en_US.UTF-8" subscription-manager list --available --matches 'Red Hat OpenShift Container Platform' | grep -E "Pool ID|System Type"
 
 subscription-manager attach --pool=<ONE-POOL-ID>
 
