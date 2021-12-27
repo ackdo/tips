@@ -3716,3 +3716,22 @@ https://oepkgs.net/zh/<br>
 
 ### OpenShift Automated Release Team tooling
 https://github.com/openshift/art-tools
+
+### Yocto and OpenEmbedded
+https://www.yoctoproject.org/<br>
+https://github.com/openembedded<br>
+https://blog.csdn.net/weixin_44410537/article/details/89741876<br>
+
+### osp 启用 vif 的 multiqueue 
+```
+需要在 flavor 和 image 上设置 properties: vif_multiqueue_enabled
+(overcloud) [stack@sne01vrhelu01 ~]$ openstack flavor show m1.dpdk2 -f yaml
+[...]
+disk: 100
+name: m1.dpdk2
+properties: hw:cpu_policy='dedicated', hw:cpu_thread_policy='isolate', hw:emulator_threads_policy='share',
+  hw:mem_page_size='1GB', hw:vif_multiqueue_enabled='true'
+ram: 4096
+rxtx_factor: 1.0
+vcpus: 2
+```
