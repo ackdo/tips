@@ -3847,3 +3847,32 @@ tar -xzf ${OCP_PATH}/ocp-installer/openshift-install-linux-${OCP_VER}.tar.gz -C 
 
 ### Single Node OpenShift
 https://github.com/eranco74/bootstrap-in-place-poc/blob/main/README.md<br>
+
+### rhel 7 通过 rescue 恢复 root 口令
+https://www.thegeekdiary.com/centos-rhel-7-reset-root-password/<br>
+https://access.redhat.com/discussions/1243493<br>
+```
+# Reboot and edit grub2
+
+# Append rd.break to kernel
+
+# Reboot the system
+# Press CTLR+x after appending the rd.break to the kernel. This will reboot the system into emergency mode.
+
+# Remount sysroot
+mount -o remount,rw /sysroot
+chroot /sysroot
+
+# Reset root password
+passwd
+
+# SElinux relabeling
+touch /.autorelabel
+
+# sync
+sync
+
+# Reboot
+reboot
+
+```
