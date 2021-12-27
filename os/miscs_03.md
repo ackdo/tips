@@ -3873,6 +3873,7 @@ touch /.autorelabel
 sync
 
 # Reboot
-reboot
+exit
+exit
 
 ```
