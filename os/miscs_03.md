@@ -4595,6 +4595,25 @@ openshift-install wait-for install-complete --log-level=debug --dir=${IGN_PATH}
 # 8.	跟踪bootstrap的日志以识别安装进度，当循环出现如下红色字体提示的内容的时候，并且haproxy的web监控界面openshift-api-server和machine-config-server的bootstrap部分变为绿色时，说明bootstrap的引导服务已经启动，此时可进入下一个阶段。
 ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "journalctl -b -f -u bootkube.service"
 
+# 7.2	第二阶段：部署master阶段
+# 7.2.1	两次启动
+# 参照bootstrap的两次启动步骤启动所有master节点，将网络参数换成各自master的地址。
+# 7.2.2	查看master节点部署进程
+# 在support节点执行命令检查master节点的镜像库配置是否按照install-config.yaml的内容进行配置
+ssh -i ${SSH_PRI_FILE} core@master-0.${OCP_CLUSTER_ID}.${DOMAIN} "sudo cat /etc/containers/registries.conf"
+# 检查是否能够正常访问registry
+ssh -i ${SSH_PRI_FILE} core@master-0.${OCP_CLUSTER_ID}.${DOMAIN} "curl -s -u openshift:redhat https://registry.${DOMAIN}:5000/v2/_catalog"
+# 安装过程中可以通过查看如下日志来跟踪安装过程。注意以下日志的红色字体部分，这些内容指示master的不同安装阶段
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "journalctl -b -f -u bootkube.service"
+# 出现上述最后两条红色字体后，说明bootstrap的任务已经完成，可以已经进入后续安装部署节点
+# 另外，我们也可以通过如下方法了解安装进程：
+tail -f ${IGN_PATH}/.openshift_install.log 
+openshift-install wait-for bootstrap-complete --log-level debug --dir ${IGN_PATH}
+# 现在我们可以关闭bootstrap节点，继续进行下一个阶段部署。
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "sudo shutdown -h now"
+# 在安装过程中，也可以通过以下方法查看master节点的日志 
+# ssh -i ${SSH_PRI_FILE} core@master-0.${OCP_CLUSTER_ID}.${DOMAIN} "journalctl -xef"
+
 ```
 
 
