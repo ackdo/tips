@@ -4649,6 +4649,84 @@ openshift-install wait-for install-complete --log-level debug --dir ${IGN_PATH}
 # 检查 kube-apiserver operator 日志
 oc -n openshift-kube-apiserver-operator logs $(oc get pods -n openshift-kube-apiserver-operator -o jsonpath='{ .items[*].metadata.name }') -f
 
+# 在单节点安装时，bootstrap 完成后
+# 按照这个链接里的内容，进行了针对 single node 环境的 patch
+# 目前尚不确认这些 patch 是否有必要
+# https://docs.google.com/document/d/1bYSwibEPfg-hq1DW7Qn2En6maswiN9C8f85aW5uYgUw/edit
+# 1. 设置 etcd-operator 支持在少于 3 个 master 节点的情况下启动 etcd cluster 
+# Etcd patch - allow etcd-operator to start the etcd cluster without minimum of 3 master nodes
+oc --kubeconfig ${IGN_PATH}/auth/kubeconfig patch etcd cluster -p='{"spec": {"unsupportedConfigOverrides": {"useUnsupportedUnsafeNonHANonProductionUnstableEtcd": true}}}' --type=merge
+
+# 2. 设置 cluster-authentication-operator 在少于 3 个 master 节点的情况下部署 OAuthServer 
+# Authentication patch -  allow cluster-authentication-operator to deploy OAuthServer without minimum of 3 master nodes
+oc --kubeconfig ${IGN_PATH}/auth/kubeconfig patch authentications.operator.openshift.io cluster -p='{"spec": {"managementState": "Managed", "unsupportedConfigOverrides": {"useUnsupportedUnsafeNonHANonProductionUnstableOAuthServer": true}}}' --type=merge
+
+# 3. 设置 1 个 ingress router pod
+# Make sure to have a single ingress router pod:
+oc patch --kubeconfig ${IGN_PATH}/auth/kubeconfig -n openshift-ingress-operator ingresscontroller/default --patch '{"spec":{"replicas": 1}}' --type=merge
+
+# 4. 标记 etcd UnManaged
+oc --kubeconfig ${IGN_PATH}/auth/kubeconfig patch clusterversion/version --type='merge' -p "$(cat <<- EOF
+ spec:
+    overrides:
+      - group: apps/v1
+        kind: Deployment
+        name: etcd-quorum-guard
+        namespace: openshift-etcd
+        unmanaged: true
+EOF
+)"
+
+# 5. 这个命令在 4.9.9 上无需执行
+oc --kubeconfig ${IGN_PATH}/auth/kubeconfig scale --replicas=1 deployment/etcd-quorum-guard -n openshift-etcd
+
+# 6. 查看安装进度 clusterversion
+oc --kubeconfig ${IGN_PATH}/auth/kubeconfig get clusterversion
+
+[root@support ~]# oc --kubeconfig=/data/ocp-cluster/ocp4-1/get nodes
+ignition/ ssh-key/  
+[root@support ~]# oc --kubeconfig=/data/ocp-cluster/ocp4-1/ignition/auth/kubeconfig get clusterversion 
+NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
+version   4.9.9     True        False         3m33s   Cluster version is 4.9.9
+
+[root@support ~]# oc --kubeconfig=/data/ocp-cluster/ocp4-1/ignition/auth/kubeconfig get clusteroperators 
+NAME                                       VERSION   AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
+authentication                             4.9.9     True        False         False      6m9s    
+baremetal                                  4.9.9     True        False         False      11m     
+cloud-controller-manager                   4.9.9     True        False         False      18m     
+cloud-credential                           4.9.9     True        False         False      67m     
+cluster-autoscaler                         4.9.9     True        False         False      13m     
+config-operator                            4.9.9     True        False         False      16m     
+console                                    4.9.9     True        False         False      5m51s   
+csi-snapshot-controller                    4.9.9     True        False         False      15m     
+dns                                        4.9.9     True        False         False      11m     
+etcd                                       4.9.9     True        False         False      13m     
+image-registry                             4.9.9     True        False         False      10m     
+ingress                                    4.9.9     True        False         False      9m13s   
+insights                                   4.9.9     True        False         False      4m24s   
+kube-apiserver                             4.9.9     True        False         False      10m     
+kube-controller-manager                    4.9.9     True        False         False      13m     
+kube-scheduler                             4.9.9     True        False         False      14m     
+kube-storage-version-migrator              4.9.9     True        False         False      16m     
+machine-api                                4.9.9     True        False         False      14m     
+machine-approver                           4.9.9     True        False         False      14m     
+machine-config                             4.9.9     True        False         False      14m     
+marketplace                                4.9.9     True        False         False      14m     
+monitoring                                 4.9.9     True        False         False      6m12s   
+network                                    4.9.9     True        False         False      16m     
+node-tuning                                4.9.9     True        False         False      14m     
+openshift-apiserver                        4.9.9     True        False         False      6m42s   
+openshift-controller-manager               4.9.9     True        False         False      9m9s    
+openshift-samples                          4.9.9     True        False         False      10m     
+operator-lifecycle-manager                 4.9.9     True        False         False      14m     
+operator-lifecycle-manager-catalog         4.9.9     True        False         False      15m     
+operator-lifecycle-manager-packageserver   4.9.9     True        False         False      12m     
+service-ca                                 4.9.9     True        False         False      16m     
+storage                                    4.9.9     True        False         False      16m     
+
+[root@support ~]# oc --kubeconfig=/data/ocp-cluster/ocp4-1/ignition/auth/kubeconfig get node
+NAME                          STATUS   ROLES           AGE   VERSION
+master-0.ocp4-1.example.com   Ready    master,worker   22m   v1.22.3+4dd1b5a
 ```
 
 
@@ -4670,5 +4748,31 @@ oc adm release info 4.6.52 --dir=/data/OCP-4.6.52/ocp/ocp-image/mirror_4.6.52 | 
 # 重新创建 soft link
 oc adm release info 4.9.9 --dir=/data/OCP-4.9.9/ocp/ocp-image/mirror_4.9.9 |  grep sha256 | grep -Ev "Digest|Pull" | while read name digest ; do ln -sf $digest 4.9.9-x86_64-${name} ;  done  
 oc adm release info 4.9.9 --dir=/data/OCP-4.9.9/ocp/ocp-image/mirror_4.9.9 |  grep sha256 | grep -E "Digest" | while read name digest ; do ln -sf $digest 4.9.9-x86_64 ;  done
+
+[root@support ~]# ssh -i ${SSH_PRI_FILE} core@master-0.${OCP_CLUSTER_ID}.${DOMAIN} "sudo crictl logs 12ca25c026f51"
+I1228 06:01:25.974215       1 cmd.go:209] Using service-serving-cert provided certificates
+I1228 06:01:25.984675       1 observer_polling.go:159] Starting file observer
+W1228 06:01:31.388600       1 builder.go:220] unable to get owner reference (falling back to namespace): Get "https://172.30.0.1:443/api/v1/namespaces/o
+penshift-kube-apiserver-operator/pods/kube-apiserver-operator-6b6548968f-wswls": dial tcp 172.30.0.1:443: connect: connection refused
+I1228 06:01:31.406830       1 builder.go:252] kube-apiserver-operator version 4.9.0-202111151318.p0.g3a02848.assembly.stream-3a02848-3a02848339e2e10e452
+2031c1deaec9a6d553063
+F1228 06:02:41.111808       1 cmd.go:138] unable to load configmap based request-header-client-ca-file: the server was unable to return a response in the time allotted, but may still be processing the request (get configmaps extension-apiserver-authentication)
+
+[root@support ~]# ssh -i ${SSH_PRI_FILE} core@master-0.${OCP_CLUSTER_ID}.${DOMAIN} "sudo crictl ps -a | grep apiserver"
+
+[root@support ocp-image]# openssl s_client -showcerts -verify 5 -connect api-int.ocp4-1.example.com:6443 < /dev/null 
+
+[root@support ~]# ssh -i ${SSH_PRI_FILE} core@master-0.${OCP_CLUSTER_ID}.${DOMAIN} "sudo crictl logs e9e10fa4eb18f 2>&1 | head -20 " 
+I1228 06:15:56.019683       1 cmd.go:209] Using service-serving-cert provided certificates
+I1228 06:15:56.020236       1 observer_polling.go:74] Adding reactor for file "/var/run/secrets/serving-cert/tls.crt"
+I1228 06:15:56.021123       1 observer_polling.go:74] Adding reactor for file "/var/run/secrets/serving-cert/tls.key"
+I1228 06:15:56.021304       1 observer_polling.go:52] Starting from specified content for file "/var/run/configmaps/config/operator-config.yaml"
+I1228 06:15:56.022353       1 observer_polling.go:159] Starting file observer
+I1228 06:15:56.023317       1 observer_polling.go:135] File observer successfully synced
+W1228 06:15:56.032629       1 builder.go:220] unable to get owner reference (falling back to namespace): Get "https://172.30.0.1:443/api/v1/namespaces/openshift-service-ca-operator/pods": dial tcp 172.30.0.1:443: connect: connection refused
+I1228 06:15:56.032902       1 builder.go:252] service-ca-operator version v4.9.0-202111151318.p0.gab44f58.assembly.stream-0-gb8f3dc1-
+I1228 06:15:56.034658       1 dynamic_serving_content.go:110] "Loaded a new cert/key pair" name="serving-cert::/var/run/secrets/serving-cert/tls.crt::/var/run/secrets/serving-cert/tls.key"
+I1228 06:15:57.878571       1 server.go:50] Error initializing delegating authentication (will retry): <nil>
+# https://bugzilla.redhat.com/show_bug.cgi?id=1933269
 
 ```
