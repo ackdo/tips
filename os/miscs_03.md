@@ -4300,7 +4300,6 @@ cat /etc/haproxy/haproxy.cfg
 systemctl restart haproxy
 ss -lntp |grep haproxy
 
-
 # 5	准备定制安装文件
 # 5.1	准备Ignition引导文件
 # 5.1.1	安装openshift-install
@@ -4309,13 +4308,257 @@ openshift-install version
 
 # 5.1.2	准备install-config.yaml文件
 # 5.1.2.1	设置环境变量
+setVAR OCP_CLUSTER_ID "ocp4-1"
 setVAR REPLICA_WORKER 0                                             ## 在安装阶段，将WORKER的数量设为0
-setVAR REPLICA_MASTER 3                                             ## 本文档的OpenShift集群只有1个master节点
+setVAR REPLICA_MASTER 1                                             ## 本文档的OpenShift集群只有1个master节点
 setVAR CLUSTER_PATH /data/ocp-cluster/${OCP_CLUSTER_ID}
 setVAR IGN_PATH ${CLUSTER_PATH}/ignition                            ## 存放Ignition相关文件的目录
-setVAR PULL_SECRET_STR "\$(cat \${PULL_SECRET_FILE})"                    ## 在安装过程使用${PULL_SECRET_FILE}拉取镜像
+
+# 将文件调整为 1 行
+cat ${PULL_SECRET_FILE} | jq -c | tee ${PULL_SECRET_FILE}
+setVAR PULL_SECRET_STR "\$(cat \${PULL_SECRET_FILE})"               ## 在安装过程使用${PULL_SECRET_FILE}拉取镜像
 setVAR SSH_KEY_PATH ${CLUSTER_PATH}/ssh-key                         ## 存放ssh-key相关文件的目录
 setVAR SSH_PRI_FILE ${SSH_KEY_PATH}/id_rsa                          ## 节点之间访问的私钥文件名
+
+# 5.1.2.2	创建CoreOS SSH访问密钥
+# 该密钥用于登录OpenShift集群节点的CoreOS。
+mkdir -p ${IGN_PATH}
+mkdir -p ${SSH_KEY_PATH}
+ssh-keygen -N '' -f ${SSH_KEY_PATH}/id_rsa
+ll ${SSH_KEY_PATH}
+setVAR SSH_PUB_STR "\$(cat ${SSH_KEY_PATH}/id_rsa.pub)"             ## 节点之间访问的公钥文件内容
+echo ${SSH_PUB_STR}
+
+# 5.1.2.3	创建无证书的install-config.yaml文件
+cat << EOF > ${IGN_PATH}/install-config.yaml
+apiVersion: v1
+baseDomain: ${DOMAIN}
+compute:
+- hyperthreading: Enabled
+  name: worker
+  replicas: ${REPLICA_WORKER}
+controlPlane:
+  hyperthreading: Enabled
+  name: master
+  replicas: ${REPLICA_MASTER}
+metadata:
+  name: ${OCP_CLUSTER_ID}
+networking:
+  clusterNetworks:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OpenShiftSDN
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  none: {}
+fips: false
+pullSecret: '${PULL_SECRET_STR}'
+sshKey: '${SSH_PUB_STR}'
+imageContentSources: 
+- mirrors:
+  - ${REGISTRY_DOMAIN}/${REGISTRY_REPO}
+  source: quay.io/openshift-release-dev/ocp-release
+- mirrors:
+  - ${REGISTRY_DOMAIN}/${REGISTRY_REPO}
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+EOF
+
+# 5.1.2.4	附加Docker Registry镜像库的证书到install-config.yaml文件
+cp ${REGISTRY_PATH}/certs/registry.crt ${IGN_PATH}/
+sed -i -e 's/^/  /' ${IGN_PATH}/registry.crt
+echo "additionalTrustBundle: |" >> ${IGN_PATH}/install-config.yaml
+cat ${IGN_PATH}/registry.crt >> ${IGN_PATH}/install-config.yaml
+
+# 5.1.2.5	查看最终的install-config.yaml文件
+# 重要说明：由于install-config.yaml中的安装证书有效期只有24小时，因此如果在生成该文件后24小时没有安装好OpenShift集群，需要重新操作生成install-config.yaml和其他所有安装前的准备步骤（所有以前生成的文件可以删除掉）。
+cat ${IGN_PATH}/install-config.yaml
+
+# 5.1.2.6	备份install-config.yaml文件
+cp ${IGN_PATH}/install-config.yaml{,.`date +%Y%m%d%H%M`.bak}
+ll ${IGN_PATH}
+
+# 5.1.3	准备manifest文件
+# 5.1.3.1	生成manifest文件
+# OpenShift集群节点在启动后会根据manifest文件生成的Ignition设置各自的操作系统配置。
+openshift-install create manifests --dir ${IGN_PATH}
+tree ${IGN_PATH}/manifests/ ${IGN_PATH}/openshift/
+
+# 5.1.3.2	修改master节点的调度策略
+# 单节点集群无需修改
+# 修改mastersSchedulable为false, 禁用master节点运行用户负载。
+sed -i 's/mastersSchedulable: true/mastersSchedulable: false/g' ${IGN_PATH}/manifests/cluster-scheduler-02-config.yml
+cat ${IGN_PATH}/manifests/cluster-scheduler-02-config.yml | grep mastersSchedulable
+
+# 5.1.3.3	为所有节点创建时钟同步配置文件
+setVAR NTP_CONF $(cat << EOF | base64 -w 0
+server ntp.${DOMAIN} iburst
+driftfile /var/lib/chrony/drift
+makestep 1.0 3
+rtcsync
+logdir /var/log/chrony
+EOF)
+
+echo ${NTP_CONF} | base64 -d
+
+# 创建master节点的创建时钟同步配置文件。
+cat << EOF > ${IGN_PATH}/openshift/99_masters-chrony-configuration.yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: masters-chrony-configuration
+spec:
+  config:
+    ignition:
+      config: {}
+      security:
+        tls: {}
+      timeouts: {}
+      version: 3.1.0
+    networkd: {}
+    passwd: {}
+    storage:
+      files:
+      - contents:
+          source: data:text/plain;charset=utf-8;base64,${NTP_CONF}
+        mode: 420
+        overwrite: true
+        path: /etc/chrony.conf
+  osImageURL: ""
+EOF
+cat ${IGN_PATH}/openshift/99_masters-chrony-configuration.yaml
+
+# 创建worker节点的创建时钟同步配置文件。
+# 单节点集群无需执行
+cat << EOF > ${IGN_PATH}/openshift/99_workers-chrony-configuration.yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: workers-chrony-configuration
+spec:
+  config:
+    ignition:
+      config: {}
+      security:
+        tls: {}
+      timeouts: {}
+      version: 3.1.0
+    networkd: {}
+    passwd: {}
+    storage:
+      files:
+      - contents:
+          source: data:text/plain;charset=utf-8;base64,${NTP_CONF}
+        mode: 420
+        overwrite: true
+        path: /etc/chrony.conf
+  osImageURL: ""
+EOF
+more ${IGN_PATH}/openshift/99_workers-chrony-configuration.yaml
+
+# 5.1.4	创建Ignition引导文件
+openshift-install create ignition-configs --dir ${IGN_PATH}/
+ll ${IGN_PATH}/*.ign
+jq .ignition.config ${IGN_PATH}/master.ign 
+jq .ignition.config ${IGN_PATH}/worker.ign 
+
+# 5.2	准备节点自动设置文件
+# 为了方面CoreOS节点首次启动后的设置操作，所有操作都放在节点自动设置文件中，只需下载该文件执行即可完成对应节点的所有配置。
+setVAR GATEWAY_IP 192.168.122.1      ## CoreOS启动时使用的GATEWAY
+setVAR NETMASK 24                  ## CoreOS启动时使用的NETMASK
+setVAR CONNECT_NAME "Wired Connection 1"    
+# CoreOS的nmcli看到的connection名称，OCP4.6 是“Wired Connection”
+# CoreOS的nmcli看到的connection名称，OCP4.8 是“Wired connection 1”
+
+creat_auto_config_file(){
+
+cat << EOF > ${IGN_PATH}/set-${NODE_NAME}
+nmcli connection modify "${CONNECT_NAME}" ipv4.addresses ${IP}/${NETMASK}
+nmcli connection modify "${CONNECT_NAME}" ipv4.dns ${DNS_IP}
+nmcli connection modify "${CONNECT_NAME}" ipv4.gateway ${GATEWAY_IP}
+nmcli connection modify "${CONNECT_NAME}" ipv4.method manual
+nmcli connection down "${CONNECT_NAME}"
+nmcli connection up "${CONNECT_NAME}"
+
+sudo coreos-installer install /dev/sda --insecure-ignition --ignition-url=http://${YUM_DOMAIN}/${OCP_CLUSTER_ID}/ignition/${NODE_TYPE}.ign --firstboot-args 'rd.neednet=1' --copy-network
+EOF
+}
+
+#创建BOOTSTRAP启动定制文件
+NODE_TYPE="bootstrap"
+NODE_NAME="bootstrap"
+IP=${BOOTSTRAP_IP}
+creat_auto_config_file
+cat ${IGN_PATH}/set-${NODE_NAME}
+
+#创建master-0启动定制文件
+NODE_TYPE="master"
+NODE_NAME="master-0"
+IP=${MASTER0_IP}
+creat_auto_config_file
+
+#创建master-1启动定制文件
+NODE_TYPE="master"
+NODE_NAME="master-1"
+IP=${MASTER1_IP}
+creat_auto_config_file
+
+#创建master-2启动定制文件
+NODE_TYPE="master"
+NODE_NAME="master-2"
+IP=${MASTER2_IP}
+creat_auto_config_file
+
+#创建worker-0启动定制文件
+NODE_TYPE="worker"
+NODE_NAME="worker-0"
+IP=${WORKER0_IP}
+creat_auto_config_file
+
+#创建worker-1启动定制文件
+NODE_TYPE="worker"
+NODE_NAME="worker-1"
+IP=${WORKER1_IP}
+creat_auto_config_file
+
+ll ${IGN_PATH}/set-*
+
+# 5.3	创建文件下载目录
+# 为定制文件创建Apache HTTP上的可下载目录。
+chmod -R 705 ${IGN_PATH}/
+cat << EOF > /etc/httpd/conf.d/ignition.conf
+Alias /${OCP_CLUSTER_ID} "${IGN_PATH}/../"
+<Directory "${IGN_PATH}/../">
+  Options +Indexes +FollowSymLinks
+  Require all granted
+</Directory>
+<Location /${OCP_CLUSTER_ID}>
+  SetHandler None
+</Location>
+EOF
+systemctl restart httpd
+
+# 确认所有安装所需文件可下载。
+curl http://${YUM_DOMAIN}/${OCP_CLUSTER_ID}/ignition/bootstrap.ign | jq 
+curl http://${YUM_DOMAIN}/${OCP_CLUSTER_ID}/ignition/worker.ign | jq
+curl http://${YUM_DOMAIN}/${OCP_CLUSTER_ID}/ignition/master.ign | jq
+curl http://${YUM_DOMAIN}/${OCP_CLUSTER_ID}/ignition/set-bootstrap
+curl http://${YUM_DOMAIN}/${OCP_CLUSTER_ID}/ignition/set-master-0
+curl http://${YUM_DOMAIN}/${OCP_CLUSTER_ID}/ignition/set-master-1
+curl http://${YUM_DOMAIN}/${OCP_CLUSTER_ID}/ignition/set-master-2
+curl http://${YUM_DOMAIN}/${OCP_CLUSTER_ID}/ignition/set-worker-0
+curl http://${YUM_DOMAIN}/${OCP_CLUSTER_ID}/ignition/set-worker-1
+
+# 6	创建Bootstrap、Master、Worker虚拟机节点
+# 具体根据不同的IaaS环境和虚机节点配置要求创建bootstrap、master-0、master-1、master-2、worker-0、worker-1虚拟机节点，方法和过程略。需要注意以下事项：
+# 1.	将硬盘的启动优先级设为最高，并将rhcos-4.9.0-x86_64-live.x86_64.iso作为所有虚机的启动盘。
+# 2.	为虚拟机配置一个网卡，并使用网桥类型的网络。
+# 3.	虚拟机操作系统类型选择RHEL 7或RHEL 8。
+
 ```
 
 
