@@ -4470,11 +4470,11 @@ jq .ignition.config ${IGN_PATH}/worker.ign
 # 为了方面CoreOS节点首次启动后的设置操作，所有操作都放在节点自动设置文件中，只需下载该文件执行即可完成对应节点的所有配置。
 setVAR GATEWAY_IP 192.168.122.1      ## CoreOS启动时使用的GATEWAY
 setVAR NETMASK 24                  ## CoreOS启动时使用的NETMASK
-setVAR CONNECT_NAME "Wired Connection 1"    
+setVAR CONNECT_NAME "Wired connection 1"    
 # CoreOS的nmcli看到的connection名称，OCP4.6 是“Wired Connection”
 # CoreOS的nmcli看到的connection名称，OCP4.8 是“Wired connection 1”
+# CoreOS的nmcli看到的connection名称，OCP4.9 是“Wired connection 1”
 # CoreOS的nmcli看到的connection名称，OCP4.9 如果启动时输入 ip= 参数是 "ens3"
-
 
 creat_auto_config_file(){
 
@@ -4613,6 +4613,41 @@ openshift-install wait-for bootstrap-complete --log-level debug --dir ${IGN_PATH
 ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "sudo shutdown -h now"
 # 在安装过程中，也可以通过以下方法查看master节点的日志 
 # ssh -i ${SSH_PRI_FILE} core@master-0.${OCP_CLUSTER_ID}.${DOMAIN} "journalctl -xef"
+
+# 复制kubeconfig文件到用户缺省目录，以便可以用oc命令访问集群。
+mkdir ~/.kube
+cp ${IGN_PATH}/auth/kubeconfig ~/.kube/config
+
+# 检查节点状态，确保master的STATUS均为Ready状态
+oc get node
+
+# 7.3	第三阶段：部署worker阶段
+# 单节点集群不执行
+# 7.3.1	两次启动
+# 参照bootstrap的两次启动步骤启动所有worker节点，将网络参数换成各自worker的地址。
+# 等待 worker machine-config-daemon-firstboot service 完成
+ssh -i ${SSH_PRI_FILE} core@worker-1.${OCP_CLUSTER_ID}.${DOMAIN} "sudo journalctl -f -u machine-config-daemon-firstboot.service"
+
+# 7.3.2	批准csr请求
+# 通过如下命令查看 csr批准请求，第一批出现的是“kube-apiserver-client-kubelet”相关csr。
+oc get csr | grep Pending
+# 执行以下命令批准请求。
+oc get csr | grep Pending | awk '{print $1}' | xargs oc adm certificate approve
+# 再次执行命令查看 csr批准请求，第二批出现的是“kubelet-serving”相关csr。
+oc get csr | grep Pending
+# 执行以下命令批准请求。
+oc get csr | grep Pending | awk '{print $1}' | xargs oc adm certificate approve
+
+# 7.3.3	查看集群部署进展
+# 执行以下命令来查看集群部署是否完成，整个过程需要一些时间。出现以下红色字体部分，说明集群已经部署完成。请记下kubeadmin和对应的登录密码。
+oc get node
+oc get clusteroperators
+oc get clusterversion
+tail -f ${IGN_PATH}/.openshift_install.log
+openshift-install wait-for install-complete --log-level debug --dir ${IGN_PATH}
+
+# 检查 kube-apiserver operator 日志
+oc -n openshift-kube-apiserver-operator logs $(oc get pods -n openshift-kube-apiserver-operator -o jsonpath='{ .items[*].metadata.name }') -f
 
 ```
 
