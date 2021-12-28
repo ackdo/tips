@@ -4021,5 +4021,303 @@ nmcli c mod "$(nmcli --fields name con show |awk 'NR==2{print}' | sed -e 's, $,,
 systemctl restart network
 nmcli c show "$(nmcli --fields name con show |awk 'NR==2{print}' | sed -e 's, $,,g')" | grep ipv4.dns
 
+# 4.6.6	测试正反向DNS解析
+# 1.	正向解析测试
+dig nfs.${DOMAIN} +short
+dig support.${DOMAIN} +short 
+dig yum.${DOMAIN} +short
+dig registry.${DOMAIN} +short
+dig ntp.${DOMAIN} +short
+dig lb.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig api.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig api-int.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig *.apps.${OCP_CLUSTER_ID}.${DOMAIN} +short
+
+dig bastion.${DOMAIN} +short
+
+dig bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} +short
+
+dig master-0.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig etcd-0.${OCP_CLUSTER_ID}.${DOMAIN} +short
+
+dig _etcd-server-ssl._tcp.${OCP_CLUSTER_ID}.${DOMAIN} SRV +short
+
+# 2.	反向解析测试
+dig -x ${BASTION_IP} +short
+dig -x ${SUPPORT_IP} +short
+dig -x ${BOOTSTRAP_IP} +short
+dig -x ${MASTER0_IP} +short
+
+# 4.7	配置远程正式YUM源
+# 4.7.1	配置Support节点的YUM源
+# 1.	删除临时yum源
+mv /etc/yum.repos.d/base.repo{,.bak}
+# 2.	创建yum repo配置文件
+setVAR YUM_DOMAIN yum.${DOMAIN}:8080
+cat > /etc/yum.repos.d/ocp.repo << EOF
+[rhel-7-server]
+name=rhel-7-server
+baseurl=http://${YUM_DOMAIN}/repo/rhel-7-server-rpms/
+enabled=1
+gpgcheck=0
+
+[rhel-7-server-extras] 
+name=rhel-7-server-extras
+baseurl=http://${YUM_DOMAIN}/repo/rhel-7-server-extras-rpms/
+enabled=1
+gpgcheck=0
+
+[rhel-7-server-ose] 
+name=rhel-7-server-ose
+baseurl=http://${YUM_DOMAIN}/repo/rhel-7-server-ose-${OCP_MAJOR_VER}-rpms/
+enabled=1
+gpgcheck=0 
+
+EOF
+yum repolist
+
+# 4.7.2	安装基础软件包，验证YUM源
+# 在Support节点安装以下软件包，验证YUM源是正常的。
+yum -y install wget git net-tools bridge-utils jq tree httpd-tools 
+
+# 4.8	部署NTP服务
+# 注意：下文将Support节点当做OpenShift集群的NTP服务源。如果用户已经有NTP服务，可以忽略此节，并在安装OpenShift集群后将集群节点的时间服务指向已有的NTP服务。
+# 4.8.1	设置正确的时区
+timedatectl set-timezone Asia/Shanghai
+timedatectl status | grep 'Time zone'
+# 4.8.2	配置chrony服务
+# 1.	RHEL 7.8最小化安装会安装chrony时间服务软件。我们先查看chrony服务状态：
+systemctl status chronyd
+yum install chrony
+2.	备份原始chrony.conf配置文件，再修改配置文件
+cp /etc/chrony.conf{,.bak}
+sed -i -e "s/^server*/#&/g" \
+       -e "s/#local stratum 10/local stratum 10/g" \
+       -e "s/#allow 192.168.0.0\/16/allow all/g" \
+       /etc/chrony.conf
+cat >> /etc/chrony.conf << EOF
+server ntp.${DOMAIN} iburst
+EOF
+# 3.	重启chrony服务
+systemctl enable --now chronyd
+systemctl restart chronyd
+# 4.8.3	检查chrony服务端启动
+ps -auxw |grep chrony
+ss -lnup |grep chronyd
+systemctl status chronyd
+chronyc -n sources -v
+
+# 4.9	部署本地Docker Registry
+# 该Docker Registry镜像库用于提供OCP安装过程所需的容器镜像。
+# 4.9.1	创建Docker Registry相关目录
+## 容器镜像库存放的根目录
+setVAR REGISTRY_PATH /data/registry
+mkdir -p ${REGISTRY_PATH}/{auth,certs,data}
+
+# 文档里的方法
+openssl req -newkey rsa:4096 -nodes -sha256 -keyout ${REGISTRY_PATH}/certs/registry.key -x509 -days 3650 \
+  -out ${REGISTRY_PATH}/certs/registry.crt \
+  -subj "/C=CN/ST=BEIJING/L=BJ/O=REDHAT/OU=IT/CN=registry.${DOMAIN}/emailAddress=admin@${DOMAIN}"
+openssl x509 -in ${REGISTRY_PATH}/certs/registry.crt -text | head -n 14
+
+# 4.9.3	安装Docker Registry
+# 1.	安装docker-distribution
+yum -y install docker-distribution
+
+# 2.	创建Registry认证凭据，允许用openshift/redhat登录。
+htpasswd -bBc ${REGISTRY_PATH}/auth/htpasswd openshift redhat
+cat ${REGISTRY_PATH}/auth/htpasswd
+
+# 3.	创建docker-distribution配置文件
+setVAR REGISTRY_DOMAIN registry.${DOMAIN}:5000                  ## 容器镜像库的访问域名
+
+cat << EOF > /etc/docker-distribution/registry/config.yml
+version: 0.1
+log:
+  fields:
+    service: registry
+storage:
+    cache:
+        layerinfo: inmemory
+    filesystem:
+        rootdirectory: ${REGISTRY_PATH}/data
+    delete:
+        enabled: false
+auth:
+  htpasswd:
+    realm: basic-realm
+    path: ${REGISTRY_PATH}/auth/htpasswd
+http:
+    addr: 0.0.0.0:5000
+    host: https://${REGISTRY_DOMAIN}
+    tls:
+      certificate: ${REGISTRY_PATH}/certs/registry.crt
+      key: ${REGISTRY_PATH}/certs/registry.key
+EOF
+cat /etc/docker-distribution/registry/config.yml
+
+# 4.	启动Registry镜像库服务
+systemctl enable docker-distribution --now
+systemctl status docker-distribution
+
+# 4.9.4	从本地访问Docker Registry 
+# 将访问Registry的证书复制到RHEL系统的默认目录，然后更新到系统中。
+cp ${REGISTRY_PATH}/certs/registry.crt /etc/pki/ca-trust/source/anchors/
+update-ca-trust
+curl -u openshift:redhat https://${REGISTRY_DOMAIN}/v2/_catalog
+
+# 4.9.6	导入OpenShift核心镜像到Docker Registry
+# 4.9.6.1	设置基础环境变量
+setVAR REGISTRY_REPO ocp4/openshift4       ## 在Docker Registry中存放OpenShift核心镜像的Repository
+setVAR GODEBUG x509ignoreCN=0
+
+# 4.9.6.2	安装镜像操作工具并登录Docker Registry
+yum -y install podman skopeo 
+# 用openshift/redhat登录Docker Registry，并将生成的免密登录信息追加到${PULL_SECRET_FILE文件。
+setVAR PULL_SECRET_FILE ${OCP_PATH}/secret/redhat-pull-secret.json
+cp ${OCP_PATH}/secret/redhat-pull-secret.json{,.bak}
+podman login -u openshift -p redhat --authfile ${PULL_SECRET_FILE} ${REGISTRY_DOMAIN}
+cat $PULL_SECRET_FILE | jq -c | tee $PULL_SECRET_FILE
+
+# 4.9.6.3	向Docker Registry导入OpenShift核心镜像
+tar -xvf ${OCP_PATH}/ocp-image/ocp-image-${OCP_VER}.tar -C ${OCP_PATH}/ocp-image/
+rm -f ${OCP_PATH}/ocp-image/ocp-image-${OCP_VER}.tar
+
+oc image mirror --registry-config=${PULL_SECRET_FILE} \
+     --from-dir=${OCP_PATH}/ocp-image/mirror_${OCP_VER} "file://openshift/release:${OCP_VER}*" ${REGISTRY_DOMAIN}/${REGISTRY_REPO}
+
+oc image mirror -a ${PULL_SECRET_FILE} \
+     --dir=${OCP_PATH}/ocp-image/mirror_${OCP_VER} "file://openshift/release:${OCP_VER}*" ${REGISTRY_DOMAIN}/${REGISTRY_REPO}
+
+# 查看已经导入镜像库镜像数量，然后查看镜像信息。
+curl -u openshift:redhat https://${REGISTRY_DOMAIN}/v2/_catalog
+curl -u openshift:redhat -s https://${REGISTRY_DOMAIN}/v2/${REGISTRY_REPO}/tags/list |jq -M '.["tags"][]' | wc -l
+curl -u openshift:redhat -s https://${REGISTRY_DOMAIN}/v2/${REGISTRY_REPO}/tags/list |jq -M '.["name"] + ":" + .["tags"][]' 
+oc adm release info -a ${PULL_SECRET_FILE} "${REGISTRY_DOMAIN}/${REGISTRY_REPO}:${OCP_VER}-x86_64" | grep -A 200 -i "Images" 
+
+# 4.10	部署HAProxy负载均衡服务
+# 1.	安装Haproxy
+yum -y install haproxy
+systemctl enable haproxy --now
+
+# 2.	添加haproxy.cfg配置文件
+cat <<EOF > /etc/haproxy/haproxy.cfg
+
+# Global settings
+#---------------------------------------------------------------------
+global
+    maxconn     20000
+    log         /dev/log local0 info
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+    user        haproxy
+    group       haproxy
+    daemon
+
+    # turn on stats unix socket
+    stats socket /var/lib/haproxy/stats
+
+#---------------------------------------------------------------------
+# common defaults that all the 'listen' and 'backend' sections will
+# use if not designated in their block
+#---------------------------------------------------------------------
+defaults
+    mode                    http
+    log                     global
+    option                  httplog
+    option                  dontlognull
+#    option http-server-close
+    option forwardfor       except 127.0.0.0/8
+    option                  redispatch
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          300s
+    timeout server          300s
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 20000
+
+listen stats
+    bind :9000
+    mode http
+    stats enable
+    stats uri /
+
+frontend  openshift-api-server-${OCP_CLUSTER_ID}
+    bind lb.${OCP_CLUSTER_ID}.${DOMAIN}:6443
+    mode tcp
+    option tcplog
+    default_backend openshift-api-server-${OCP_CLUSTER_ID}
+
+frontend  machine-config-server-${OCP_CLUSTER_ID}
+    bind lb.${OCP_CLUSTER_ID}.${DOMAIN}:22623
+    mode tcp
+    option tcplog
+    default_backend machine-config-server-${OCP_CLUSTER_ID}
+
+frontend  ingress-http-${OCP_CLUSTER_ID}
+    bind lb.${OCP_CLUSTER_ID}.${DOMAIN}:80
+    mode tcp
+    option tcplog
+    default_backend ingress-http-${OCP_CLUSTER_ID}
+
+frontend  ingress-https-${OCP_CLUSTER_ID}
+    bind lb.${OCP_CLUSTER_ID}.${DOMAIN}:443
+    mode tcp
+    option tcplog
+    default_backend ingress-https-${OCP_CLUSTER_ID}
+
+backend openshift-api-server-${OCP_CLUSTER_ID}
+    balance source
+    mode tcp
+    server     bootstrap bootstrap.${OCP_CLUSTER_ID}.${DOMAIN}:6443 check
+    server     master-0 master-0.${OCP_CLUSTER_ID}.${DOMAIN}:6443 check
+
+backend machine-config-server-${OCP_CLUSTER_ID}
+    balance source
+    mode tcp
+    server     bootstrap bootstrap.${OCP_CLUSTER_ID}.${DOMAIN}:22623 check
+    server     master-0 master-0.${OCP_CLUSTER_ID}.${DOMAIN}:22623 check
+
+backend ingress-http-${OCP_CLUSTER_ID}
+    balance source
+    mode tcp
+    server     master-0 master-0.${OCP_CLUSTER_ID}.${DOMAIN}:80 check
+
+backend ingress-https-${OCP_CLUSTER_ID}
+    balance source
+    mode tcp
+    server     master-0 master-0.${OCP_CLUSTER_ID}.${DOMAIN}:443 check
+EOF
+cat /etc/haproxy/haproxy.cfg
+
+# 3.	重启HAProxy服务, 然后检查HAProxy服务
+systemctl restart haproxy
+ss -lntp |grep haproxy
+
+
+```
+
+
+### 报错
+```
+oc image mirror -a ${PULL_SECRET_FILE} --from-dir=${OCP_PATH}/ocp-image/mirror_${OCP_VER} "file://openshift/release:${OCP_VER}-x86_64*" ${REGISTRY_DOMAIN}/${REGISTRY_REPO} --loglevel=8
+I1227 21:07:46.203600    3054 config.go:128] looking for config.json at /root/.docker/config.json
+I1227 21:07:46.203840    3054 config.go:94] looking for .dockercfg at /root/.dockercfg
+I1227 21:07:46.204818    3054 file.go:30] Repository https://registry-1.docker.io openshift/release
+I1227 21:07:46.206264    3054 options.go:59] Search for "4.9.9*" (^4\.9\.9.*.*$) found: []
+F1227 21:07:46.206452    3054 helpers.go:116] error: you must specify at least one source image to pull and the destination to push to as SRC=DST or SRC
+ DST [DST2 DST3 ...]
+
+oc adm release info 4.9.9 --dir=/data/OCP-4.9.9/ocp/ocp-image/mirror_4.9.9 | tee /tmp/oc-adm-release-info-4.9.9
+oc adm release info 4.6.52 --dir=/data/OCP-4.6.52/ocp/ocp-image/mirror_4.6.52 | tee /tmp/oc-adm-release-info-4.6.52
+
+# 怀疑是运行命令时 soft link 信息丢失了
+#  rsync -r -v --stats --progress <srcdir> <dsthost>:<dstdir>
+# 重新创建 soft link
+oc adm release info 4.9.9 --dir=/data/OCP-4.9.9/ocp/ocp-image/mirror_4.9.9 |  grep sha256 | grep -Ev "Digest|Pull" | while read name digest ; do ln -sf $digest 4.9.9-x86_64-${name} ;  done  
+oc adm release info 4.9.9 --dir=/data/OCP-4.9.9/ocp/ocp-image/mirror_4.9.9 |  grep sha256 | grep -E "Digest" | while read name digest ; do ln -sf $digest 4.9.9-x86_64 ;  done
 
 ```
