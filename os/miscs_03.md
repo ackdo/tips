@@ -3844,7 +3844,13 @@ ll -h ${OCP_PATH}/ocp-installer
 tar -xzf ${OCP_PATH}/ocp-installer/openshift-install-linux-${OCP_VER}.tar.gz -C /usr/local/sbin/
 
 上传介质
-rsync -r -v --stats --progress /data/OCP-4.9.9 10.66.208.240:/data
+# 关于参数 --checksum
+# https://serverfault.com/questions/211005/rsync-difference-between-checksum-and-ignore-times-options
+rsync -r -v  --copy-links --checksum --stats --progress /data/OCP-4.9.9 10.66.208.240:/data
+
+# 看了 rsync 的参数说明后，感觉应该用
+rsync -a -v  --copy-links --checksum --stats --progress /data/OCP-4.9.9 10.66.208.240:/data
+
 ```
 
 
