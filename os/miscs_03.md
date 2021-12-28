@@ -4662,10 +4662,12 @@ oc --kubeconfig ${IGN_PATH}/auth/kubeconfig patch etcd cluster -p='{"spec": {"un
 oc --kubeconfig ${IGN_PATH}/auth/kubeconfig patch authentications.operator.openshift.io cluster -p='{"spec": {"managementState": "Managed", "unsupportedConfigOverrides": {"useUnsupportedUnsafeNonHANonProductionUnstableOAuthServer": true}}}' --type=merge
 
 # 3. 设置 1 个 ingress router pod
+# 4.9.9 上无需执行
 # Make sure to have a single ingress router pod:
 oc patch --kubeconfig ${IGN_PATH}/auth/kubeconfig -n openshift-ingress-operator ingresscontroller/default --patch '{"spec":{"replicas": 1}}' --type=merge
 
-# 4. 标记 etcd UnManaged
+# 4. 标记 openshift-etcd namespace 下的 etcd-quorum-guard deployment 为 unmanaged: true
+# 4.9.9 上没有这个 deployment
 oc --kubeconfig ${IGN_PATH}/auth/kubeconfig patch clusterversion/version --type='merge' -p "$(cat <<- EOF
  spec:
     overrides:
@@ -4678,6 +4680,7 @@ EOF
 )"
 
 # 5. 这个命令在 4.9.9 上无需执行
+# 4.9.9 上没有这个 deployment
 oc --kubeconfig ${IGN_PATH}/auth/kubeconfig scale --replicas=1 deployment/etcd-quorum-guard -n openshift-etcd
 
 # 6. 查看安装进度 clusterversion
