@@ -4189,9 +4189,6 @@ cat $PULL_SECRET_FILE | jq -c | tee $PULL_SECRET_FILE
 tar -xvf ${OCP_PATH}/ocp-image/ocp-image-${OCP_VER}.tar -C ${OCP_PATH}/ocp-image/
 rm -f ${OCP_PATH}/ocp-image/ocp-image-${OCP_VER}.tar
 
-oc image mirror --registry-config=${PULL_SECRET_FILE} \
-     --from-dir=${OCP_PATH}/ocp-image/mirror_${OCP_VER} "file://openshift/release:${OCP_VER}*" ${REGISTRY_DOMAIN}/${REGISTRY_REPO}
-
 oc image mirror -a ${PULL_SECRET_FILE} \
      --dir=${OCP_PATH}/ocp-image/mirror_${OCP_VER} "file://openshift/release:${OCP_VER}*" ${REGISTRY_DOMAIN}/${REGISTRY_REPO}
 
@@ -4304,6 +4301,21 @@ systemctl restart haproxy
 ss -lntp |grep haproxy
 
 
+# 5	准备定制安装文件
+# 5.1	准备Ignition引导文件
+# 5.1.1	安装openshift-install
+tar -xzf ${OCP_PATH}/ocp-installer/openshift-install-linux-${OCP_VER}.tar.gz -C /usr/local/sbin/
+openshift-install version
+
+# 5.1.2	准备install-config.yaml文件
+# 5.1.2.1	设置环境变量
+setVAR REPLICA_WORKER 0                                             ## 在安装阶段，将WORKER的数量设为0
+setVAR REPLICA_MASTER 3                                             ## 本文档的OpenShift集群只有1个master节点
+setVAR CLUSTER_PATH /data/ocp-cluster/${OCP_CLUSTER_ID}
+setVAR IGN_PATH ${CLUSTER_PATH}/ignition                            ## 存放Ignition相关文件的目录
+setVAR PULL_SECRET_STR "\$(cat \${PULL_SECRET_FILE})"                    ## 在安装过程使用${PULL_SECRET_FILE}拉取镜像
+setVAR SSH_KEY_PATH ${CLUSTER_PATH}/ssh-key                         ## 存放ssh-key相关文件的目录
+setVAR SSH_PRI_FILE ${SSH_KEY_PATH}/id_rsa                          ## 节点之间访问的私钥文件名
 ```
 
 
