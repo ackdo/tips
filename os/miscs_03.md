@@ -4473,6 +4473,8 @@ setVAR NETMASK 24                  ## CoreOS启动时使用的NETMASK
 setVAR CONNECT_NAME "Wired Connection 1"    
 # CoreOS的nmcli看到的connection名称，OCP4.6 是“Wired Connection”
 # CoreOS的nmcli看到的connection名称，OCP4.8 是“Wired connection 1”
+# CoreOS的nmcli看到的connection名称，OCP4.9 如果启动时输入 ip= 参数是 "ens3"
+
 
 creat_auto_config_file(){
 
@@ -4558,6 +4560,40 @@ curl http://${YUM_DOMAIN}/${OCP_CLUSTER_ID}/ignition/set-worker-1
 # 1.	将硬盘的启动优先级设为最高，并将rhcos-4.9.0-x86_64-live.x86_64.iso作为所有虚机的启动盘。
 # 2.	为虚拟机配置一个网卡，并使用网桥类型的网络。
 # 3.	虚拟机操作系统类型选择RHEL 7或RHEL 8。
+
+# 配置 ip 地址
+sudo nmcli con mod 'Wired Connection 1' connection.autoconnect 'yes' ipv4.method 'manual' ipv4.address '192.168.122.200/24' ipv4.gateway '192.168.122.1' ipv4.dns '192.168.122.12'
+sudo nmcli con down 'Wired Connection 1'
+sudo nmcli con up 'Wired Connection 1'
+
+# 使用命令检查网卡配置是否成功
+ip a
+
+# 在bootstrap节点中执行以下命令，先下载自动配置文件，然后执行它。注意：由于此节点当前还未完成配置，因此只能通过IP地址获取自动配置文件。
+curl -O http://<SOPPORT-IP>:8080/<OCP_CLUSTER_ID>/ignition/set-bootstrap
+source set-bootstrap
+# 执行命令重启bootstrap节点。
+reboot
+
+
+# 7.1.2	查看bootstrap节点部署进程
+# 1.	删除以前ssh保留的登录主机信息。
+rm -rf ~/.ssh/known_hosts
+# 2.	检查bootstrap节点的镜像库mirror配置是否按照install-config.yaml的内容进行配置
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "sudo cat /etc/containers/registries.conf"
+# 3.	检查bootstrap节点是否能访问到Registry。
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "curl -s -u openshift:redhat https://registry.${DOMAIN}:5000/v2/_catalog"
+# 4.	检查bootstrap节点的本地pods。
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "sudo crictl pods"
+# 5.	访问如下地址http://lb.ocp4-1.example.internal:9000/，确认只有两处bootstrap节点变为绿色。
+# 6.	确认可以通过curl命令查看machine config配置服务是否启动。
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "curl -kIs https://api-int.${OCP_CLUSTER_ID}.${DOMAIN}:22623/config/master"
+
+# 7.	可通过如下命令从宏观面观察部署过程。
+openshift-install wait-for install-complete --log-level=debug --dir=${IGN_PATH}
+
+# 8.	跟踪bootstrap的日志以识别安装进度，当循环出现如下红色字体提示的内容的时候，并且haproxy的web监控界面openshift-api-server和machine-config-server的bootstrap部分变为绿色时，说明bootstrap的引导服务已经启动，此时可进入下一个阶段。
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "journalctl -b -f -u bootkube.service"
 
 ```
 
