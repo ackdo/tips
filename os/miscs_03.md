@@ -4730,6 +4730,10 @@ storage                                    4.9.9     True        False         F
 [root@support ~]# oc --kubeconfig=/data/ocp-cluster/ocp4-1/ignition/auth/kubeconfig get node
 NAME                          STATUS   ROLES           AGE   VERSION
 master-0.ocp4-1.example.com   Ready    master,worker   22m   v1.22.3+4dd1b5a
+
+# 参考以下链接里的步骤，设置 SNO 的存储
+# https://www.itix.fr/blog/deploy-openshift-single-node-in-kvm/
+
 ```
 
 
