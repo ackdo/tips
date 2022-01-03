@@ -4805,6 +4805,290 @@ oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patc
 {"spec":{"managementState": "Managed"}}
 EOF
 
+# 根据 https://github.com/eranco74/bootstrap-in-place-poc/blob/main/README.md
+# 测试 SNO LiveCD 方法
+git clone https://github.com/eranco74/bootstrap-in-place-poc
+cd bootstrap-in-place-poc
+mkdir sno-workdir
+
+# 生成 install-config.yaml
+# BootstrapInPlace - InstallationDisk
+# https://github.com/openshift/installer/blob/release-4.9/data/data/bootstrap/bootstrap-in-place/files/usr/local/bin/install-to-disk.sh.template#L19
+cat << EOF > sno-workdir/install-config.yaml
+apiVersion: v1
+baseDomain: ${DOMAIN}
+compute:
+- hyperthreading: Enabled
+  name: worker
+  replicas: ${REPLICA_WORKER}
+controlPlane:
+  hyperthreading: Enabled
+  name: master
+  replicas: ${REPLICA_MASTER}
+metadata:
+  name: ${OCP_CLUSTER_ID}
+networking:
+  clusterNetworks:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OpenShiftSDN
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  none: {}
+BootstrapInPlace:
+  InstallationDisk: --copy-network /dev/vda  
+fips: false
+pullSecret: '${PULL_SECRET_STR}'
+sshKey: '${SSH_PUB_STR}'
+imageContentSources: 
+- mirrors:
+  - ${REGISTRY_DOMAIN}/${REGISTRY_REPO}
+  source: quay.io/openshift-release-dev/ocp-release
+- mirrors:
+  - ${REGISTRY_DOMAIN}/${REGISTRY_REPO}
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+EOF
+
+# 5.1.2.4	附加Docker Registry镜像库的证书到install-config.yaml文件
+cp ${REGISTRY_PATH}/certs/registry.crt sno-workdir/
+sed -i -e 's/^/  /' sno-workdir/registry.crt
+echo "additionalTrustBundle: |" >> sno-workdir/install-config.yaml
+cat sno-workdir/registry.crt >> sno-workdir/install-config.yaml
+
+# 拷贝 base.iso
+cp /data/OCP-4.9.9/ocp/rhcos/rhcos-4.9.0-x86_64-live.x86_64.iso sno-workdir/base.iso
+
+# 准备 openshift-install 
+# 之前已经解压缩过了
+
+# 生成 Manifests
+INSTALLATION_DISK=/dev/vda \
+RELEASE_IMAGE=quay.io/openshift-release-dev/ocp-release:4.9.9-x86_64 \
+INSTALLER_BIN=/usr/local/sbin/openshift-install \
+INSTALLER_WORKDIR=./sno-workdir \
+./manifests.sh
+cp ./manifests/*.yaml $INSTALLER_WORKDIR/manifests/
+
+# 生成 Single-Node-Ignition-Config ignition 
+INSTALLATION_DISK=/dev/vda \
+RELEASE_IMAGE=quay.io/openshift-release-dev/ocp-release:4.9.9-x86_64 \
+INSTALLER_BIN=/usr/local/sbin/openshift-install \
+INSTALLER_WORKDIR=./sno-workdir \
+./generate.sh
+
+# 生成 sno embeded livecd iso
+ISO_PATH=./sno-workdir/base.iso \
+IGNITION_PATH=./sno-workdir/bootstrap-in-place-for-live-iso.ign \
+OUTPUT_PATH=./sno-workdir/embedded.iso \
+./embed.sh
+
+# 调整 dns 
+# 4.6.3.4	创建ocp4-1.example.com.zone区域配置文件
+cat > /var/named/${OCP_CLUSTER_ID}.${DOMAIN}.zone << EOF
+\$ORIGIN ${OCP_CLUSTER_ID}.${DOMAIN}.
+\$TTL 1D
+@           IN SOA  ${OCP_CLUSTER_ID}.${DOMAIN}. admin.${OCP_CLUSTER_ID}.${DOMAIN}. (
+                                        0          ; serial
+                                        1D         ; refresh
+                                        1H         ; retry
+                                        1W         ; expire
+                                        3H )       ; minimum
+
+@             IN NS                         dns.${DOMAIN}.
+
+lb             IN A                          ${LB_IP}
+
+api            IN A                          ${LB_IP}
+api-int        IN A                          ${LB_IP}
+*.apps         IN A                          ${LB_IP}
+
+bootstrap      IN A                          ${MASTER0_IP}
+
+master-0       IN A                          ${MASTER0_IP}
+
+etcd-0         IN A                          ${MASTER0_IP}
+
+_etcd-server-ssl._tcp.${OCP_CLUSTER_ID}.${DOMAIN}. 8640 IN SRV 0 10 2380 etcd-0.${OCP_CLUSTER_ID}.${DOMAIN}.
+
+EOF
+
+# 4.6.3.5	创建168.192.in-addr.arpa.zone反向解析区域配置文件
+# 注意：以下脚本中的反向IP如果有变化需要在此手动修改。
+cat > /var/named/168.192.in-addr.arpa.zone << EOF
+\$TTL 1D
+@           IN SOA  ${DOMAIN}. admin.${DOMAIN}. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+                                        
+@                              IN NS       dns.${DOMAIN}.
+
+13.122.168.192.in-addr.arpa.     IN PTR      bastion.${DOMAIN}.
+
+12.122.168.192.in-addr.arpa.     IN PTR      support.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      dns.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      ntp.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      yum.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      registry.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      nfs.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      lb.${OCP_CLUSTER_ID}.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      api.${OCP_CLUSTER_ID}.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      api-int.${OCP_CLUSTER_ID}.${DOMAIN}.
+
+201.122.168.192.in-addr.arpa.    IN PTR      bootstrap.${OCP_CLUSTER_ID}.${DOMAIN}.
+
+201.122.168.192.in-addr.arpa.    IN PTR      master-0.${OCP_CLUSTER_ID}.${DOMAIN}.
+EOF
+
+# 4.6.4	重启BIND服务
+# 重启BIND服务，然后检查没有错误日志。
+systemctl restart named
+rndc reload
+journalctl -u named
+
+# 2.	添加haproxy.cfg配置文件
+cat <<EOF > /etc/haproxy/haproxy.cfg
+
+# Global settings
+#---------------------------------------------------------------------
+global
+    maxconn     20000
+    log         /dev/log local0 info
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+    user        haproxy
+    group       haproxy
+    daemon
+
+    # turn on stats unix socket
+    stats socket /var/lib/haproxy/stats
+
+#---------------------------------------------------------------------
+# common defaults that all the 'listen' and 'backend' sections will
+# use if not designated in their block
+#---------------------------------------------------------------------
+defaults
+    mode                    http
+    log                     global
+    option                  httplog
+    option                  dontlognull
+#    option http-server-close
+    option forwardfor       except 127.0.0.0/8
+    option                  redispatch
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          300s
+    timeout server          300s
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 20000
+
+listen stats
+    bind :9000
+    mode http
+    stats enable
+    stats uri /
+
+frontend  openshift-api-server-${OCP_CLUSTER_ID}
+    bind lb.${OCP_CLUSTER_ID}.${DOMAIN}:6443
+    mode tcp
+    option tcplog
+    default_backend openshift-api-server-${OCP_CLUSTER_ID}
+
+frontend  machine-config-server-${OCP_CLUSTER_ID}
+    bind lb.${OCP_CLUSTER_ID}.${DOMAIN}:22623
+    mode tcp
+    option tcplog
+    default_backend machine-config-server-${OCP_CLUSTER_ID}
+
+frontend  ingress-http-${OCP_CLUSTER_ID}
+    bind lb.${OCP_CLUSTER_ID}.${DOMAIN}:80
+    mode tcp
+    option tcplog
+    default_backend ingress-http-${OCP_CLUSTER_ID}
+
+frontend  ingress-https-${OCP_CLUSTER_ID}
+    bind lb.${OCP_CLUSTER_ID}.${DOMAIN}:443
+    mode tcp
+    option tcplog
+    default_backend ingress-https-${OCP_CLUSTER_ID}
+
+backend openshift-api-server-${OCP_CLUSTER_ID}
+    balance source
+    mode tcp
+    server     master-0 master-0.${OCP_CLUSTER_ID}.${DOMAIN}:6443 check
+
+backend machine-config-server-${OCP_CLUSTER_ID}
+    balance source
+    mode tcp
+    server     master-0 master-0.${OCP_CLUSTER_ID}.${DOMAIN}:22623 check
+
+backend ingress-http-${OCP_CLUSTER_ID}
+    balance source
+    mode tcp
+    server     master-0 master-0.${OCP_CLUSTER_ID}.${DOMAIN}:80 check
+
+backend ingress-https-${OCP_CLUSTER_ID}
+    balance source
+    mode tcp
+    server     master-0 master-0.${OCP_CLUSTER_ID}.${DOMAIN}:443 check
+EOF
+cat /etc/haproxy/haproxy.cfg
+
+# 3.	重启HAProxy服务, 然后检查HAProxy服务
+systemctl restart haproxy
+ss -lntp |grep haproxy
+
+# 6	创建 SNO 虚拟机节点
+# 具体根据不同的IaaS环境和虚机节点配置要求创建 master-0 虚拟机节点，方法和过程略。需要注意以下事项：
+# 1.	将硬盘的启动优先级设为最高，并将 embedded.iso 作为虚机的启动盘。
+# 2.	为虚拟机配置一个网卡，并使用网桥类型的网络。
+# 3.	虚拟机操作系统类型选择RHEL 7或RHEL 8。
+# 启动参数添加 nameserver=192.168.122.12 ip=192.168.122.201::192.168.122.1:255.255.255.0:master-0.ocp4-1.example.com:ens3:none
+
+# 7.1.2	查看bootstrap节点部署进程
+# 1.	删除以前ssh保留的登录主机信息。
+rm -rf ~/.ssh/known_hosts
+# 2.	检查bootstrap节点的镜像库mirror配置是否按照install-config.yaml的内容进行配置
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "sudo cat /etc/containers/registries.conf"
+# 3.	检查bootstrap节点是否能访问到Registry。
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "curl -s -u openshift:redhat https://registry.${DOMAIN}:5000/v2/_catalog"
+# 4.	检查bootstrap节点的本地pods。
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "sudo crictl pods"
+# 5.	访问如下地址http://lb.ocp4-1.example.internal:9000/，确认只有两处bootstrap节点变为绿色。
+# 6.	确认可以通过curl命令查看machine config配置服务是否启动。
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "curl -kIs https://api-int.${OCP_CLUSTER_ID}.${DOMAIN}:22623/config/master"
+
+# 7.	可通过如下命令从宏观面观察部署过程。
+openshift-install wait-for install-complete --log-level=debug --dir=${IGN_PATH}
+
+# 8.	跟踪bootstrap的日志以识别安装进度，当循环出现如下红色字体提示的内容的时候，并且haproxy的web监控界面openshift-api-server和machine-config-server的bootstrap部分变为绿色时，说明bootstrap的引导服务已经启动，此时可进入下一个阶段。
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "journalctl -b -f -u bootkube.service"
+
+# 7.2	第二阶段：部署master阶段
+# 7.2.1	两次启动
+# 参照bootstrap的两次启动步骤启动所有master节点，将网络参数换成各自master的地址。
+# 7.2.2	查看master节点部署进程
+# 在support节点执行命令检查master节点的镜像库配置是否按照install-config.yaml的内容进行配置
+ssh -i ${SSH_PRI_FILE} core@master-0.${OCP_CLUSTER_ID}.${DOMAIN} "sudo cat /etc/containers/registries.conf"
+# 检查是否能够正常访问registry
+ssh -i ${SSH_PRI_FILE} core@master-0.${OCP_CLUSTER_ID}.${DOMAIN} "curl -s -u openshift:redhat https://registry.${DOMAIN}:5000/v2/_catalog"
+# 安装过程中可以通过查看如下日志来跟踪安装过程。注意以下日志的红色字体部分，这些内容指示master的不同安装阶段
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "journalctl -b -f -u bootkube.service"
+# 出现上述最后两条红色字体后，说明bootstrap的任务已经完成，可以已经进入后续安装部署节点
+# 另外，我们也可以通过如下方法了解安装进程：
+tail -f ${IGN_PATH}/.openshift_install.log 
+openshift-install wait-for bootstrap-complete --log-level debug --dir ${IGN_PATH}
+# 现在我们可以关闭bootstrap节点，继续进行下一个阶段部署。
+ssh -i ${SSH_PRI_FILE} core@bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} "sudo shutdown -h now"
+# 在安装过程中，也可以通过以下方法查看master节点的日志 
+# ssh -i ${SSH_PRI_FILE} core@master-0.${OCP_CLUSTER_ID}.${DOMAIN} "journalctl -xef"
+
 ```
 
 
@@ -4853,4 +5137,29 @@ I1228 06:15:56.034658       1 dynamic_serving_content.go:110] "Loaded a new cert
 I1228 06:15:57.878571       1 server.go:50] Error initializing delegating authentication (will retry): <nil>
 # https://bugzilla.redhat.com/show_bug.cgi?id=1933269
 
+```
+
+### ACM 相关
+https://cloud.redhat.com/blog/using-the-openshift-assisted-installer-service-to-deploy-an-openshift-cluster-on-metal-and-vsphere<br>
+```
+# 执行导入命令，
+# 创建了
+# open-cluster-management crd
+# open-cluster-management-agent namespace
+# klusterlet serviceaccount
+# klusterlet clusterrole
+# open-cluster-management:klusterlet-admin-aggregate-clusterrole clusterrole
+# klusterlet clusterrolebinding
+# bootstrap-hub-kubeconfig secret
+# klusterlet deployment
+# klusterlet klusterlet
+customresourcedefinition.apiextensions.k8s.io/klusterlets.operator.open-cluster-management.io created
+namespace/open-cluster-management-agent created
+serviceaccount/klusterlet created
+secret/bootstrap-hub-kubeconfig created
+clusterrole.rbac.authorization.k8s.io/klusterlet created
+clusterrole.rbac.authorization.k8s.io/open-cluster-management:klusterlet-admin-aggregate-clusterrole created
+clusterrolebinding.rbac.authorization.k8s.io/klusterlet created
+deployment.apps/klusterlet created
+klusterlet.operator.open-cluster-management.io/klusterlet created
 ```
