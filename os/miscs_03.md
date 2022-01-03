@@ -5141,6 +5141,7 @@ I1228 06:15:57.878571       1 server.go:50] Error initializing delegating authen
 
 ### ACM 相关
 https://cloud.redhat.com/blog/using-the-openshift-assisted-installer-service-to-deploy-an-openshift-cluster-on-metal-and-vsphere<br>
+https://github.com/openshift/assisted-service/blob/master/docs/user-guide/restful-api-guide.md#setting-static-network-config<br>
 ```
 # 执行导入命令，
 # 创建了
