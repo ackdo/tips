@@ -5195,6 +5195,11 @@ If you don't see a command prompt, try p
 sh-4.4# chroot /host
 sh-4.4# toolbox
 ```
+### 配置 NodePort 类型的服务
+```
+# 暴露 Node Port 类型的服务
+oc expose service tb-mqtt-transport --type=NodePort --name=tb-route-mqtt-transport --generator="service/v2"
+```
 
 ### 配置 LoadBalancer Type 的服务
 https://docs.openshift.com/container-platform/4.6/networking/configuring_ingress_cluster_traffic/configuring-ingress-cluster-traffic-load-balancer.html
@@ -5229,4 +5234,5 @@ Connection to a72bc4fdef91d467ba706a541fdc925f-1741428165.us-east-2.elb.amazonaw
 https://hub.daocloud.io/
 
 ### OpenShift 上运行 MQTT 服务
-https://bigredstack.com/run-mosquitto-mqtt-broker-on-red-hat-openshift/
+https://bigredstack.com/run-mosquitto-mqtt-broker-on-red-hat-openshift/<br>
+https://github.com/thingsboard/thingsboard/issues/3637<br>
