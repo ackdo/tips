@@ -5227,3 +5227,6 @@ Connection to a72bc4fdef91d467ba706a541fdc925f-1741428165.us-east-2.elb.amazonaw
 
 ### 镜像服务器
 https://hub.daocloud.io/
+
+### OpenShift 上运行 MQTT 服务
+https://bigredstack.com/run-mosquitto-mqtt-broker-on-red-hat-openshift/
