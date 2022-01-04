@@ -5174,3 +5174,19 @@ klusterlet.operator.open-cluster-management.io/klusterlet created
 # ToDo: 仔细看看 disk-image-builder 相关资料
 # disk-image-create rhel grub2 vm block-dev-efi -o rhel-wholedisk
 ```
+
+### 镜像仓库
+Docker本地镜像发布到阿里云镜像仓库以及拉取操作<br>
+http://www.lzhpo.com/article/35<br>
+
+
+### openshift toolbox pod 的使用 
+```
+$ oc debug node/ip-10-0-159-84.us-east-2.compute.internal 
+Starting pod/ip-10-0-159-84us-east-2computeinternal-debug ...
+To use host binaries, run `chroot /host`
+Pod IP: 10.0.159.84
+If you don't see a command prompt, try p
+sh-4.4# chroot /host
+sh-4.4# toolbox
+```
