@@ -5179,6 +5179,11 @@ klusterlet.operator.open-cluster-management.io/klusterlet created
 Docker本地镜像发布到阿里云镜像仓库以及拉取操作<br>
 http://www.lzhpo.com/article/35<br>
 
+### 暴露 mqtt 服务
+```
+以下命令生成一个 NodePort Service，这个 Service 可以通过 Node:Port 访问 
+oc expose service tb-mqtt-transport --type=NodePort --name=tb-mqtt-transport-ingress --generator="service/v2"
+```
 
 ### openshift toolbox pod 的使用 
 ```
@@ -5190,3 +5195,32 @@ If you don't see a command prompt, try p
 sh-4.4# chroot /host
 sh-4.4# toolbox
 ```
+
+### 配置 LoadBalancer Type 的服务
+https://docs.openshift.com/container-platform/4.6/networking/configuring_ingress_cluster_traffic/configuring-ingress-cluster-traffic-load-balancer.html
+```
+创建 Type 为 LoadBalancer 的 Service
+cat << EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: tb-mqtt-ingress-lb 
+spec:
+  ports:
+  - name: mqtt
+    port: 1883 
+  loadBalancerIP:
+  type: LoadBalancer 
+  selector:
+    app: tb-mqtt-transport
+EOF | oc apply -f -
+
+yum install nmap-ncat -y
+
+echo -en "\x10\x0d\x00\x04MQTT\x04\x00\x00\x00\x00\x01a" | nc -v a72bc4fdef91d467ba706a541fdc925f-1741428165.us-east-2.elb.amaznaws.com 1883
+
+echo -en "\x10\x0d\x00\x04MQTT\x04\x00\x00\x00\x00\x01a" | nc -v 72.52.10.14 1883
+```
+
+### 镜像服务器
+https://hub.daocloud.io/
