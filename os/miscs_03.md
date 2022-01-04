@@ -5240,5 +5240,10 @@ https://github.com/thingsboard/thingsboard/issues/3637<br>
 ### 创建 debug node 指定特定的镜像作为 toolbox 镜像
 https://access.redhat.com/solutions/4929021
 ```
-$ oc debug node/ip-10-0-159-84.us-east-2.compute.internal --image=quay.io/fedora/fedora:33-x86_64:latest
+$ oc debug node/ip-10-0-159-84.us-east-2.compute.internal --image=quay.io/fedora/fedora:33-x86_64
+sh-4.4# chroot /host
+sh-4.4# toolbox
+# 安装 sysstat 软件包，其中包含 iostat 命令
+[root@ip-xx-xx-xx-xx /]# yum install -y sysstat
+[root@ip-xx-xx-xx-xx /]# iostat 1 1
 ```
