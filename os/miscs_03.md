@@ -5164,3 +5164,13 @@ clusterrolebinding.rbac.authorization.k8s.io/klusterlet created
 deployment.apps/klusterlet created
 klusterlet.operator.open-cluster-management.io/klusterlet created
 ```
+
+### Disk Image Builder 创建 whole disk image 
+```
+# Disk Image Builder 可以创建 partition image，也可以创建 whole disk image
+
+# Disk Image Builder 创建 whole disk image 的命令
+# 命令里的 vm 参数告诉 disk-image-builder 创建 whole disk image
+# ToDo: 仔细看看 disk-image-builder 相关资料
+# disk-image-create rhel grub2 vm block-dev-efi -o rhel-wholedisk
+```
