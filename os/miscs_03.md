@@ -5247,3 +5247,13 @@ sh-4.4# toolbox
 [root@ip-xx-xx-xx-xx /]# yum install -y sysstat
 [root@ip-xx-xx-xx-xx /]# iostat 1 1
 ```
+
+### 创建带有 group 信息的 repodata
+```
+# support 机器创建带有 group 信息的 repodata
+[root@support rhel-7-server-rpms]# pwd
+/data/OCP-4.9.9/yum/rhel-7-server-rpms
+[root@support rhel-7-server-rpms]# time createrepo -g $(ls $(pwd)/comps.xml) $(pwd)
+[root@support rhel-7-server-rpms]# yum clean all
+[root@support rhel-7-server-rpms]# yum grouplist
+```
