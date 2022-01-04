@@ -5220,6 +5220,9 @@ yum install nmap-ncat -y
 echo -en "\x10\x0d\x00\x04MQTT\x04\x00\x00\x00\x00\x01a" | nc -v a72bc4fdef91d467ba706a541fdc925f-1741428165.us-east-2.elb.amaznaws.com 1883
 
 echo -en "\x10\x0d\x00\x04MQTT\x04\x00\x00\x00\x00\x01a" | nc -v 72.52.10.14 1883
+
+$ nc -v a72bc4fdef91d467ba706a541fdc925f-1741428165.us-east-2.elb.amazonaws.com 1883
+Connection to a72bc4fdef91d467ba706a541fdc925f-1741428165.us-east-2.elb.amazonaws.com port 1883 [tcp/ibm-mqisdp] succeeded!
 ```
 
 ### 镜像服务器
