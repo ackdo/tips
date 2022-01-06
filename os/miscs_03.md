@@ -5590,6 +5590,8 @@ EOF
 
 ## NMState Config
 ## https://bugzilla.redhat.com/show_bug.cgi?id=2030289
+## https://docs.openshift.com/container-platform/4.9/scalability_and_performance/ztp-deploying-disconnected.html
+## https://coreos.slack.com/archives/CUPJTHQ5P/p1628169479283900?thread_ts=1628081457.173400&cid=CUPJTHQ5P
 cat << EOF | oc apply -f -
 apiVersion: agent-install.openshift.io/v1beta1
 kind: NMStateConfig
@@ -5599,16 +5601,53 @@ metadata:
     cluster-name: nmstate-lab-spoke
 spec:
   config:
+    dns-resolver:
+      config:
+        server:
+        - 192.168.122.1
     interfaces:
-      - name: ens3
-        type: bond
-        state: up
-        ipv6:
-          address:
-          - ip:192.168.122.201
-            prefix-length: 24
+    - name: ens3
+      type: ethernet
+      state: up
+      ipv4:
+        address:
+        - ip: 192.168.122.201
+          prefix-length: 24
+        enabled: true
+    routes:
+      config:
+      - destination: 0.0.0.0/0
+        next-hop-address: 192.168.122.1
+        next-hop-interface: ens3
+        table-id: 254
   interfaces:
     - name: "ens3"
-      macAddress: "02:00:00:80:12:14"
+      macAddress: "52:54:00:1c:14:57"
+EOF
 
+## InfraEnv
+cp ~/.ssh/acm_id_rsa.pub ~/tmp/
+ACM_PUBLIC_KEY=~/tmp/acm_id_rsa.pub
+
+cat << EOF | oc apply -f -
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
+metadata:
+  name: lab-env
+  namespace: open-cluster-management
+spec:
+  clusterRef:
+    name: lab-cluster
+    namespace: open-cluster-management
+  sshAuthorizedKey: "$(cat ${ACM_PUBLIC_KEY})"
+  agentLabelSelector:
+    matchLabels:
+      bla: "aaa"
+  pullSecretRef:
+    name: assisted-deployment-pull-secret
+  nmStateConfigLabelSelector:
+    matchLabels:
+      cluster-name: nmstate-lab-spoke
+EOF
+oc get InfraEnv lab-env -o yaml
 ```
