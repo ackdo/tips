@@ -5501,4 +5501,114 @@ spec:
     url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/rhcos-4.9.0-x86_64-live.x86_64.iso
     version: 49.84.202110081407-0
 EOF
+
+## Private Key
+ssh-keygen -t rsa -N '' -f ~/.ssh/acm_id_rsa
+cp ~/.ssh/acm_id_rsa ~/tmp/
+ACM_PRIVATE_KEY=~/tmp/acm_id_rsa
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: assisted-deployment-ssh-private-key
+  namespace: open-cluster-management
+stringData:
+  ssh-privatekey: |-
+$(cat ${ACM_PRIVATE_KEY})
+type: Opaque
+EOF
+
+## Pull Secret
+PULL_SECRET_FILE=~/tmp/redhat-pull-secret.json
+PULL_SECRET_STR=$(cat ${PULL_SECRET_FILE} | jq -c .)
+cat <<EOF | oc apply -f - 
+apiVersion: v1
+kind: Secret
+metadata:
+  name: assisted-deployment-pull-secret
+  namespace: open-cluster-management
+stringData:
+  .dockerconfigjson: '${PULL_SECRET_STR}'
+EOF
+
+#  oc get secret assisted-deployment-pull-secret -o jsonpath="{.data.\.dockerconfigjson}" | base64 --decode
+
+## AgentClusterInstall
+## SNO Cluster Definition
+## AgentClusterInstall
+ACM_PUBLIC_STR=$(cat ~/.ssh/acm_id_rsa.pub)
+cat << EOF | oc apply -f -
+apiVersion: extensions.hive.openshift.io/v1beta1
+kind: AgentClusterInstall
+metadata:
+  name: lab-cluster-aci
+  namespace: open-cluster-management
+spec:
+  clusterDeploymentRef:
+    name: lab-cluster
+  imageSetRef:
+    name: img4.9.9-x86-64-appsub
+  networking:
+    clusterNetwork:
+      - cidr: "10.128.0.0/14"
+        hostPrefix: 23
+    serviceNetwork:
+      - "172.31.0.0/16"
+    machineNetwork:
+      - cidr: "192.168.122.0/24"
+  provisionRequirements:
+    controlPlaneAgents: 1
+  sshPublicKey: "${ACM_PUBLIC_STR}"
+EOF
+
+## ClusterDeployment
+cat << EOF | oc apply -f -
+apiVersion: hive.openshift.io/v1
+kind: ClusterDeployment
+metadata:
+  name: lab-cluster
+  namespace: open-cluster-management
+spec:
+  baseDomain: example.com
+  clusterName: ocp4-1
+  controlPlaneConfig:
+    servingCertificates: {}
+  installed: false
+  clusterInstallRef:
+    group: extensions.hive.openshift.io
+    kind: AgentClusterInstall
+    name: lab-cluster-aci
+    version: v1beta1
+  platform:
+    agentBareMetal:
+      agentSelector:
+        matchLabels:
+          bla: "aaa"
+  pullSecretRef:
+    name: assisted-deployment-pull-secret
+EOF
+
+## NMState Config
+## https://bugzilla.redhat.com/show_bug.cgi?id=2030289
+cat << EOF | oc apply -f -
+apiVersion: agent-install.openshift.io/v1beta1
+kind: NMStateConfig
+metadata:
+  name: assisted-deployment-nmstate-lab-spoke
+  labels:
+    cluster-name: nmstate-lab-spoke
+spec:
+  config:
+    interfaces:
+      - name: ens3
+        type: bond
+        state: up
+        ipv6:
+          address:
+          - ip:192.168.122.201
+            prefix-length: 24
+  interfaces:
+    - name: "ens3"
+      macAddress: "02:00:00:80:12:14"
+
 ```
