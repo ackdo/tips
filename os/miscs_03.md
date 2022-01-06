@@ -5466,3 +5466,39 @@ esac
 
 exit 0
 ```
+
+### 创建 AgentServiceConfig 的例子
+https://cloud.redhat.com/blog/telco-5g-zero-touch-provisioning-ztp<br>
+https://github.com/openshift/assisted-service/blob/master/config/samples/agent-install.openshift.io_v1beta1_agentserviceconfig.yaml<br>
+```
+cat << EOF | oc apply -f - 
+apiVersion: agent-install.openshift.io/v1beta1
+kind: AgentServiceConfig
+metadata:
+  name: agent
+  namespace: open-cluster-management
+  ### This is the annotation that injects modifications in the Assisted Service pod
+  annotations:
+    unsupported.agent-install.openshift.io/assisted-service-configmap: "assisted-service-config"
+###
+spec:
+  databaseStorage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 40Gi
+  filesystemStorage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 40Gi
+  osImages:
+  - cpuArchitecture: x86_64
+    openshiftVersion: '4.9'
+    rootFSUrl: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/rhcos-live-rootfs.x86_64.img
+    url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/rhcos-4.9.0-x86_64-live.x86_64.iso
+    version: 49.84.202110081407-0
+EOF
+```
