@@ -5588,6 +5588,7 @@ spec:
     name: assisted-deployment-pull-secret
 EOF
 
+
 ## NMState Config
 ## https://bugzilla.redhat.com/show_bug.cgi?id=2030289
 ## https://docs.openshift.com/container-platform/4.9/scalability_and_performance/ztp-deploying-disconnected.html
@@ -5650,4 +5651,9 @@ spec:
       cluster-name: nmstate-lab-spoke
 EOF
 oc get InfraEnv lab-env -o yaml
+
+
+## SPOKE CLUSTER DEPLOYMENT
+oc get pod -A | grep metal3
+
 ```
