@@ -5660,7 +5660,8 @@ oc get pod -A | grep metal3
 
 
 ### 离线 OLM 与 operator
-参考： https://zhimin-wen.medium.com/airgap-installation-for-openshift-operators-fb0a3cad8731
+参考： https://zhimin-wen.medium.com/airgap-installation-for-openshift-operators-fb0a3cad8731<br>
+参考：https://docs.oracle.com/en/operating-systems/oracle-linux/podman/skopeo-container-tool.html<br>
 ```
 # 在 RHEL 8 上执行
 创建定制化的 index image
@@ -5678,6 +5679,27 @@ grpcurl -plaintext localhost:50051 api.Registry/ListPackages > packages.out
 # 检查我们需要的 operator
 # advanced-cluster-management,local-storage-operator,kubevirt-hyperconverged,submariner
 
+# 生成 podman 本地 index image 
 opm index prune -f registry.redhat.io/redhat/redhat-operator-index:v4.9 -p advanced-cluster-management,local-storage-operator,kubevirt-hyperconverged,submariner -t my-redhat-operator-index:v4.9
+
+# 拷贝 podman 本地 index image 到 tar.gz 文件
+skopeo copy containers-storage:localhost/my-redhat-operator-index:v4.9 docker-archive:my-redhat-operator-index-v4.9.tar.gz
+
+# 拷贝 tar.gz 文件到 disconnected registry
+skopeo copy --authfile /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json docker-archive:my-redhat-operator-index-v4.9.tar.gz docker://registry.example.com:5000/olm-mirror/my-redhat-operator-index:v4.9
+
+# 将 catalog bundle 拷贝到目录
+# v2/mirror/olm-mirror/my-redhat-operator-index
+# 使用修剪的 image registry.example.com:5000/olm-mirror/my-redhat-operator-index:v4.9
+# 将 catalog（metadata 和 image）保存到文件系统中
+# 请注意，file://mirror 将映射到当前目录中的 v2/mirror 
+mkdir -p /data/OCP-4.9.9/ocp/olm-mirror/redhat-operator-index
+cd /data/OCP-4.9.9/ocp/olm-mirror/redhat-operator-index 
+oc adm catalog mirror registry.example.com:5000/olm-mirror/my-redhat-operator-index:v4.9 file://mirror -a /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json
+
+# 将目录上传到目标 registry
+# 进入到包含 v2/mirror/olm-mirror/my-redhat-operator-index 中 v2 的目录
+cd /data/OCP-4.9.9/ocp/olm-mirror/redhat-operator-index 
+oc adm catalog mirror file://mirror/olm-mirror/my-redhat-operator-index:v4.9 registry.example.com:5000/olm-mirror -a /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json
 
 ```
