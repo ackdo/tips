@@ -5657,3 +5657,27 @@ oc get InfraEnv lab-env -o yaml
 oc get pod -A | grep metal3
 
 ```
+
+
+### 离线 OLM 与 operator
+参考： https://zhimin-wen.medium.com/airgap-installation-for-openshift-operators-fb0a3cad8731
+```
+# 在 RHEL 8 上执行
+创建定制化的 index image
+podman pull registry.redhat.io/redhat/redhat-operator-index:v4.9 --authfile /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json
+podman run -p50051:50051 --name operator-index -d registry.redhat.io/redhat/redhat-operator-index:v4.9
+
+# 安装 grpcurl 工具
+# https://github.com/fullstorydev/grpcurl/releases/download/v1.8.5/grpcurl_1.8.5_linux_x86_64.tar.gz
+curl -L https://github.com/fullstorydev/grpcurl/releases/download/v1.8.5/grpcurl_1.8.5_linux_x86_64.tar.gz -o grpcurl_1.8.5_linux_x86_64.tar.gz
+tar zxf grpcurl_1.8.5_linux_x86_64.tar.gz -C /usr/local/bin
+
+# 获取 index image packages 信息
+grpcurl -plaintext localhost:50051 api.Registry/ListPackages > packages.out
+
+# 检查我们需要的 operator
+# advanced-cluster-management,local-storage-operator,kubevirt-hyperconverged,submariner
+
+opm index prune -f registry.redhat.io/redhat/redhat-operator-index:v4.9 -p advanced-cluster-management,local-storage-operator,kubevirt-hyperconverged,submariner -t my-redhat-operator-index:v4.9
+
+```
