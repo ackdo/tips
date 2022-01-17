@@ -5696,10 +5696,30 @@ skopeo copy --authfile /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json docker
 mkdir -p /data/OCP-4.9.9/ocp/olm-mirror/redhat-operator-index
 cd /data/OCP-4.9.9/ocp/olm-mirror/redhat-operator-index 
 oc adm catalog mirror registry.example.com:5000/olm-mirror/my-redhat-operator-index:v4.9 file://mirror -a /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json
+...
+info: Mirroring completed in 5h39m40.14s (3.478MB/s)
+error mirroring image: one or more errors occurred
+wrote mirroring manifests to manifests-my-redhat-operator-index-1642043666
+
+To upload local images to a registry, run:
+
+        oc adm catalog mirror file://mirror/olm-mirror/my-redhat-operator-index:v4.9 REGISTRY/REPOSITORY
 
 # 将目录上传到目标 registry
 # 进入到包含 v2/mirror/olm-mirror/my-redhat-operator-index 中 v2 的目录
 cd /data/OCP-4.9.9/ocp/olm-mirror/redhat-operator-index 
 oc adm catalog mirror file://mirror/olm-mirror/my-redhat-operator-index:v4.9 registry.example.com:5000/olm-mirror -a /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json
 
+```
+
+### 将 StatefulSet 的启动命令改为循环
+```
+  containers:
+  - name: command-demo-container
+    image: debian
+    command:
+      - /bin/sh
+    args:
+      - "-c"
+      - "while true ; do echo hello; sleep 10; done"
 ```
