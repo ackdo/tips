@@ -5732,3 +5732,20 @@ zoo.cfg
 zookeeper
 Cannot assign requested address (Bind failed)
 ```
+
+### cat 查看行号
+```
+cat -n filename
+```
+
+### 用命令检查 CrashLoopBack 状态容器
+```
+  containers:
+  - name: command-demo-container
+    image: debian
+    command:
+      - /bin/sh
+    args:
+      - "-c"
+      - "while true ; do echo hello; sleep 10; done"
+```
