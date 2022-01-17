@@ -5723,3 +5723,12 @@ oc adm catalog mirror file://mirror/olm-mirror/my-redhat-operator-index:v4.9 reg
       - "-c"
       - "while true ; do echo hello; sleep 10; done"
 ```
+
+### zookeeper 报错 
+https://blog.csdn.net/XiyouLinux_Kangyijie/article/details/76704639<br>
+https://zookeeper.apache.org/doc/r3.1.2/zookeeperStarted.html<br>
+```
+zoo.cfg
+zookeeper
+Cannot assign requested address (Bind failed)
+```
