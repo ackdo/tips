@@ -5868,4 +5868,23 @@ time="2022-01-18T05:21:15Z" level=fatal msg="Failed to upload boot files" func=m
 firewall-cmd --add-service=http
 firewall-cmd --add-service=http --permanent
 
+oc --kubeconfig=/root/kubeconfig-ocp4-1 project
+Using project "open-cluster-management" on server "https://api.ocp4-1.example.com:6443".
+
+oc --kubeconfig=/root/kubeconfig-ocp4-1 get infraenv
+
+oc --kubeconfig=/root/kubeconfig-ocp4-1 get infraenv ocp4-2 -o yaml
+...
+status:
+  agentLabelSelector:
+    matchLabels:
+      infraenvs.agent-install.openshift.io: ocp4-2
+  conditions:
+  - lastTransitionTime: "2022-01-18T05:38:01Z"
+    message: 'Failed to create image: cluster does not exist: ocp4-2, check AgentClusterInstall
+      conditions: name ocp4-2 in namespace open-cluster-management'
+    reason: ImageCreationError
+    status: Unknown
+    type: ImageCreated
+
 ```
