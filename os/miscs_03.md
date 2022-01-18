@@ -5845,3 +5845,27 @@ spec:
 EOF
 
 ```
+
+### 重建 assisted-service pod postgresql 数据库
+```
+1. save a copy of agentserviceconfig
+oc --kubeconfig=/root/kubeconfig-ocp4-1 get agentserviceconfig agent -o yaml > agentserviceconfig.backup
+
+2.
+oc --kubeconfig=/root/kubeconfig-ocp4-1 delete agentserviceconfig agent
+
+3.
+oc --kubeconfig=/root/kubeconfig-ocp4-1 create -f agentserviceconfig.backup
+```
+
+### assisted-service pod 服务检查
+```
+报错
+time="2022-01-18T05:21:15Z" level=fatal msg="Failed to upload boot files" func=main.main.func1 file="/remote-source/assisted-service/app/cmd/main.go:179" error="Failed uploading boot files for OCP version 4.9: Failed fetching from URL http://192.168.122.15/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/rhcos-4.9.0-x86_64-live.x86_64.iso: Get \"http://192.168.122.15/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/rhcos-4.9.0-x86_64-live.x86_64.iso\": dial tcp 192.168.122.15:80: connect: no route to host"
+
+问题解决
+在 192.168.122.15 上开启防火墙
+firewall-cmd --add-service=http
+firewall-cmd --add-service=http --permanent
+
+```
