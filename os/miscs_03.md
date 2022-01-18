@@ -5887,4 +5887,5 @@ status:
     status: Unknown
     type: ImageCreated
 
+oc --kubeconfig=/root/kubeconfig-ocp4-1 get AgentClusterInstall
 ```
