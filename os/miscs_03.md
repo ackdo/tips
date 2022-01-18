@@ -5766,10 +5766,80 @@ spec:
     - rregistry.example.com:5000/ocp4/openshift4
     source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 EOF
+
+# 创建为内部 image-registry 准备的 pvc 
+oc --kubeconfig=/root/kubeconfig-ocp4-1 create -f - <<EOF
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: registry-storage
+  namespace: openshift-image-registry
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+EOF
+
+# 将 SNO 原来的 configs.imageregistry.operator.openshift.io/cluster 的 /spec/storge 删除
+# 然后添加 
+# spec:
+#   storage:
+#     pvc:
+#       claim: "registry-storage"
+oc --kubeconfig=/root/kubeconfig-ocp4-1 patch configs.imageregistry.operator.openshift.io cluster --type=json --patch-file=/dev/fd/0 <<EOF
+[{"op": "remove", "path": "/spec/storage" },{"op": "add", "path": "/spec/storage", "value": {"pvc":{"claim": "registry-storage"}}}]
+EOF
+
+# 将 configs.imageregistry.operator.openshift.io/cluster 的 spec.managemntState 设置为 Managed
+# spec:
+#   managementState: "Managed"
+oc --kubeconfig=/root/kubeconfig-ocp4-1 patch configs.imageregistry.operator.openshift.io cluster --type merge --patch-file=/dev/fd/0 <<EOF
+{"spec":{"managementState": "Managed"}}
+EOF
 ```
 
 ### 报错 systemd[1]: Failed to start User Manager for UID 0.
 https://access.redhat.com/solutions/5931241
 ```
 Jan 14 05:58:59 master-0.ocp4-1.example.com systemd[1]: Failed to start User Manager for UID 0.
+
+报错: oc get clusteroperators 
+image-registry                             4.9.9     True        False         True       5m1s    ImagePrunerDegraded: Job has reached the specified backoff limit
+
+清除报错
+https://access.redhat.com/solutions/5370391
+
+oc --kubeconfig=/root/kubeconfig-ocp4-1 patch imagepruner.imageregistry/cluster --patch '{"spec":{"suspend":true}}' --type=merge
+oc --kubeconfig=/root/kubeconfig-ocp4-1 -n openshift-image-registry delete jobs --all
+```
+
+```
+# 拷贝镜像
+https://github.com/containers/skopeo/issues/1440
+
+# 保存 rhacm2/agent-service-rhel8 到本地 registry，skopeo copy -a 命令可以拷贝全部数据
+skopeo copy -a --authfile ${PULL_SECRET_FILE} --format v2s2 docker://registry.redhat.io/rhacm2/agent-service-rhel8@sha256:d738f808b7cf86c47d4c5a6c8ed5cb4387ca285123a393ec5f8d18951e4e0fb2 docker://registry.example.com:5000/rhacm2/agent-service-rhel8@sha256:d738f808b7cf86c47d4c5a6c8ed5cb4387ca285123a393ec5f8d18951e4e0fb2
+skopeo copy -a --authfile ${PULL_SECRET_FILE} --format v2s2 docker://registry.redhat.io/rhel8/postgresql-12@sha256:952ac9a625c7600449f0ab1970fae0a86c8a547f785e0f33bfae4365ece06336 docker://registry.example.com:5000/rhel8/postgresql-12/
+
+cat << EOF | oc --kubeconfig=/root/kubeconfig-ocp4-1 apply -f - 
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: openshift-release
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - registry.example.com:5000/ocp4/openshift4
+    source: quay.io/openshift-release-dev/ocp-release
+  - mirrors:
+    - registry.example.com:5000/ocp4/openshift4
+    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+  - mirrors:
+    - registry.example.com:5000/rhacm2/agent-service-rhel8
+    source: registry.redhat.io/rhacm2/agent-service-rhel8    
+EOF
+
+registry.redhat.io/rhacm2/agent-service-rhel8@sha256:d738f808b7cf86c47d4c5a6c8ed5cb4387ca285123a393ec5f8d18951e4e0fb2
 ```
