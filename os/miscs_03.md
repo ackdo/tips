@@ -5749,3 +5749,21 @@ cat -n filename
       - "-c"
       - "while true ; do echo hello; sleep 10; done"
 ```
+
+### 为 master 指定 ImageContentSourcePolicy
+```
+cat << EOF | oc --kubeconfig=/root/kubeconfig-ocp4-1 apply -f - 
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: openshift-release
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - registry.example.com:5000/ocp4/openshift4
+    source: quay.io/openshift-release-dev/ocp-release
+  - mirrors:
+    - rregistry.example.com:5000/ocp4/openshift4
+    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+EOF
+```
