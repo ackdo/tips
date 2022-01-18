@@ -5767,3 +5767,9 @@ spec:
     source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 EOF
 ```
+
+### 报错 systemd[1]: Failed to start User Manager for UID 0.
+https://access.redhat.com/solutions/5931241
+```
+Jan 14 05:58:59 master-0.ocp4-1.example.com systemd[1]: Failed to start User Manager for UID 0.
+```
