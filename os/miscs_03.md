@@ -5821,7 +5821,7 @@ https://github.com/containers/skopeo/issues/1440
 
 # 保存 rhacm2/agent-service-rhel8 到本地 registry，skopeo copy -a 命令可以拷贝全部数据
 skopeo copy -a --authfile ${PULL_SECRET_FILE} --format v2s2 docker://registry.redhat.io/rhacm2/agent-service-rhel8@sha256:d738f808b7cf86c47d4c5a6c8ed5cb4387ca285123a393ec5f8d18951e4e0fb2 docker://registry.example.com:5000/rhacm2/agent-service-rhel8@sha256:d738f808b7cf86c47d4c5a6c8ed5cb4387ca285123a393ec5f8d18951e4e0fb2
-skopeo copy -a --authfile ${PULL_SECRET_FILE} --format v2s2 docker://registry.redhat.io/rhel8/postgresql-12@sha256:952ac9a625c7600449f0ab1970fae0a86c8a547f785e0f33bfae4365ece06336 docker://registry.example.com:5000/rhel8/postgresql-12/
+skopeo copy -a --authfile ${PULL_SECRET_FILE} --format v2s2 docker://registry.redhat.io/rhel8/postgresql-12@sha256:952ac9a625c7600449f0ab1970fae0a86c8a547f785e0f33bfae4365ece06336 docker://registry.example.com:5000/rhel8/postgresql-12
 
 cat << EOF | oc --kubeconfig=/root/kubeconfig-ocp4-1 apply -f - 
 apiVersion: operator.openshift.io/v1alpha1
@@ -5838,8 +5838,10 @@ spec:
     source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
   - mirrors:
     - registry.example.com:5000/rhacm2/agent-service-rhel8
-    source: registry.redhat.io/rhacm2/agent-service-rhel8    
+    source: registry.redhat.io/rhacm2/agent-service-rhel8
+  - mirrors:
+    - registry.example.com:5000/rhel8/postgresql-12
+    source: registry.redhat.io/rhel8/postgresql-12    
 EOF
 
-registry.redhat.io/rhacm2/agent-service-rhel8@sha256:d738f808b7cf86c47d4c5a6c8ed5cb4387ca285123a393ec5f8d18951e4e0fb2
 ```
