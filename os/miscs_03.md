@@ -5894,7 +5894,7 @@ oc --kubeconfig=/root/kubeconfig-ocp4-1 get AgentClusterInstall
 # google-chrome 执行时设置 host-resolver-rules 
 nohup /usr/bin/google-chrome-stable --restore-last-session --host-resolver-rules="MAP api.ocp-edge-cluster-0.qe.redhat.com 10.46.46.12","MAP oauth-openshift.apps.ocp-edge-cluster-0.qe.lab.redhat.com 10.46.46.12","MAP console-openshift-console.apps.ocp-edge-cluster-0.qe.lab.redhat.com 10.46.46.12","MAP grafana-openshift-monitoring.apps.ocp-edge-cluster-0.qe.redhat.com 10.46.46.12","MAP thanos-querier-openshift-monitoring.apps.ocp-edge-cluster-0.qe.redhat.com 10.46.46.12","MAP prometheus-k8s-openshift-monitoring.apps.ocp-edge-cluster-0.qe.redhat.com 10.46.46.12","MAP alertmanager-main-openshift-monitoring.apps.ocp-edge-cluster-0.qe.redhat.com 10.46.46.12","MAP multicloud-console.apps.ocp-edge-cluster-0.qe.lab.redhat.com 10.46.46.12" &
 
-# Baremetal Host 
+# Baremetal Host 例子
 cat 07_baremetal_host.yaml 
 
 apiVersion: metal3.io/v1alpha1
