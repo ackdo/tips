@@ -5914,4 +5914,9 @@ spec:
     address: idrac-virtualmedia+https://10.19.28.55/redfish/v1/Systems/System.Embedded.1
     credentialsName: "10.19.28.55"
     disableCertificateVerification: true
+
+# RHEL 8 EPEL
+# https://docs.fedoraproject.org/en-US/epel/#_el8
+subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms
+dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 ```
