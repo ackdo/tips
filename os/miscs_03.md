@@ -5893,4 +5893,25 @@ oc --kubeconfig=/root/kubeconfig-ocp4-1 get AgentClusterInstall
 ```
 # google-chrome 执行时设置 host-resolver-rules 
 nohup /usr/bin/google-chrome-stable --restore-last-session --host-resolver-rules="MAP api.ocp-edge-cluster-0.qe.redhat.com 10.46.46.12","MAP oauth-openshift.apps.ocp-edge-cluster-0.qe.lab.redhat.com 10.46.46.12","MAP console-openshift-console.apps.ocp-edge-cluster-0.qe.lab.redhat.com 10.46.46.12","MAP grafana-openshift-monitoring.apps.ocp-edge-cluster-0.qe.redhat.com 10.46.46.12","MAP thanos-querier-openshift-monitoring.apps.ocp-edge-cluster-0.qe.redhat.com 10.46.46.12","MAP prometheus-k8s-openshift-monitoring.apps.ocp-edge-cluster-0.qe.redhat.com 10.46.46.12","MAP alertmanager-main-openshift-monitoring.apps.ocp-edge-cluster-0.qe.redhat.com 10.46.46.12","MAP multicloud-console.apps.ocp-edge-cluster-0.qe.lab.redhat.com 10.46.46.12" &
+
+# Baremetal Host 
+cat 07_baremetal_host.yaml 
+
+apiVersion: metal3.io/v1alpha1
+kind: BareMetalHost
+metadata:
+  name: "bm-spoke-8-master"
+  namespace: bm-spoke-8
+  labels:
+    infraenvs.agent-install.openshift.io: "bm-spoke-8"
+  annotations:
+    inspect.metal3.io: disabled
+spec:
+  online: true
+  automatedCleaningMode: disabled
+  bootMACAddress: E4:43:4B:BD:90:9A 
+  bmc:
+    address: idrac-virtualmedia+https://10.19.28.55/redfish/v1/Systems/System.Embedded.1
+    credentialsName: "10.19.28.55"
+    disableCertificateVerification: true
 ```
