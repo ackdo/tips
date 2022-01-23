@@ -5915,8 +5915,177 @@ spec:
     credentialsName: "10.19.28.55"
     disableCertificateVerification: true
 
-# RHEL 8 EPEL
+# Install RHEL 8 Hypervisor
+
+# 启用 RHEL 8 EPEL
 # https://docs.fedoraproject.org/en-US/epel/#_el8
 subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms
 dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
+# 安装虚拟化组件
+sudo dnf module install virt
+sudo dnf install virt-install
+sudo systemctl start libvirtd
+sudo systemctl enable libvirtd
+
+# 根据需要禁用虚拟网络的 DHCP，以下是在虚拟网络 default 上，禁止 DHCP 时的例子 
+if(virsh net-dumpxml default | grep dhcp &>/dev/null); then
+      virsh net-update default delete ip-dhcp-range "<range start='192.168.122.2' end='192.168.122.254'/>" --live --config || { echo "Unable to disable DHCP on default network"; return 1; }
+fi
+
+# 检查 kvm_intel 的 nested 是否启用，如果未启用则启用
+sudo cat /sys/module/kvm_intel/parameters/nested
+sudo sed -ie 's|^#options kvm_intel nested=1|options kvm_intel nested=1|' /etc/modprobe.d/kvm.conf 
+sudo modprobe -r kvm_intel
+sudo modprobe kvm_intel
+
+# 创建虚拟机磁盘目录
+
+mkdir -p /data/kvm
+chcon --reference /var/lib/libvirt /data
+chcon -R --reference /var/lib/libvirt/images /data/kvm
+sudo chmod a+r /data
+
+[root@undercloud ~]# cat > /tmp/ks.cfg <<'EOF'
+lang en_US
+keyboard us
+timezone Asia/Shanghai --isUtc
+rootpw $1$PTAR1+6M$DIYrE6zTEo5dWWzAp9as61 --iscrypted
+#platform x86, AMD64, or Intel EM64T
+reboot
+text
+cdrom
+bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
+zerombr
+clearpart --all --initlabel
+autopart
+network --device=enp1s0 --hostname=support.example.com --bootproto=static --ip=192.168.122.12 --netmask=255.255.255.0 --gateway=192.168.122.1 --nameserver=192.168.122.12
+auth --passalgo=sha512 --useshadow
+selinux --enforcing
+firewall --enabled --ssh
+skipx
+firstboot --disable
+%packages
+@^minimal-environment
+kexec-tools
+tar
+%end
+EOF
+
+qemu-img create -f qcow2 -o preallocation=metadata /data/kvm/jwang-support-openshift.qcow2 120G
+
+virt-install --name=jwang-support-openshift --vcpus=1 --ram=2048 \
+--disk path=/data/kvm/jwang-support-openshift.qcow2,bus=virtio,size=120 \
+--os-variant rhel8.0 --network network=default,model=virtio \
+--boot menu=on --location /data/isos/rhel-8.4-x86_64-dvd.iso \
+--console pty,target_type=serial \
+--initrd-inject /tmp/ks.cfg \
+--extra-args='inst.ks=file:/ks.cfg'
+
+访问虚拟机console
+yum install cockpit
+systemctl enable --now cockpit.socket
+firewall-cmd --add-service=cockpit --permanent
+firewall-cmd --reload
+yum install -y cockpit-machines 
+
+安装 vncserver
+yum install -y tigervnc-server virt-viewer
+vncserver :3
+firewall-cmd --permanent --add-port=5900/tcp
+firewall-cmd --permanent --add-port=5901/tcp
+firewall-cmd --permanent --add-port=5902/tcp
+firewall-cmd --permanent --add-port=5903/tcp
+firewall-cmd --reload
+
+# 登陆 support.example.com
+# 设置OCP安装版本信息
+export OCP_MAJOR_VER=4.9
+export OCP_VER=4.9.9
+echo ${OCP_VER}
+
+# 创建离线介质目录
+export OCP_PATH=/data/OCP-${OCP_VER}/ocp
+export YUM_PATH=/data/OCP-${OCP_VER}/yum
+mkdir -p ${OCP_PATH}/{app-image,ocp-client,ocp-image,ocp-installer,rhcos,secret}  ${YUM_PATH}
+
+# 下载离线YUM源
+# 登录订阅账户并绑定OpenShift订阅
+rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+export SUB_USER=XXXXX
+set +o history
+export SUB_PASSWD=XXXXX
+subscription-manager register --force --user ${SUB_USER} --password ${SUB_PASSWD}
+set -o history
+subscription-manager refresh
+subscription-manager list --available --matches 'Red Hat OpenShift Container Platform' | grep "Pool ID"
+subscription-manager attach --pool=<ONE-POOL-ID>
+subscription-manager config --rhsm.baseurl=https://china.cdn.redhat.com
+subscription-manager refresh
+yum clean all
+yum makecache
+
+# 开启订阅频道
+# 关闭所有预先启用的yum频道
+subscription-manager repos --disable="*"
+# 仅启用与本次部署相关的yum源
+subscription-manager repos \
+    --enable="rhel-8-for-x86_64-baseos-rpms" \
+    --enable="rhel-8-for-x86_64-appstream-rpms" \
+    --enable="rhocp-${OCP_MAJOR_VER}-for-rhel-8-x86_64-rpms" 
+# 批量下载软件包
+yum -y install yum-utils 
+for repo in $(subscription-manager repos --list-enabled | grep "Repo ID" | awk '{print $3}'); do
+    reposync -n --delete --repoid ${repo} -p ${YUM_PATH} --download-metadata
+done
+# 检查下载后的软件包容量
+du -lh ${YUM_PATH} --max-depth=1
+# 压缩打包
+cd ${YUM_PATH}
+for dir in $(ls --indicator-style=none ${YUM_PATH}/); do
+    tar -zcvf ${YUM_PATH}/${dir}.tar.gz ${dir}; 
+done
+
+
+
+# 生成 cluster bashrc
+export OCP_CLUSTER_ID="ocp4-1"
+cat << EOF >> ~/.bashrc-${OCP_CLUSTER_ID}
+#######################################
+setVAR(){
+  if [ \$# = 0 ]
+  then
+    echo "USAGE: "
+    echo "   setVAR VAR_NAME VAR_VALUE    # Set VAR_NAME with VAR_VALUE"
+    echo "   setVAR VAR_NAME              # Delete VAR_NAME"
+  elif [ \$# = 1 ]
+  then
+    sed -i "/\${1}/d" ~/.bashrc-${OCP_CLUSTER_ID}
+source ~/.bashrc-${OCP_CLUSTER_ID}
+unset \${1}
+    echo \${1} is empty
+  else
+    sed -i "/\${1}/d" ~/.bashrc-${OCP_CLUSTER_ID}
+    echo export \${1}=\"\${2}\" >> ~/.bashrc-${OCP_CLUSTER_ID}
+source ~/.bashrc-${OCP_CLUSTER_ID}
+echo \${1}="\${2}"
+  fi
+  echo ${VAR_NAME}
+}
+#######################################
+EOF
+source ~/.bashrc-${OCP_CLUSTER_ID}
+
+# 设置变量
+setVAR OCP_MAJOR_VER 4.9
+setVAR OCP_VER 4.9.9
+setVAR RHCOS_VER 4.9.0
+setVAR YUM_PATH /data/OCP-${OCP_VER}/yum     #存放yum源的目录
+setVAR OCP_PATH /data/OCP-${OCP_VER}/ocp     #存放OCP原始安装介质的目录
+
+# 安装oc客户端
+tar -xzf ${OCP_PATH}/ocp-client/openshift-client-linux-${OCP_VER}.tar.gz -C /usr/local/sbin/
+oc version
+
+# curl -v https://subscription.rhn.redhat.com --cacert /etc/rhsm/ca/redhat-uep.pem
 ```
