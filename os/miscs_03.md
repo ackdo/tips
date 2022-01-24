@@ -3028,6 +3028,7 @@ brew install sshuttle
 
 转发
 sshuttle --dns -r user@remotehost 192.168.122.0/0
+sshuttle --dns -r root@10.66.208.240 192.168.122.12/32 -x 10.0.0.0/8 
 
 openshift 报错
 ingress                                    4.9.9     True        False         True       5h14m   The "default" ingress controller reports Degraded=True: DegradedConditions: One or more other status conditions indicate a degraded state: CanaryChecksSucceeding=False (CanaryChecksRepetitiveFailures: Canary route checks for the default ingress controller are failing)
@@ -5846,6 +5847,16 @@ EOF
 
 ```
 
+```
+parted -s /dev/sdb mklabel msdos 
+parted -s /dev/sdb unit mib mkpart primary 1 100%
+parted -s /dev/sdb set 1 lvm on
+pvcreate /dev/sdb1
+vgextend rhel /dev/sdb1
+lvextend -l +100%FREE /dev/rhel/root /dev/sdb1 
+xfs_growfs /
+```
+
 ### 重建 assisted-service pod postgresql 数据库
 ```
 1. save a copy of agentserviceconfig
@@ -6086,6 +6097,332 @@ setVAR OCP_PATH /data/OCP-${OCP_VER}/ocp     #存放OCP原始安装介质的目�
 # 安装oc客户端
 tar -xzf ${OCP_PATH}/ocp-client/openshift-client-linux-${OCP_VER}.tar.gz -C /usr/local/sbin/
 oc version
+
+# 配置本地临时YUM源
+# 准备YUM源所需的文件
+# 先解压缩文件，然后删除压缩文件
+for file in $(ls ${YUM_PATH}/*.tar.gz); do tar -zxvf ${file} -C ${YUM_PATH}/; done
+rm -rf ${YUM_PATH}/*.tar.gz
+
+# 配置本地临时YUM源
+# 创建以下文件，配置本地临时YUM源
+cat << EOF > /etc/yum.repos.d/local.repo
+[rhel-8-for-x86_64-baseos-rpms]
+name=rhel-8-for-x86_64-baseos-rpms
+baseurl=file://${YUM_PATH}/rhel-8-for-x86_64-baseos-rpms
+enabled=1
+gpgcheck=0
+
+[rhel-8-for-x86_64-appstream-rpms]
+name=rhel-8-for-x86_64-appstream-rpms
+baseurl=file://${YUM_PATH}/rhel-8-for-x86_64-appstream-rpms
+enabled=1
+gpgcheck=0
+EOF
+yum repolist
+
+# 创建基于HTTP的YUM服务
+# 安装Apache HTTP服务，并将http的端口修改为8080
+yum -y install httpd
+systemctl enable httpd --now
+sed -i -e 's/Listen 80/Listen 8080/g' /etc/httpd/conf/httpd.conf
+cat /etc/httpd/conf/httpd.conf |grep "Listen 8080"
+# 注意：必须将yum目录所属首级目录/data以及所有子目录权限设为705，这样才能通过http访问。
+chmod -R 705 /data
+# 创建指向yum目录的httpd配置文件。
+cat << EOF > /etc/httpd/conf.d/yum.conf
+Alias /repo "${YUM_PATH}"
+<Directory "${YUM_PATH}">
+  Options +Indexes +FollowSymLinks
+  Require all granted
+</Directory>
+<Location /repo>
+  SetHandler None
+</Location>
+EOF
+# 重新启动 httpd 服务，然后验证可以访问到repo目录
+systemctl restart httpd
+curl http://localhost:8080/repo/
+
+# 安装配置DNS服务
+# OpenShift 4建议的域名组成为：集群名+根域名 $OCP_CLUSTER_ID.$DOMAIN
+# 对于etcd，OCP要求由etcd-$INDEX格式组成。本例中由于etcd安装于master上，因此etcd的域名实际也是指向各master节点。此外，etcd还需要_etcd-server-ssl._tcp.$CLUSTERDOMMAIN的SRV记录，用于master寻找etcd节点，该域名指向etcd节点。
+# 安装BIND服务
+yum -y install bind bind-utils
+systemctl enable named --now
+# 设置BIND配置文件
+# 先备份原始BIND配置文件，然后修改BIND配置，并重新加载配置
+cp /etc/named.conf{,_bak}
+sed -i -e "s/listen-on port.*/listen-on port 53 { any; };/" /etc/named.conf
+sed -i -e "s/allow-query.*/allow-query { any; };/" /etc/named.conf
+rndc reload
+grep -E 'listen-on port|allow-query' /etc/named.conf 
+# 注意：如果有外部的解析需求，则请确保DNS服务器可以访问外网，并添加如下配置：
+# 如果有外部的解析需求，则请确保DNS服务器可以访问外网，并添加如下配置：
+sed -i '/recursion yes;/a \
+        forward first; \
+        forwarders { 114.114.114.114; 8.8.8.8; };' /etc/named.conf
+sed -i -e "s/dnssec-enable.*/dnssec-enable no;/" /etc/named.conf
+sed -i -e "s/dnssec-validation.*/dnssec-validation no;/" /etc/named.conf
+rndc reload
+
+# 配置Zone区域
+# 设置DNS环境变量
+setVAR DOMAIN example.com
+setVAR OCP_CLUSTER_ID ocp4-1
+setVAR BASTION_IP 192.168.122.13
+setVAR SUPPORT_IP 192.168.122.12
+setVAR DNS_IP 192.168.122.12
+setVAR NTP_IP 192.168.122.12
+setVAR YUM_IP 192.168.122.12
+setVAR REGISTRY_IP 192.168.122.12
+setVAR NFS_IP 192.168.122.12
+setVAR LB_IP 192.168.122.12
+setVAR BOOTSTRAP_IP 192.168.122.100
+setVAR MASTER0_IP 192.168.122.101
+setVAR MASTER1_IP 192.168.122.102
+setVAR MASTER2_IP 192.168.122.103
+setVAR WORKER0_IP 192.168.122.110
+setVAR WORKER1_IP 192.168.122.111
+
+# 添加解析Zone区域
+# 执行以下命令添加3个解析ZONE（如果要执行多次，需要手动删除以前增加的内容），它们分别为：
+# 域名后缀                解释
+# example.com           集群内部域名后缀：集群内部所有节点的主机名均采用该域名后缀
+# ocp4-1.example.com    OCP集群的域名，如本例中的集群名为ocp4-1，则域名为ocp4-1.example.com
+# 168.192.in-addr.arpa  用于集群内所有节点的反向解析
+cat >> /etc/named.rfc1912.zones << EOF
+ 
+zone "${DOMAIN}" IN {
+        type master;
+        file "${DOMAIN}.zone";
+        allow-transfer { any; };
+};
+ 
+zone "${OCP_CLUSTER_ID}.${DOMAIN}" IN {
+        type master;
+        file "${OCP_CLUSTER_ID}.${DOMAIN}.zone";
+        allow-transfer { any; };
+};
+ 
+zone "168.192.in-addr.arpa" IN {
+        type master;
+        file "168.192.in-addr.arpa.zone";
+        allow-transfer { any; };
+};
+ 
+EOF
+# 创建example.com.zone区域配置文件
+cat > /var/named/${DOMAIN}.zone << EOF
+\$ORIGIN ${DOMAIN}.
+\$TTL 1D
+@           IN SOA  ${DOMAIN}. admin.${DOMAIN}. (
+                                        0          ; serial
+                                        1D         ; refresh
+                                        1H         ; retry
+                                        1W         ; expire
+                                        3H )       ; minimum
+ 
+@             IN NS                         dns.${DOMAIN}.
+ 
+bastion       IN A                          ${BASTION_IP}
+support       IN A                          ${SUPPORT_IP}
+dns           IN A                          ${DNS_IP}
+ntp           IN A                          ${NTP_IP}
+yum           IN A                          ${YUM_IP}
+registry      IN A                          ${REGISTRY_IP}
+nfs           IN A                          ${NFS_IP}
+ 
+EOF
+cat /var/named/${DOMAIN}.zone
+# 创建ocp4-1.example.com.zone区域配置文件
+cat > /var/named/${OCP_CLUSTER_ID}.${DOMAIN}.zone << EOF
+\$ORIGIN ${OCP_CLUSTER_ID}.${DOMAIN}.
+\$TTL 1D
+@           IN SOA  ${OCP_CLUSTER_ID}.${DOMAIN}. admin.${OCP_CLUSTER_ID}.${DOMAIN}. (
+                                        0          ; serial
+                                        1D         ; refresh
+                                        1H         ; retry
+                                        1W         ; expire
+                                        3H )       ; minimum
+ 
+@             IN NS                         dns.${DOMAIN}.
+ 
+lb             IN A                          ${LB_IP}
+ 
+api            IN A                          ${LB_IP}
+api-int        IN A                          ${LB_IP}
+*.apps         IN A                          ${LB_IP}
+ 
+bootstrap      IN A                          ${BOOTSTRAP_IP}
+ 
+master-0       IN A                          ${MASTER0_IP}
+master-1       IN A                          ${MASTER1_IP}
+master-2       IN A                          ${MASTER2_IP}
+ 
+etcd-0         IN A                          ${MASTER0_IP}
+etcd-1         IN A                          ${MASTER1_IP}
+etcd-2         IN A                          ${MASTER2_IP}
+ 
+worker-0       IN A                          ${WORKER0_IP}
+worker-1       IN A                          ${WORKER1_IP}
+ 
+_etcd-server-ssl._tcp.${OCP_CLUSTER_ID}.${DOMAIN}. 8640 IN SRV 0 10 2380 etcd-0.${OCP_CLUSTER_ID}.${DOMAIN}.
+_etcd-server-ssl._tcp.${OCP_CLUSTER_ID}.${DOMAIN}. 8640 IN SRV 0 10 2380 etcd-1.${OCP_CLUSTER_ID}.${DOMAIN}.
+_etcd-server-ssl._tcp.${OCP_CLUSTER_ID}.${DOMAIN}. 8640 IN SRV 0 10 2380 etcd-2.${OCP_CLUSTER_ID}.${DOMAIN}.
+ 
+EOF
+cat /var/named/${OCP_CLUSTER_ID}.${DOMAIN}.zone
+# 创建168.192.in-addr.arpa.zone反向解析区域配置文件
+# 注意：以下脚本中的反向IP如果有变化需要在此手动修改。
+cat > /var/named/168.192.in-addr.arpa.zone << EOF
+\$TTL 1D
+@           IN SOA  ${DOMAIN}. admin.${DOMAIN}. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+                                        
+@                              IN NS       dns.${DOMAIN}.
+ 
+13.122.168.192.in-addr.arpa.     IN PTR      bastion.${DOMAIN}.
+ 
+12.122.168.192.in-addr.arpa.     IN PTR      support.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      dns.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      ntp.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      yum.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      registry.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      nfs.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      lb.${OCP_CLUSTER_ID}.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      api.${OCP_CLUSTER_ID}.${DOMAIN}.
+12.122.168.192.in-addr.arpa.     IN PTR      api-int.${OCP_CLUSTER_ID}.${DOMAIN}.
+ 
+100.122.168.192.in-addr.arpa.    IN PTR      bootstrap.${OCP_CLUSTER_ID}.${DOMAIN}.
+ 
+101.122.168.192.in-addr.arpa.    IN PTR      master-0.${OCP_CLUSTER_ID}.${DOMAIN}.
+102.122.168.192.in-addr.arpa.    IN PTR      master-1.${OCP_CLUSTER_ID}.${DOMAIN}.
+103.122.168.192.in-addr.arpa.    IN PTR      master-2.${OCP_CLUSTER_ID}.${DOMAIN}.
+ 
+110.122.168.192.in-addr.arpa.    IN PTR      worker-0.${OCP_CLUSTER_ID}.${DOMAIN}.
+111.122.168.192.in-addr.arpa.    IN PTR      worker-1.${OCP_CLUSTER_ID}.${DOMAIN}.
+ 
+EOF
+cat /var/named/168.192.in-addr.arpa.zone
+# 重启BIND服务
+# 重启BIND服务，然后检查没有错误日志。
+systemctl restart named
+rndc reload
+journalctl -u named
+
+# 将Support节点的DNS配置指向自己
+nmcli c mod $(nmcli con show |awk 'NR==2{print}'|awk '{print $1}') ipv4.dns "${DNS_IP}"
+systemctl restart NetworkManager
+nmcli c show $(nmcli con show |awk 'NR==2{print}'|awk '{print $1}')| grep ipv4.dns
+
+# 测试正反向DNS解析
+# 正向解析测试
+dig nfs.${DOMAIN} +short
+dig support.${DOMAIN} +short 
+dig yum.${DOMAIN} +short
+dig registry.${DOMAIN} +short
+dig ntp.${DOMAIN} +short
+dig lb.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig api.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig api-int.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig *.apps.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig bastion.${DOMAIN} +short
+dig bootstrap.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig master-0.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig etcd-0.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig master-1.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig etcd-1.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig master-2.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig etcd-2.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig worker-0.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig worker-1.${OCP_CLUSTER_ID}.${DOMAIN} +short
+dig _etcd-server-ssl._tcp.${OCP_CLUSTER_ID}.${DOMAIN} SRV +short
+
+# 反向解析测试
+dig -x ${BASTION_IP} +short
+dig -x ${SUPPORT_IP} +short
+dig -x ${BOOTSTRAP_IP} +short
+dig -x ${MASTER0_IP} +short
+dig -x ${MASTER1_IP} +short
+dig -x ${MASTER2_IP} +short
+dig -x ${WORKER0_IP} +short
+dig -x ${WORKER1_IP} +short
+
+# 配置远程正式YUM源
+# 配置Support节点的YUM源
+# 删除临时yum源
+mv /etc/yum.repos.d/local.repo{,.bak}
+cat > /etc/yum.repos.d/ocp.repo << EOF
+[rhel-8-for-x86_64-baseos-rpms]
+name=rhel-8-for-x86_64-baseos-rpms
+baseurl=http://${YUM_DOMAIN}/repo/rhel-8-for-x86_64-baseos-rpms/
+enabled=1
+gpgcheck=0
+ 
+[rhel-8-for-x86_64-appstream-rpms] 
+name=rhel-8-for-x86_64-appstream-rpms
+baseurl=http://${YUM_DOMAIN}/repo/rhel-8-for-x86_64-appstream-rpms/
+enabled=1
+gpgcheck=0
+ 
+[rhocp-4.9-for-rhel-8-x86_64-rpms] 
+name=rhocp-4.9-for-rhel-8-x86_64-rpms
+baseurl=http://${YUM_DOMAIN}/repo/rhocp-4.9-for-rhel-8-x86_64-rpms/
+enabled=1
+gpgcheck=0 
+ 
+EOF
+yum repolist
+
+# 安装基础软件包，验证YUM源
+# 在Support节点安装以下软件包，验证YUM源是正常的。
+yum -y install podman wget git net-tools jq tree httpd-tools 
+
+# 部署NTP服务
+# 注意：下文将Support节点当做OpenShift集群的NTP服务源。如果用户已经有NTP服务，可以忽略此节，并在安装OpenShift集群后将集群节点的时间服务指向已有的NTP服务。
+# 设置正确的时区
+timedatectl set-timezone Asia/Shanghai
+timedatectl status | grep 'Time zone'
+# 配置chrony服务
+# RHEL 8.4最小化安装会安装chrony时间服务软件。我们先查看chrony服务状态：
+systemctl status chronyd
+# 备份原始chrony.conf配置文件，再修改配置文件
+cp /etc/chrony.conf{,.bak}
+sed -i -e "s/^server*/#&/g" \
+       -e "s/^pool*/#&/g" \
+       -e "s/#local stratum 10/local stratum 10/g" \
+       -e "s/#allow 192.168.0.0\/16/allow all/g" \
+       /etc/chrony.conf
+cat >> /etc/chrony.conf << EOF
+server ntp.${DOMAIN} iburst
+EOF
+cat /etc/chrony.conf
+# 重启chrony服务
+systemctl restart chronyd
+# 检查chrony服务端启动
+ps -auxw |grep chrony
+ss -lnup |grep chronyd
+chronyc sources -v
+
+# 部署本地Docker Registry
+# 该Docker Registry镜像库用于提供OCP安装过程所需的容器镜像。
+# 创建Docker Registry相关目录
+setVAR REGISTRY_PATH /data/registry            ## 容器镜像库存放的根目录
+mkdir -p ${REGISTRY_PATH}/{auth,certs,data}
+
+# 创建访问Docker Registry的证书
+openssl req -newkey rsa:4096 -nodes -sha256 -keyout ${REGISTRY_PATH}/certs/registry.key -x509 -days 3650 \
+  -out ${REGISTRY_PATH}/certs/registry.crt \
+  -addext "subjectAltName = DNS:registry.${DOMAIN}" \
+  -subj "/C=CN/ST=BEIJING/L=BJ/O=REDHAT/OU=IT/CN=registry.${DOMAIN}/emailAddress=admin@${DOMAIN}"
+openssl x509 -in ${REGISTRY_PATH}/certs/registry.crt -text | head -n 14
+
+yum -y install docker-distribution
 
 # curl -v https://subscription.rhn.redhat.com --cacert /etc/rhsm/ca/redhat-uep.pem
 ```
