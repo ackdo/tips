@@ -6502,6 +6502,301 @@ openssl req -newkey rsa:4096 -nodes -sha256 -keyout ${REGISTRY_PATH}/certs/regis
 openssl x509 -in ${REGISTRY_PATH}/certs/registry.crt -text | head -n 14
 
 yum -y install docker-distribution
+# 创建Registry认证凭据，允许用openshift/redhat登录。
+htpasswd -bBc ${REGISTRY_PATH}/auth/htpasswd openshift redhat
+cat ${REGISTRY_PATH}/auth/htpasswd
+# 创建docker-distribution配置文件
+setVAR REGISTRY_DOMAIN registry.${DOMAIN}:5000                  ## 容器镜像库的访问域名
+cat << EOF > /etc/docker-distribution/registry/config.yml
+version: 0.1
+log:
+  fields:
+    service: registry
+storage:
+    cache:
+        layerinfo: inmemory
+    filesystem:
+        rootdirectory: ${REGISTRY_PATH}/data
+    delete:
+        enabled: false
+auth:
+  htpasswd:
+    realm: basic-realm
+    path: ${REGISTRY_PATH}/auth/htpasswd
+http:
+    addr: 0.0.0.0:5000
+    host: https://${REGISTRY_DOMAIN}
+    tls:
+      certificate: ${REGISTRY_PATH}/certs/registry.crt
+      key: ${REGISTRY_PATH}/certs/registry.key
+EOF
+cat /etc/docker-distribution/registry/config.yml
+# 启动Registry镜像库服务
+systemctl enable --now docker-distribution
+systemctl status docker-distribution
+
+# 从本地访问Docker Registry 
+cp ${REGISTRY_PATH}/certs/registry.crt /etc/pki/ca-trust/source/anchors/
+update-ca-trust
+curl -u openshift:redhat https://${REGISTRY_DOMAIN}/v2/_catalog
+
+# 从远程访问Docker Registry
+
+
+# 导入OpenShift核心镜像到Docker Registry
+setVAR REGISTRY_REPO ocp4/openshift4       ## 在Docker Registry中存放OpenShift核心镜像的Repository
+# 如果生成证书时设置了 subjectAltName 不需要设置 GODEBUG
+setVAR GODEBUG 509ignoreCN=0
+
+# 安装镜像操作工具并登录Docker Registry
+yum -y install podman skopeo 
+setVAR PULL_SECRET_FILE ${OCP_PATH}/secret/redhat-pull-secret.json
+podman login -u openshift -p redhat --authfile ${PULL_SECRET_FILE} ${REGISTRY_DOMAIN}
+cat ${PULL_SECRET_FILE}
+# 向Docker Registry导入OpenShift核心镜像
+tar -xvf ${OCP_PATH}/ocp-image/ocp-image-${OCP_VER}.tar -C ${OCP_PATH}/ocp-image/
+rm -f ${OCP_PATH}/ocp-image/ocp-image-${OCP_VER}.tar
+setVAR REGISTRY_REPO 
+oc image mirror -a ${PULL_SECRET_FILE} \
+     --dir=${OCP_PATH}/ocp-image/mirror_${OCP_VER} file://openshift/release:${OCP_VER}* ${REGISTRY_DOMAIN}/${REGISTRY_REPO}
+# 查看已经导入镜像库镜像数量，然后查看镜像信息。
+curl -u openshift:redhat https://${REGISTRY_DOMAIN}/v2/_catalog
+curl -u openshift:redhat -s https://${REGISTRY_DOMAIN}/v2/${REGISTRY_REPO}/tags/list |jq -M '.["tags"][]' | wc -l
+curl -u openshift:redhat -s https://${REGISTRY_DOMAIN}/v2/${REGISTRY_REPO}/tags/list |jq -M '.["name"] + ":" + .["tags"][]' 
+oc adm release info -a ${PULL_SECRET_FILE} "${REGISTRY_DOMAIN}/${REGISTRY_REPO}:${OCP_VER}-x86_64" | grep -A 200 -i "Images" 
+
+# 部署HAProxy负载均衡服务
+# 安装Haproxy
+yum -y install haproxy
+systemctl enable haproxy --now
+
+# 添加haproxy.cfg配置文件
+cat <<EOF > /etc/haproxy/haproxy.cfg
+ 
+# Global settings
+#---------------------------------------------------------------------
+global
+    maxconn     20000
+    log         /dev/log local0 info
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+    user        haproxy
+    group       haproxy
+    daemon
+ 
+    # turn on stats unix socket
+    stats socket /var/lib/haproxy/stats
+ 
+#---------------------------------------------------------------------
+# common defaults that all the 'listen' and 'backend' sections will
+# use if not designated in their block
+#---------------------------------------------------------------------
+defaults
+    mode                    http
+    log                     global
+    option                  httplog
+    option                  dontlognull
+#    option http-server-close
+    option forwardfor       except 127.0.0.0/8
+    option                  redispatch
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          300s
+    timeout server          300s
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 20000
+ 
+listen stats
+    bind :9000
+    mode http
+    stats enable
+    stats uri /
+ 
+frontend  openshift-api-server-${OCP_CLUSTER_ID}
+    bind lb.${OCP_CLUSTER_ID}.${DOMAIN}:6443
+    mode tcp
+    option tcplog
+    default_backend openshift-api-server-${OCP_CLUSTER_ID}
+ 
+frontend  machine-config-server-${OCP_CLUSTER_ID}
+    bind lb.${OCP_CLUSTER_ID}.${DOMAIN}:22623
+    mode tcp
+    option tcplog
+    default_backend machine-config-server-${OCP_CLUSTER_ID}
+ 
+frontend  ingress-http-${OCP_CLUSTER_ID}
+    bind lb.${OCP_CLUSTER_ID}.${DOMAIN}:80
+    mode tcp
+    option tcplog
+    default_backend ingress-http-${OCP_CLUSTER_ID}
+ 
+frontend  ingress-https-${OCP_CLUSTER_ID}
+    bind lb.${OCP_CLUSTER_ID}.${DOMAIN}:443
+    mode tcp
+    option tcplog
+    default_backend ingress-https-${OCP_CLUSTER_ID}
+ 
+backend openshift-api-server-${OCP_CLUSTER_ID}
+    balance source
+    mode tcp
+    server     bootstrap bootstrap.${OCP_CLUSTER_ID}.${DOMAIN}:6443 check
+    server     master-0 master-0.${OCP_CLUSTER_ID}.${DOMAIN}:6443 check
+    server     master-1 master-1.${OCP_CLUSTER_ID}.${DOMAIN}:6443 check
+    server     master-2 master-2.${OCP_CLUSTER_ID}.${DOMAIN}:6443 check
+ 
+backend machine-config-server-${OCP_CLUSTER_ID}
+    balance source
+    mode tcp
+    server     bootstrap bootstrap.${OCP_CLUSTER_ID}.${DOMAIN}:22623 check
+    server     master-0 master-0.${OCP_CLUSTER_ID}.${DOMAIN}:22623 check
+    server     master-1 master-1.${OCP_CLUSTER_ID}.${DOMAIN}:22623 check
+    server     master-2 master-2.${OCP_CLUSTER_ID}.${DOMAIN}:22623 check
+ 
+backend ingress-http-${OCP_CLUSTER_ID}
+    balance source
+    mode tcp
+    server     worker-0 worker-0.${OCP_CLUSTER_ID}.${DOMAIN}:80 check
+    server     worker-1 worker-1.${OCP_CLUSTER_ID}.${DOMAIN}:80 check
+ 
+backend ingress-https-${OCP_CLUSTER_ID}
+    balance source
+    mode tcp
+    server     worker-0 worker-0.${OCP_CLUSTER_ID}.${DOMAIN}:443 check
+    server     worker-1 worker-1.${OCP_CLUSTER_ID}.${DOMAIN}:443 check
+ 
+EOF
+cat /etc/haproxy/haproxy.cfg
+
+# 重启HAProxy服务, 然后检查HAProxy服务
+systemctl restart haproxy
+ss -lntp |grep haproxy
+
+# 访问如下页面http://lb.ocp4-1.example.internal:9000/，确认每行颜色和下图一致。注意：为了能解析域名，运行浏览器所在节点需要将DNS设置到support节点的地址。
+
+# 1. 安装 Assisted Install 服务
+# 这个部分按照安装 openshift upi support 服务器来安装一台服务器
+# hostname: ocpai.exmaple.com
+# ip: 192.168.122.14/24
+# gateway: 192.168.122.1
+# nameserver: 192.168.122.12
+# 生成 ks.cfg - ocp-ai
+cat > /tmp/ks-ocp-ai.cfg <<'EOF'
+lang en_US
+keyboard us
+timezone Asia/Shanghai --isUtc
+rootpw $1$PTAR1+6M$DIYrE6zTEo5dWWzAp9as61 --iscrypted
+#platform x86, AMD64, or Intel EM64T
+reboot
+text
+cdrom
+bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
+zerombr
+clearpart --all --initlabel
+autopart
+network --device=enp1s0 --hostname=ocpai.example.com --bootproto=static --ip=192.168.122.14 --netmask=255.255.255.0 --gateway=192.168.122.1 --nameserver=192.168.122.12
+auth --passalgo=sha512 --useshadow
+selinux --enforcing
+firewall --enabled --ssh
+skipx
+firstboot --disable
+%packages
+@^minimal-environment
+kexec-tools
+tar
+openssl-perl
+%end
+EOF
+
+# 创建 jwang-ocp-ai 虚拟机，安装操作系统
+qemu-img create -f qcow2 -o preallocation=metadata /data/kvm/jwang-ocp-ai.qcow2 120G
+virt-install --name=jwang-ocp-ai --vcpus=1 --ram=2048 --disk path=/data/kvm/jwang-ocp-ai.qcow2,bus=virtio,size=100 --os-variant rhel8.0 --network network=default,model=virtio --boot menu=on --location /data/isos/rhel-8.4-x86_64-dvd.iso --initrd-inject /tmp/ks-ocp-ai.cfg --extra-args='ks=file:/ks-ocp-ai.cfg'
+
+# 挂载 iso
+virsh change-media jwang-ocp-ai sda --source /data/isos/rhel-8.4-x86_64-dvd.iso --insert --live
+mount /dev/sr0 /mnt
+
+# 生成本地 yum 源
+cat > /etc/yum.repos.d/local.repo << EOF
+[baseos]
+name=baseos
+baseurl=file:///mnt/BaseOS
+enabled=1
+gpgcheck=0
+
+[appstream]
+name=appstream
+baseurl=file:///mnt/AppStream
+enabled=1
+gpgcheck=0
+EOF
+
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
+setenforce 0
+
+dnf install -y @container-tools
+dnf groupinstall -y "Development Tools"
+dnf install -y python3-pip socat make tmux git jq crun
+
+tar zxvf /data/assisted-installer/assisted-service.tar.gz -C /root/ 
+tar zxvf /data/assisted-installer/assisted-installer-cli.tar.gz -C /root/
+
+# 加载镜像
+tar zxvf /data/assisted-installer/assisted-installer-images.tar.gz -C /root/
+cd /root
+for i in assisted-installer-images/*.tar ; do podman load -i $i ; done
+
+# 关闭防火墙
+systemctl disable firewalld
+systemctl mask firewalld
+iptable -nL 
+
+# 安装 httpd
+yum install -y httpd
+systemctl enable --now httpd
+
+tar zxvf /data/assisted-installer/assisted-image-service-os-image.tar.gz -C /
+curl localhost/pub/
+
+# 拷贝 rhcos-4.9.0-x86_64-live-rootfs.x86_64.img 
+cp /data/assisted-installer/rhcos-4.9.0-x86_64-live-rootfs.x86_64.img /var/www/html/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/
+
+# 导入 assisted-image-service.tar 到 quay.io/edge-infrastructure/assisted-image-service-new
+tar zxvf /data/assisted-installer/assisted-service-export.tar.gz -C /root/
+cd /root/assisted-service-export/
+podman import assisted-image-service.tar quay.io/edge-infrastructure/assisted-image-service-new -c CMD=/assisted-image-service -c ENV=DATA_DIR=/data -c ENV=PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+cd /root/assisted-service
+cat onprem-environment | grep IMAGE
+
+# 编辑 onprem-environment，检查以下配置
+SERVICE_BASE_URL=http://192.168.122.14:8090
+ASSISTED_SERVICE_HOST=127.0.0.1:8090
+IMAGE_SERVICE_BASE_URL=http://192.168.122.14:8888
+LISTEN_PORT=8888
+OS_IMAGES=[{"openshift_version":"4.9","cpu_architecture":"x86_64","url":"http://192.168.122.14/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/rhcos-4.9.0-x86_64-live.x86_64.iso","rootfs_url":"http://192.168.122.14/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/rhcos-live-rootfs.x86_64.img","version":"49.84.202110081407-0"}]
+RELEASE_IMAGES=[{"openshift_version":"4.9","cpu_architecture":"x86_64","url":"registry.example.com:5000/ocp4/openshift4:4.9.9-x86_64","version":"4.9.9","default":true}]
+HW_VALIDATOR_REQUIREMENTS=[{"version":"default","master":{"cpu_cores":4,"ram_mib":16384,"disk_size_gb":120,"installation_disk_speed_threshold_ms":10,"network_latency_threshold_ms":100,"packet_loss_percentage":0},"worker":{"cpu_cores":2,"ram_mib":8192,"disk_size_gb":120,"installation_disk_speed_threshold_ms":10,"network_latency_threshold_ms":1000,"packet_loss_percentage":10},"sno":{"cpu_cores":8,"ram_mib":16384,"disk_size_gb":120,"installation_disk_speed_threshold_ms":10}}]
+
+# 检查 Makefile deploy-onprem
+deploy-onprem:
+        # Format: ip:hostPort:containerPort | ip::containerPort | hostPort:containerPort | containerPort
+        podman pod create --name assisted-installer -p 5432:5432,8000:8000,8090:8090,8080:8080,8888:8888
+        podman run -dt --pod assisted-installer --env-file onprem-environment --pull always --name postgres $(PSQL_IMAGE)
+        podman run -dt --pod assisted-installer --env-file onprem-environment --pull always -v $(PWD)/deploy/ui/nginx.conf:/opt/bitnami/nginx/conf/server_blocks/nginx.conf:z --name assisted-installer-ui $(ASSISTED_UI)
+        podman run -dt --pod assisted-installer --env-file onprem-environment --pull always --restart always --name assisted-image-service $(IMAGE_SERVICE)
+        podman run -dt --pod assisted-installer --env-file onprem-environment ${PODMAN_PULL_FLAG} --env DUMMY_IGNITION=$(DUMMY_IGNITION) --restart always --name assisted-service $(SERVICE)
+        ./hack/retry.sh 90 2 "curl -f http://127.0.0.1:8090/ready"
+        ./hack/retry.sh 60 10 "curl -f http://127.0.0.1:8888/health"
+
+# 执行以下命令启动 pod
+podman pod create --name assisted-installer -p 5432:5432,8000:8000,8090:8090,8080:8080,8888:8888
+podman run -dt --pod assisted-installer --env-file onprem-environment --pull never --name postgres quay.io/centos7/postgresql-12-centos7:latest
+podman run -dt --pod assisted-installer --env-file onprem-environment --pull never -v ./deploy/ui/nginx.conf:/opt/bitnami/nginx/conf/server_blocks/nginx.conf:z --name assisted-installer-ui quay.io/edge-infrastructure/assisted-installer-ui:latest
+podman run -dt --pod assisted-installer --env-file onprem-environment --pull never --restart always --name assisted-image-service quay.io/edge-infrastructure/assisted-image-service-new:latest
+podman run -dt --pod assisted-installer --env-file onprem-environment --pull never --env DUMMY_IGNITION="False" --restart always --name assisted-service quay.io/edge-infrastructure/assisted-service:latest
 
 # curl -v https://subscription.rhn.redhat.com --cacert /etc/rhsm/ca/redhat-uep.pem
 ```
