@@ -6139,10 +6139,22 @@ oc version
 # 配置本地临时YUM源
 # 准备YUM源所需的文件
 # 先解压缩文件，然后删除压缩文件
+cd ${YUM_PATH}
 for file in $(ls ${YUM_PATH}/*.tar.gz); do tar -zxvf ${file} -C ${YUM_PATH}/; done
 rm -rf ${YUM_PATH}/*.tar.gz
 
 # 配置本地临时YUM源
+# RHEL7
+cat << EOF > /etc/yum.repos.d/base.repo
+[rhel-7-server]
+name=rhel-7-server
+baseurl=file://${YUM_PATH}/rhel-7-server-rpms
+enabled=1
+gpgcheck=0
+EOF
+
+
+# RHEL8
 # 创建以下文件，配置本地临时YUM源
 cat << EOF > /etc/yum.repos.d/local.repo
 [rhel-8-for-x86_64-baseos-rpms]
@@ -6394,6 +6406,31 @@ dig -x ${WORKER1_IP} +short
 # 配置远程正式YUM源
 # 配置Support节点的YUM源
 # 删除临时yum源
+setVAR YUM_DOMAIN yum.${DOMAIN}:8080
+
+# RHEL7
+cat > /etc/yum.repos.d/ocp.repo << EOF
+[rhel-7-server]
+name=rhel-7-server
+baseurl=http://${YUM_DOMAIN}/repo/rhel-7-server-rpms/
+enabled=1
+gpgcheck=0
+ 
+[rhel-7-server-extras] 
+name=rhel-7-server-extras
+baseurl=http://${YUM_DOMAIN}/repo/rhel-7-server-extras-rpms/
+enabled=1
+gpgcheck=0
+ 
+[rhel-7-server-ose] 
+name=rhel-7-server-ose
+baseurl=http://${YUM_DOMAIN}/repo/rhel-7-server-ose-${OCP_MAJOR_VER}-rpms/
+enabled=1
+gpgcheck=0 
+ 
+EOF
+
+# RHEL8
 mv /etc/yum.repos.d/local.repo{,.bak}
 cat > /etc/yum.repos.d/ocp.repo << EOF
 [rhel-8-for-x86_64-baseos-rpms]
@@ -6419,6 +6456,9 @@ yum repolist
 
 # 安装基础软件包，验证YUM源
 # 在Support节点安装以下软件包，验证YUM源是正常的。
+# RHEL7 
+yum -y install wget git net-tools bridge-utils jq tree httpd-tools 
+# RHEL8
 yum -y install podman wget git net-tools jq tree httpd-tools 
 
 # 部署NTP服务
@@ -6454,6 +6494,7 @@ setVAR REGISTRY_PATH /data/registry            ## 容器镜像库存放的根目
 mkdir -p ${REGISTRY_PATH}/{auth,certs,data}
 
 # 创建访问Docker Registry的证书
+# 在 RHEL 8 服务器上创建，然后拷贝对应文件到 RHEL 7
 openssl req -newkey rsa:4096 -nodes -sha256 -keyout ${REGISTRY_PATH}/certs/registry.key -x509 -days 3650 \
   -out ${REGISTRY_PATH}/certs/registry.crt \
   -addext "subjectAltName = DNS:registry.${DOMAIN}" \
