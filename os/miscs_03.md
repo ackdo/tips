@@ -5957,6 +5957,34 @@ chcon --reference /var/lib/libvirt /data
 chcon -R --reference /var/lib/libvirt/images /data/kvm
 sudo chmod a+r /data
 
+# RHEL 7
+[root@undercloud ~]# cat > /tmp/ks.cfg <<'EOF'
+lang en_US
+keyboard us
+timezone Asia/Shanghai --isUtc
+rootpw $1$PTAR1+6M$DIYrE6zTEo5dWWzAp9as61 --iscrypted
+#platform x86, AMD64, or Intel EM64T
+reboot
+text
+cdrom
+bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
+zerombr
+clearpart --all --initlabel
+autopart
+network --device=eth0 --hostname=support.example.com --bootproto=static --ip=192.168.122.12 --netmask=255.255.255.0 --gateway=192.168.122.1 --nameserver=192.168.122.12
+auth --passalgo=sha512 --useshadow
+selinux --enforcing
+firewall --enabled --ssh
+skipx
+firstboot --disable
+%packages
+@^minimal
+kexec-tools
+tar
+%end
+EOF
+
+# RHEL 8
 [root@undercloud ~]# cat > /tmp/ks.cfg <<'EOF'
 lang en_US
 keyboard us
@@ -5985,6 +6013,16 @@ EOF
 
 qemu-img create -f qcow2 -o preallocation=metadata /data/kvm/jwang-support-openshift.qcow2 120G
 
+# RHEL 7
+virt-install --name=jwang-support-openshift --vcpus=1 --ram=2048 \
+--disk path=/data/kvm/jwang-support-openshift.qcow2,bus=virtio,size=120 \
+--os-variant rhel7.0 --network network=default,model=virtio \
+--boot menu=on --location /data/isos/rhel-7.9-x86_64-dvd1.iso \
+--console pty,target_type=serial \
+--initrd-inject /tmp/ks.cfg \
+--extra-args='inst.ks=file:/ks.cfg'
+
+# RHEL 8
 virt-install --name=jwang-support-openshift --vcpus=1 --ram=2048 \
 --disk path=/data/kvm/jwang-support-openshift.qcow2,bus=virtio,size=120 \
 --os-variant rhel8.0 --network network=default,model=virtio \
@@ -5993,7 +6031,7 @@ virt-install --name=jwang-support-openshift --vcpus=1 --ram=2048 \
 --initrd-inject /tmp/ks.cfg \
 --extra-args='inst.ks=file:/ks.cfg'
 
-访问虚拟机console
+# RHEL8 访问虚拟机console
 yum install cockpit
 systemctl enable --now cockpit.socket
 firewall-cmd --add-service=cockpit --permanent
