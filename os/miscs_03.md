@@ -6800,5 +6800,52 @@ podman run -dt --pod assisted-installer --env-file onprem-environment --pull nev
 
 # curl -v https://subscription.rhn.redhat.com --cacert /etc/rhsm/ca/redhat-uep.pem
 
-# podman pull 镜像时指定 loglevel 来获得调试信息
+# podman pull 镜像时指定 log-level 来获得调试信息
+# podman pull xxxx --log-level=debug
+
+# 创建 htpasswd 文件，添加用户 admin, user01 和 user02
+mkdir -p /root/ocp4
+htpasswd -c -B -b /root/ocp4/htpasswd admin admin
+htpasswd -b /root/ocp4/htpasswd user01 redhat
+htpasswd -b /root/ocp4/htpasswd user02 redhat
+
+# 使用 htpasswd 文件创建 secret htpass-secret
+oc create secret generic htpass-secret --from-file=htpasswd=/root/ocp4/htpasswd -n openshift-config
+
+# 为 oauth.config.openshift.io/cluster 添加 htpasswd identity provider
+# 因为 OAuth 对象使用 htpasswd 作为 key，因此上面的 secret 对应的文件名请注意使用 htpasswd
+cat <<EOF | oc apply -f -
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: cluster
+spec:
+  identityProviders:
+  - name: LocalProvider 
+    mappingMethod: claim 
+    type: HTPasswd
+    htpasswd:
+      fileData:
+        name: htpass-secret 
+EOF
+
+oc adm policy add-cluster-role-to-user cluster-admin admin
+
+cat << EOF | oc1 apply -f -
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: ManagedClusterSet
+metadata:
+  name: gitops-openshift-clusters
+  spec: {}
+EOF
+
+cat << EOF | oc1 apply -f -
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: ManagedClusterSetBinding
+metadata:
+  name: gitops-openshift-clusters
+  namespace: openshift-gitops
+spec:
+  clusterSet: gitops-openshift-clusters
+EOF
 ```
