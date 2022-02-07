@@ -6799,4 +6799,6 @@ podman run -dt --pod assisted-installer --env-file onprem-environment --pull nev
 podman run -dt --pod assisted-installer --env-file onprem-environment --pull never --env DUMMY_IGNITION="False" --restart always --name assisted-service quay.io/edge-infrastructure/assisted-service:latest
 
 # curl -v https://subscription.rhn.redhat.com --cacert /etc/rhsm/ca/redhat-uep.pem
+
+# podman pull 镜像时指定 loglevel 来获得调试信息
 ```
