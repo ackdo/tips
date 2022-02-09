@@ -6849,3 +6849,42 @@ spec:
   clusterSet: gitops-openshift-clusters
 EOF
 ```
+
+### Install Go Compiler in rhel8
+```
+yum groupinstall -y "Development Tools"
+
+yum module list go-toolset
+yum module -y install go-toolset
+
+git clone https://github.com/openshift/oc-mirror
+cd oc-mirror
+
+make 
+cp ./bin/oc-mirror /usr/local/bin
+
+mkdir -p /data/OCP-4.9.9/ocp/ocp-image 
+
+# 生成 image-config-realse.yaml 文件
+cat > image-config-realse-local.yaml <<EOF
+# This config demonstrates how to mirror a specified
+# version(s) of openshift. Optionally, omit the version to mirror
+# the latest release.
+---
+apiVersion: mirror.openshift.io/v1alpha1
+kind: ImageSetConfiguration
+storageConfig:
+  local:
+    path: /data/OCP-4.9.9/ocp/ocp-image
+mirror:
+  ocp:
+    channels:
+      - name: stable-4.9
+        versions:
+          - 4.9.9
+EOF
+
+# 同步 OCP-4.9.9 到 archives 目录
+cd /data/OCP-4.9.9/ocp/ocp-image
+/usr/local/bin/oc-mirror --config /root/image-config-realse-local.yaml file://archives
+```
