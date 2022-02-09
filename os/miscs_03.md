@@ -6926,5 +6926,22 @@ EOF
 mkdir -p /data/OCP-4.9.10/ocp/ocp-images
 /usr/local/bin/oc-mirror --config /root/image-config-realse-4.9.10-operator-headless.yaml file:///data/OCP-4.9.10/ocp/ocp-images
 
+/usr/local/bin/oc-mirror --config /root/image-config-realse-4.9.10-operator-headless.yaml file:///data/OCP-4.9.10/ocp/ocp-images
+...
+INFO Creating directory: /data/OCP-4.9.10/ocp/ocp-images/oc-mirror-workspace/src/publish
+INFO Creating directory: /data/OCP-4.9.10/ocp/ocp-images/oc-mirror-workspace/src/v2
+INFO Creating directory: /data/OCP-4.9.10/ocp/ocp-images/oc-mirror-workspace/src/charts
+WARNING backend is not configured in /root/image-config-realse-4.9.10-operator-headless.yaml, using stateless mode
+INFO Planning download for requested release 4.9.10
+WARN[0144] DEPRECATION NOTICE:
+Sqlite-based catalogs and their related subcommands are deprecated. Support for
+them will be removed in a future release. Please migrate your catalog workflows
+to the new file-based catalog format.
+WARNING bundle : pinning related image registry.redhat.io/openshift4/ose-kube-rbac-proxy to digest
+WARNING bundle nfd.4.9.0-202110012022: related image tag not set
+wrote mirroring manifests to /data/OCP-4.9.10/ocp/ocp-images/oc-mirror-workspace/operators.1644393945/manifests-redhat-operator-index
 
+To upload local images to a registry, run:
+
+        oc adm catalog mirror file://redhat/redhat-operator-index:v4.9 REGISTRY/REPOSITORY
 ```
