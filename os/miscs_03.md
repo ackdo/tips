@@ -6850,7 +6850,23 @@ spec:
 EOF
 ```
 
-### Install Go Compiler in rhel8
+### Install oc-mirror on rhel7
+https://asciinema.org/a/uToc11VnzG0RMZrht2dsaTfo9
+```
+wget https://storage.googleapis.com/golang/getgo/installer_linux
+chmod +x ./installer_linux
+./installer_linux 
+source ~/.bash_profile
+go version
+
+git clone https://github.com/openshift/oc-mirror
+cd oc-mirror
+
+make 
+cp ./bin/oc-mirror /usr/local/bin
+```
+
+### Install oc-mirror on rhel8
 ```
 yum groupinstall -y "Development Tools"
 
@@ -6887,4 +6903,28 @@ EOF
 # 同步 OCP-4.9.9 到 archives 目录
 cd /data/OCP-4.9.9/ocp/ocp-image
 /usr/local/bin/oc-mirror --config /root/image-config-realse-local.yaml file://archives
+
+# 创建 imageset 4.9.10 与 headonly operator redhat-operator-index:v4.9 
+cat > /root/image-config-realse-4.9.10-operator-headless.yaml <<EOF
+# This config uses the headsOnly feature which will mirror the 
+# latest version of each channel within each package contained 
+# within a specified operator catalog
+---
+apiVersion: mirror.openshift.io/v1alpha1
+kind: ImageSetConfiguration
+mirror:
+  ocp:
+    channels:
+      - name: stable-4.9
+        versions:
+          - 4.9.10
+  operators:
+    - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.9
+      headsonly: true
+EOF
+
+mkdir -p /data/OCP-4.9.10/ocp/ocp-images
+/usr/local/bin/oc-mirror --config /root/image-config-realse-4.9.10-operator-headless.yaml file:///data/OCP-4.9.10/ocp/ocp-images
+
+
 ```
