@@ -6944,4 +6944,6 @@ wrote mirroring manifests to /data/OCP-4.9.10/ocp/ocp-images/oc-mirror-workspace
 To upload local images to a registry, run:
 
         oc adm catalog mirror file://redhat/redhat-operator-index:v4.9 REGISTRY/REPOSITORY
+...
+
 ```
