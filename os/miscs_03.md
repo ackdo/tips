@@ -6944,6 +6944,14 @@ oc image mirror -a /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json --dir=/dat
 
 检查导入的 openshift-release 
 oc adm release info -a /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json registry.example.com:5000/ocp4/openshift4:4.9.10-x86_64
+
+在离线环境下从 4.9.9 更新到 4.9.10
+oc2 adm upgrade \
+--allow-explicit-upgrade \
+--allow-upgrade-with-warnings=true \
+--force=true \
+--to-image=registry.example.com:5000/ocp4/openshift4:4.9.10-x86_64
+   
 ```
 
 ```
