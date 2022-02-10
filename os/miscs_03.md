@@ -6953,4 +6953,37 @@ Feb 10 08:08:27 master2.ocp4.rhcnsa.com hyperkube[1862]: E0210 08:08:27.266189  
 按照 https://access.redhat.com/solutions/5350721 里的步骤清了一下 crio 存储
 
 
+Feb 10 08:44:42 master1.ocp4.rhcnsa.com hyperkube[2088]: E0210 08:44:42.271876    2088 kuberuntime_sandbox.go:70] CreatePodSandbox for pod "csi-snapshot-controller-operator-8fc4d7584-wlt5d_openshift-cluster-storage-operator(f50e5b8a-d06f-4f15-8567-d00b7f40e0fe)" failed: rpc error: code = Unknown desc = failed to create pod network sandbox k8s_csi-snapshot-controller-operator-8fc4d7584-wlt5d_openshift-cluster-storage-operator_f50e5b8a-d06f-4f15-8567-d00b7f40e0fe_0(93397762a225c4bad23e5a9010679fa36fa679abaeff2f3904751ea03ac3ab5b): error adding pod openshift-cluster-storage-operator_csi-snapshot-controller-operator-8fc4d7584-wlt5d to CNI network "multus-cni-network": Multus: [openshift-cluster-storage-operator/csi-snapshot-controller-operator-8fc4d7584-wlt5d]: PollImmediate error waiting for ReadinessIndicatorFile: timed out waiting for the condition
+
+oc logs network-operator-7844d6cf9f-mrlvb -n openshift-network-operator 
+
+I0210 08:56:01.936090       1 connectivity_check_controller.go:138] ConnectivityCheckController is waiting for transition to desired version (4.8.0) to be completed.
+I0210 08:56:01.943062       1 connectivity_check_controller.go:138] ConnectivityCheckController is waiting for transition to desired version (4.8.0) to be completed.
+I0210 08:56:02.200207       1 log.go:181] Reconciling update to openshift-network-diagnostics/network-check-target
+I0210 08:56:02.218215       1 log.go:181] Reconciling update to openshift-multus/multus
+I0210 08:56:02.230981       1 log.go:181] Reconciling update to openshift-multus/multus-admission-controller
+I0210 08:56:02.244647       1 log.go:181] Reconciling update to openshift-multus/network-metrics-daemon
+I0210 08:56:02.453908       1 log.go:181] Reconciling update to openshift-sdn/sdn-controller
+I0210 08:56:02.718022       1 log.go:181] Reconciling update to openshift-sdn/sdn
+
+  message: |-
+    DaemonSet "openshift-multus/multus" is not available (awaiting 1 nodes)
+    DaemonSet "openshift-multus/network-metrics-daemon" is not available (awaiting 1 nodes)
+    DaemonSet "openshift-multus/multus-admission-controller" is not available (awaiting 1 nodes)
+    DaemonSet "openshift-network-diagnostics/network-check-target" is not available (awaiting 1 nodes)
+
+oc logs cluster-image-registry-operator-5cc5bdcf6c-wfc6z -n openshift-image-registry  -f 
+...
+E0210 09:00:37.302551       1 controller.go:369] unable to sync: unable to sync storage configuration: exactly one storage type should be configured at the same time, got 2: [EmptyDir PVC], requeuing
+I0210 09:00:37.342789       1 controller.go:357] get event from workqueue
+E0210 09:00:37.343021       1 controller.go:369] unable to sync: unable to sync storage configuration: exactly one storage type should be configured at the same time, got 2: [EmptyDir PVC], requeuing
+I0210 09:00:37.423275       1 controller.go:357] get event from workqueue
+E0210 09:00:37.423597       1 controller.go:369] unable to sync: unable to sync storage configuration: exactly one storage type should be configured at the same time, got 2: [EmptyDir PVC], requeuing
+
+# 处理的方法是 https://access.redhat.com/solutions/4516391
+oc edit configs.imageregistry.operator.openshift.io cluster
+
+
+E0210 09:33:06.324699       1 controller.go:369] unable to sync: Operation cannot be fulfilled on configs.imageregistry.operator.openshift.io "cluster": the object has been modified; please apply your changes to the latest version and try again, requeuing
+W0210 09:33:12.914914       1 reflector.go:436] github.com/openshift/client-go/route/informers/externalversions/factory.go:101: watch of *v1.Route ended with: an error on the server ("unable to decode an event from the watch stream: stream error: stream ID 65; INTERNAL_ERROR") has prevented the request from succeeding
 ```
