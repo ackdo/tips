@@ -6938,4 +6938,19 @@ mkdir -p /data/OCP-4.9.10/ocp/ocp-image/oc-mirror-workspace
 
 将离线镜像同步到目标服务器
 rsync -av /data/OCP-4.9.10/ 10.66.208.240:/data/OCP-4.9.10/
+
+virsh -c qemu:///system?authfile=/etc/ovirt-hosted-engine/virsh_auth.conf
+
+报错：
+
+Feb 10 07:35:23 master2.ocp4.rhcnsa.com hyperkube[1644]: E0210 07:35:23.492091    1644 kubelet_volumes.go:154] orphaned pod "094bac69-fe7a-46cc-be2f-0e5756e2df5d" found, but volume paths are still present on disk : There were a total of 1 errors similar to this. Turn up verbosity to see them.
+
+
+master2 日志里有这种报错
+
+Feb 10 08:08:27 master2.ocp4.rhcnsa.com hyperkube[1862]: E0210 08:08:27.266189    1862 kuberuntime_manager.go:767] createPodSandbox for pod "openshift-kube-scheduler-master2.ocp4.rhcnsa.com_openshift-kube-scheduler(c816ad2e-6dc0-4547-bed6-d7f00e786192)" failed: rpc error: code = Unknown desc = failed to mount container k8s_POD_openshift-kube-scheduler-master2.ocp4.rhcnsa.com_openshift-kube-scheduler_c816ad2e-6dc0-4547-bed6-d7f00e786192_0 in pod sandbox k8s_openshift-kube-scheduler-master2.ocp4.rhcnsa.com_openshift-kube-scheduler_c816ad2e-6dc0-4547-bed6-d7f00e786192_0(27a06857ff0c3a26b515330b5c3d90059440fe6374b56193f007c03ff61f8827): error recreating the missing symlinks: error reading name of symlink for &{"a7da25a9e41a5cab49b25503dec29abb68ca9969564195e88972b62446c59c63" '\x14' %!q(os.FileMode=2147484096) {%!q(uint64=423867529) %!q(int64=63762202496) %!q(*time.Location=&{Local [{UTC 0 false}] [{-576460752303423488 0 false false}] UTC0 9223372036854775807 9223372036854775807 0xc00018faa0})} {'ﰄ' %!q(uint64=408944870) '\x03' '䇀' '\x00' '\x00' '\x00' '\x00' '\x14' 'က' '\x00' {%!q(int64=1644478738) %!q(int64=980695719)} {%!q(int64=1626605696) %!q(int64=423867529)} {%!q(int64=1626605696) %!q(int64=423867529)} ['\x00' '\x00' '\x00']}}: open /var/lib/containers/storage/overlay/a7da25a9e41a5cab49b25503dec29abb68ca9969564195e88972b62446c59c63/link: no such file or directory
+
+按照 https://access.redhat.com/solutions/5350721 里的步骤清了一下 crio 存储
+
+
 ```
