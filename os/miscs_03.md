@@ -6939,6 +6939,14 @@ mkdir -p /data/OCP-4.9.10/ocp/ocp-image/oc-mirror-workspace
 将离线镜像同步到目标服务器
 rsync -av /data/OCP-4.9.10/ 10.66.208.240:/data/OCP-4.9.10/
 
+在离线环境下将 openshift-release 导入到离线镜像仓库
+oc image mirror -a /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json --dir=/data/OCP-4.9.10/ocp/ocp-image/oc-mirror-workspace/src "file://openshift/release:4.9.10-x86_64" registry.example.com:5000/ocp4/openshift4
+
+检查导入的 openshift-release 
+oc adm release info -a /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json registry.example.com:5000/ocp4/openshift4:4.9.10-x86_64
+```
+
+```
 virsh -c qemu:///system?authfile=/etc/ovirt-hosted-engine/virsh_auth.conf
 
 报错：
