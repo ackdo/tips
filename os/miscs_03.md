@@ -6912,6 +6912,10 @@ cat > /root/image-config-realse-4.9.10-operator-headless.yaml <<EOF
 ---
 apiVersion: mirror.openshift.io/v1alpha1
 kind: ImageSetConfiguration
+archiveSize: 1
+storageConfig:
+  local:
+    path: /data/OCP-4.9.10/ocp/ocp-images/oc-mirror-workspace
 mirror:
   ocp:
     channels:
@@ -6923,7 +6927,7 @@ mirror:
       headsonly: true
 EOF
 
-mkdir -p /data/OCP-4.9.10/ocp/ocp-images
+mkdir -p /data/OCP-4.9.10/ocp/ocp-images/oc-mirror-workspace
 /usr/local/bin/oc-mirror --config /root/image-config-realse-4.9.10-operator-headless.yaml file:///data/OCP-4.9.10/ocp/ocp-images
 
 /usr/local/bin/oc-mirror --config /root/image-config-realse-4.9.10-operator-headless.yaml file:///data/OCP-4.9.10/ocp/ocp-images
