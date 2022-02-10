@@ -6986,4 +6986,7 @@ oc edit configs.imageregistry.operator.openshift.io cluster
 
 E0210 09:33:06.324699       1 controller.go:369] unable to sync: Operation cannot be fulfilled on configs.imageregistry.operator.openshift.io "cluster": the object has been modified; please apply your changes to the latest version and try again, requeuing
 W0210 09:33:12.914914       1 reflector.go:436] github.com/openshift/client-go/route/informers/externalversions/factory.go:101: watch of *v1.Route ended with: an error on the server ("unable to decode an event from the watch stream: stream error: stream ID 65; INTERNAL_ERROR") has prevented the request from succeeding
+
+参考
+https://access.redhat.com/solutions/5370391
 ```
