@@ -6851,7 +6851,8 @@ EOF
 ```
 
 ### Install oc-mirror on rhel7
-https://asciinema.org/a/uToc11VnzG0RMZrht2dsaTfo9
+https://asciinema.org/a/uToc11VnzG0RMZrht2dsaTfo9<br>
+https://golangissues.com/issues/1156078<br>
 ```
 wget https://storage.googleapis.com/golang/getgo/installer_linux
 chmod +x ./installer_linux
@@ -6928,9 +6929,9 @@ mirror:
 EOF
 
 mkdir -p /data/OCP-4.9.10/ocp/ocp-image/oc-mirror-workspace
-/usr/local/bin/oc-mirror --config /root/image-config-realse-4.9.10-operator-headless.yaml file:///data/OCP-4.9.10/ocp/ocp-image
+mkdir -p output-dir
+/usr/local/bin/oc-mirror --config /root/image-config-realse-4.9.10-operator-headless.yaml file://output-dir
 
-/usr/local/bin/oc-mirror --config /root/image-config-realse-4.9.10-operator-headless.yaml file:///data/OCP-4.9.10/ocp/ocp-image
 ...
 
         oc adm catalog mirror file://redhat/redhat-operator-index:v4.9 REGISTRY/REPOSITORY
@@ -6940,6 +6941,9 @@ mkdir -p /data/OCP-4.9.10/ocp/ocp-image/oc-mirror-workspace
 rsync -av /data/OCP-4.9.10/ 10.66.208.240:/data/OCP-4.9.10/
 
 在离线环境下将 openshift-release 导入到离线镜像仓库
+oc-mirror --config /root/image-config-realse-4.9.10-operator-headless.yaml docker://registry.example.com:5000/redhat
+
+
 oc image mirror -a /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json --dir=/data/OCP-4.9.10/ocp/ocp-image/oc-mirror-workspace/src "file://openshift/release:4.9.10-x86_64" registry.example.com:5000/ocp4/openshift4
 
 检查导入的 openshift-release 
