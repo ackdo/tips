@@ -6996,8 +6996,12 @@ E0210 09:00:37.343021       1 controller.go:369] unable to sync: unable to sync 
 I0210 09:00:37.423275       1 controller.go:357] get event from workqueue
 E0210 09:00:37.423597       1 controller.go:369] unable to sync: unable to sync storage configuration: exactly one storage type should be configured at the same time, got 2: [EmptyDir PVC], requeuing
 
-# 处理的方法是 https://access.redhat.com/solutions/4516391
+# https://access.redhat.com/solutions/4516391
+# https://access.redhat.com/solutions/5114881
+# 处理的方法是 
+# https://access.redhat.com/solutions/5370391
 oc edit configs.imageregistry.operator.openshift.io cluster
+
 
 
 E0210 09:33:06.324699       1 controller.go:369] unable to sync: Operation cannot be fulfilled on configs.imageregistry.operator.openshift.io "cluster": the object has been modified; please apply your changes to the latest version and try again, requeuing
