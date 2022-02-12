@@ -6891,10 +6891,13 @@ mirror:
   ocp:
     channels:
       - name: stable-4.9
-      graph: true
+        versions:
+          - '4.9.9'
+          - '4.9.10'
+    graph: true
   operators:
     - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.9
-      headsonly: false
+      headsOnly: false
       packages:
         - name: local-storage-operator
         - name: openshift-gitops-operator
@@ -6929,16 +6932,11 @@ EOF
 mkdir -p output-dir
 /usr/local/bin/oc-mirror --config /root/image-config-realse-4.9.10-operator-headless.yaml file://output-dir
 
-...
-
-        oc adm catalog mirror file://redhat/redhat-operator-index:v4.9 REGISTRY/REPOSITORY
-...
-
 将离线镜像同步到目标服务器
 rsync -av output-dir/mirror_seq1_000000.tar 10.66.208.240:/data/OCP-4.9.10/ocp/ocp-image
 
-在离线环境下将 openshift-release 导入到离线镜像仓库
-oc-mirror --config /root/image-config-realse-4.9.10-operator-headless.yaml docker://registry.example.com:5000/redhat
+在离线环境下将导入到离线镜像仓库
+oc-mirror --from ./output-dir/mirror_seq1_000000.tar docker://registry.example.com:5000 --dest-skip-tls
 
 
 oc image mirror -a /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json --dir=/data/OCP-4.9.10/ocp/ocp-image/oc-mirror-workspace/src "file://openshift/release:4.9.10-x86_64" registry.example.com:5000/ocp4/openshift4
