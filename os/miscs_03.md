@@ -6868,6 +6868,7 @@ cp ./bin/oc-mirror /usr/local/bin
 ```
 
 ### Install oc-mirror on rhel8
+https://golangissues.com/issues/1156078<br>
 ```
 yum groupinstall -y "Development Tools"
 
@@ -6882,28 +6883,25 @@ cp ./bin/oc-mirror /usr/local/bin
 
 mkdir -p /data/OCP-4.9.9/ocp/ocp-image 
 
-# 生成 image-config-realse.yaml 文件
+# 生成 image-config-realse-local.yaml 文件
 cat > image-config-realse-local.yaml <<EOF
-# This config demonstrates how to mirror a specified
-# version(s) of openshift. Optionally, omit the version to mirror
-# the latest release.
----
 apiVersion: mirror.openshift.io/v1alpha1
 kind: ImageSetConfiguration
-storageConfig:
-  local:
-    path: /data/OCP-4.9.9/ocp/ocp-image
 mirror:
   ocp:
     channels:
       - name: stable-4.9
-        versions:
-          - 4.9.9
+      graph: true
+  operators:
+    - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.9
+      headsonly: false
+      packages:
+        - name: local-storage-operator
+        - name: openshift-gitops-operator
+        - name: advanced-cluster-management
 EOF
-
-# 同步 OCP-4.9.9 到 archives 目录
-cd /data/OCP-4.9.9/ocp/ocp-image
-/usr/local/bin/oc-mirror --config /root/image-config-realse-local.yaml file://archives
+mkdir -p output-dir
+/usr/local/bin/oc-mirror --config /root/image-config-realse-local.yaml file://output-dir
 
 # 创建 imageset 4.9.10 与 headonly operator redhat-operator-index:v4.9 
 cat > /root/image-config-realse-4.9.10-operator-headless.yaml <<EOF
@@ -6928,7 +6926,6 @@ mirror:
       headsonly: true
 EOF
 
-mkdir -p /data/OCP-4.9.10/ocp/ocp-image/oc-mirror-workspace
 mkdir -p output-dir
 /usr/local/bin/oc-mirror --config /root/image-config-realse-4.9.10-operator-headless.yaml file://output-dir
 
@@ -6938,7 +6935,7 @@ mkdir -p output-dir
 ...
 
 将离线镜像同步到目标服务器
-rsync -av /data/OCP-4.9.10/ 10.66.208.240:/data/OCP-4.9.10/
+rsync -av output-dir/mirror_seq1_000000.tar 10.66.208.240:/data/OCP-4.9.10/ocp/ocp-image
 
 在离线环境下将 openshift-release 导入到离线镜像仓库
 oc-mirror --config /root/image-config-realse-4.9.10-operator-headless.yaml docker://registry.example.com:5000/redhat
