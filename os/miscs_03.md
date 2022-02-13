@@ -6938,6 +6938,58 @@ rsync -av output-dir/mirror_seq1_000000.tar 10.66.208.240:/data/OCP-4.9.10/ocp/o
 在离线环境下将导入到离线镜像仓库
 oc-mirror --from ./output-dir/mirror_seq1_000000.tar docker://registry.example.com:5000 --dest-skip-tls
 
+导入 catalogsource
+cat <<EOF | oc1 apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: redhat-operator-index
+  namespace: openshift-marketplace
+spec:
+  image: registry.example.com:5000/redhat/redhat-operator-index:v4.9
+  sourceType: grpc
+EOF
+
+导入 imagecontentsourcepolicy
+cat <<EOF | oc1 apply -f -
+---
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: generic-0
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - registry.example.com:5000/operator-framework
+    source: operator-framework
+---
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  labels:
+    operators.openshift.org/catalog: "true"
+  name: operator-0
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - registry.example.com:5000/rhacm2
+    source: rhacm2
+  - mirrors:
+    - registry.example.com:5000/openshift-gitops-1
+    source: openshift-gitops-1
+  - mirrors:
+    - registry.example.com:5000/openshift4
+    source: openshift4
+  - mirrors:
+    - registry.example.com:5000/redhat
+    source: registry.redhat.io/redhat
+  - mirrors:
+    - registry.example.com:5000/rhel8
+    source: rhel8
+  - mirrors:
+    - registry.example.com:5000/rh-sso-7
+    source: rh-sso-7
+EOF
 
 oc image mirror -a /data/OCP-4.9.9/ocp/secret/redhat-pull-secret.json --dir=/data/OCP-4.9.10/ocp/ocp-image/oc-mirror-workspace/src "file://openshift/release:4.9.10-x86_64" registry.example.com:5000/ocp4/openshift4
 
@@ -7008,4 +7060,25 @@ W0210 09:33:12.914914       1 reflector.go:436] github.com/openshift/client-go/r
 
 参考
 https://access.redhat.com/solutions/5370391
+
+cat <<EOF | oc2 apply -f -
+---
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  labels:
+    operators.openshift.org/catalog: "true"
+  name: operator-0
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - registry.example.com:5000/rhacm2
+    source: registry.redhat.io/rhacm2
+EOF
+
+报错
+oc2 get clusteroperators
+kube-apiserver                             4.9.9     True        True          True       18d     
+ StaticPodFallbackRevisionDegraded: a static pod kube-apiserver-master-0.ocp4-2.example.com was rolled back to revision 12 due to waiting for kube-apiserver static pod to listen on port 6443: Get "https://localhost:6443/healthz/etcd": dial tcp [::1]:6443: connect: connection refused
+oc2 patch kubeapiserver/cluster --type=json -p '[ {"op": "replace", "path": "/spec/forceRedeploymentReason", "value": "forced test 1" } ]'
 ```
