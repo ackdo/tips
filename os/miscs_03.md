@@ -7081,4 +7081,8 @@ oc2 get clusteroperators
 kube-apiserver                             4.9.9     True        True          True       18d     
  StaticPodFallbackRevisionDegraded: a static pod kube-apiserver-master-0.ocp4-2.example.com was rolled back to revision 12 due to waiting for kube-apiserver static pod to listen on port 6443: Get "https://localhost:6443/healthz/etcd": dial tcp [::1]:6443: connect: connection refused
 oc2 patch kubeapiserver/cluster --type=json -p '[ {"op": "replace", "path": "/spec/forceRedeploymentReason", "value": "forced test 1" } ]'
+
+
+# master 节点 kubeconfig 文件位置
+/etc/kubernetes/static-pod-resources/kube-apiserver-certs/secrets/node-kubeconfigs/
 ```
