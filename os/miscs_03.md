@@ -7085,4 +7085,9 @@ oc2 patch kubeapiserver/cluster --type=json -p '[ {"op": "replace", "path": "/sp
 
 # master 节点 kubeconfig 文件位置
 /etc/kubernetes/static-pod-resources/kube-apiserver-certs/secrets/node-kubeconfigs/
+
+报错
+I0214 04:39:33.223311       1 event.go:282] Event(v1.ObjectReference{Kind:"Namespace", Namespace:"open-cluster-management-agent", Name:"open-cluster-management-agent", UID:"", APIVersion:"v1", ResourceVersion:"", FieldPath:""}): type: 'Warning' reason: 'SecretCreateFailed' Failed to create Secret/open-cluster-management-image-pull-credentials -n open-cluster-management-agent-addon: secrets "open-cluster-management-image-pull-credentials" is forbidden: unable to create new content in namespace open-cluster-management-agent-addon because it is being terminated
+
+
 ```
