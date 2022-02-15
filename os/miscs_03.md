@@ -7089,5 +7089,10 @@ oc2 patch kubeapiserver/cluster --type=json -p '[ {"op": "replace", "path": "/sp
 报错
 I0214 04:39:33.223311       1 event.go:282] Event(v1.ObjectReference{Kind:"Namespace", Namespace:"open-cluster-management-agent", Name:"open-cluster-management-agent", UID:"", APIVersion:"v1", ResourceVersion:"", FieldPath:""}): type: 'Warning' reason: 'SecretCreateFailed' Failed to create Secret/open-cluster-management-image-pull-credentials -n open-cluster-management-agent-addon: secrets "open-cluster-management-image-pull-credentials" is forbidden: unable to create new content in namespace open-cluster-management-agent-addon because it is being terminated
 
+上传 openshift-release
+cd /data/OCP-4.9.10/ocp/ocp-image/output-dir/
+tar xvf mirror_seq1_000000.tar
+ln -sf `pwd`/blobs v2/openshift/release/
+oc image mirror -a ${LOCAL_SECRET_JSON} 'file://openshift/release:4.9.10*' ${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}
 
 ```
